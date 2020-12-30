@@ -4,9 +4,11 @@ import logging
 import colorlog
 import os
 import subprocess
+import shutil
 
-from dreem import BitVector, settings, logger
+from dreem import BitVector, settings, logger, mapping
 from dreem.parameters import *
+from dreem.util import *
 
 # TODO make sure to validate files
 # TODO make sure to validate right format of fasta file "> " vs ">"
@@ -14,11 +16,6 @@ from dreem.parameters import *
 
 
 # logging/settings/args ###############################################################
-
-
-def safe_mkdir(dir_name):
-    if not os.path.isdir(dir_name):
-        os.mkdir(dir_name)
 
 
 def parse_args():
@@ -42,59 +39,11 @@ def parse_args():
     return args
 
 
-def run_command(cmd):
-    output, error_msg = None, None
-    try:
-        output = subprocess.check_output(
-            cmd, shell=True, stderr=subprocess.STDOUT
-        ).decode("utf8")
-    except subprocess.CalledProcessError as exc:
-        error_msg = exc.output.decode("utf8")
-    return output, error_msg
-
-
 def write_log_file(fname, output):
     pass
 
 
-def log_error(pname, error_msg):
-    if error_msg is None:
-        log.info("{} ran without errors".format(pname))
-    else:
-        log.error("{}} returned error:".format(pname))
-        log.error(error_msg)
-        log.error("EXITING")
-        exit()
-
-
 # pipeline running functions for mapping ##############################################
-
-
-def run_fastqc(p: Parameters):
-    # run fastqc
-    fastqc_dir = p.dirs.mapping + "/" + p.ins.fastq1_name + "_fastqc"
-    if os.path.isdir(fastqc_dir) and not p.overwrite:
-        log.info(
-            "SKIPPING fastqc, it has been run already! specify -overwrite to rerun"
-        )
-        return
-    if p.map.skip_fastqc:
-        log.info("SKIPPING fastqc, was requested by user using param map.skip_fastqc")
-        return
-
-    if p.paired:
-        fastqc_cmd = "fastqc --extract {fq1} {fq2} --outdir={dir}".format(
-            dir=p.dirs.mapping, fq1=p.ins.fastq1, fq2=p.ins.fastq2,
-        )
-    else:
-        fastqc_cmd = "fastqc --extract {fq1} -outdir={dir}".format(
-            dir=p.dirs.mapping, fq1=p.ins.fastq1
-        )
-
-    log.info("running fastqc")
-    log.debug(fastqc_cmd)
-    output, error = run_command(fastqc_cmd)
-    log_error("fastqc", error)
 
 
 def run_trim_glore(p: Parameters):
@@ -102,6 +51,16 @@ def run_trim_glore(p: Parameters):
         log.info(
             "SKIPPING trim_glore, it has been run already! specify -overwrite to rerun"
         )
+        return
+
+    if p.map.skip_trim_galore:
+        log.info(
+            "SKIPPING trim_glore, was requested by user using param map.skip_trim_glore"
+        )
+        log.info("copying input fastq files directly")
+        shutil.copy(p.ins.fastq1, p.files.tg_fastq1)
+        if p.paired:
+            shutil.copy(p.ins.fastq2, p.files.tg_fastq2)
         return
 
     if p.paired:
@@ -112,38 +71,70 @@ def run_trim_glore(p: Parameters):
         trim_galore_cmd = "trim_galore --fastqc {fq1} -o {out}".format(
             out=p.dirs.mapping, fq1=p.ins.fastq1
         )
-    log.info("#######################################################################")
     log.info("running trim_galore")
-    log.info("#######################################################################")
     log.debug(trim_galore_cmd)
+    output, error = run_command(trim_galore_cmd)
+    log_error("trim_galore", error)
 
 
-def run_bowtie_build(args):
+def run_bowtie_build(p: Parameters):
     # TODO assume I already checked is a valid fasta file format
-    fa_name = args.fasta.split(".")[0]
+    if os.path.isfile(p.dirs.input + p.ins.ref_fasta_name + ".1.bt2"):
+        log.info(
+            "SKIPPING bowtie-build, it has been run already! specify -overwrite to rerun"
+        )
+        return
+
     bowtie_build_cmd = "bowtie2-build {fa} input/{fa_name}".format(
-        fa=args.fasta, fa_name=fa_name
+        fa=p.ins.ref_fasta, fa_name=p.ins.ref_fasta_name
     )
     log.info("running bowtie2 build")
     log.debug(bowtie_build_cmd)
-    os.system(bowtie_build_cmd)
+    output, error = run_command(bowtie_build_cmd)
+    log_error(log, "bowtie2-build", error)
 
 
-def run_bowtie_alignment(fl):
-    bowtie2_cmd = (
-        "bowtie2 --local --no-unal --no-discordant --no-mixed -X 1000 -L 12"
-        + " -p 16 -x {btindex} -1 {fq1} -2 {fq2} -S {samfile}"
-    ).format(
-        btindex=fl.btindex,
-        fq1=fl.trim_galore_fastq1,
-        fq2=fl.trim_galore_fastq2,
-        samfile=fl.sam_file,
-    )
+# TODO valdiate bt2 args?
+def run_bowtie_alignment(p: Parameters):
+    if os.path.isfile(p.files.bt2_alignment_output):
+        log.info(
+            "SKIPPING bowtie alignment, it has been run already! specify -overwrite to rerun"
+        )
+        return
+    bt2_args = " ".join(p.map.bt2_alignment_args.split(","))
+    if p.paired:
+        bowtie2_cmd = (
+            "bowtie2 " + bt2_args + " -x {btindex} -1 {fq1} -2 {fq2} -S {samfile}"
+        ).format(
+            btindex=p.files.bt2_index,
+            fq1=p.files.tg_fastq1,
+            fq2=p.files.tg_fastq2,
+            samfile=p.files.bt2_alignment_output,
+        )
+    else:
+        bowtie2_cmd = (
+            "bowtie2 " + bt2_args + " -x {btindex} -U {fq} -S {samfile}"
+        ).format(
+            btindex=p.files.bt2_index,
+            fq=p.files.tg_fastq1,
+            samfile=p.files.bt2_alignment_output,
+        )
     log.info("running bowtie2 alignment")
-    os.system(bowtie2_cmd)
+    log.debug(bowtie2_cmd)
+    output, error = run_command(bowtie2_cmd)
+    log_error(log, "bowtie2", error)
+    output_lines = output.split("\n")
+    keep = []
+    for l in output_lines:
+        if len(l) == 0:
+            continue
+        if l[0] != "U":
+            keep.append(l)
+    log.info("results for bowtie alignment: \n" + "\n".join(keep))
 
 
-def run_picard(fl):
+def run_picard_bam_convert(p: Parameters):
+    print("Converting BAM file to SAM file format")
     picard_path = settings.get_lib_path() + "/resources/picard.jar"
     picard_cmd = (
         "java -jar "
@@ -181,22 +172,17 @@ def main():
 
     setup_parameters(args)
     p = get_parameters()
-
     build_directories(p)
-    run_fastqc(p)
-    # run_trim_glore(p)
+    m = mapping.Mapper()
+    m.run(p)
     exit()
 
-    """
-    run_bowtie_build(args)
-    run_bowtie_alignment(fl)
-    run_picard(fl)"""
-    """picard_path = get_lib_path() + "/resources/picard.jar"
-    print('Converting BAM file to SAM file format')
-    convert_cmd = 'java -jar {} SamFormatConverter I={} O={} >> log.txt'
-    convert_cmd = convert_cmd.format\
-        (picard_path, fl.bam_file, fl.new_sam_file)
-    os.system(convert_cmd)"""
+    run_fastqc(p)
+    run_trim_glore(p)
+    run_bowtie_build(p)
+    run_bowtie_alignment(p)
+    run_picard_bam_convert(p)
+    exit()
 
     # bit_vector.get_bit_vectors(fl, p)
 

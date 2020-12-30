@@ -16,9 +16,9 @@ class ParametersFactory(object):
 
     class _Inputs(object):
         def __init__(self, paths):
-            self.__ref_fasta = paths[0]  # fasta input file
-            self.__fastq1 = paths[1]  # fastq1 input file
-            self.__fastq2 = paths[2]  # fastq2 input file
+            self.ref_fasta = paths[0]  # fasta input file
+            self.fastq1 = paths[1]  # fastq1 input file
+            self.fastq2 = paths[2]  # fastq2 input file
 
         def __get_name(self, path):
             fname = path.split("/")[-1]
@@ -26,104 +26,36 @@ class ParametersFactory(object):
             return fname
 
         @property
-        def ref_fasta(self):
-            return self.__ref_fasta
-
-        @property
-        def fastq1(self):
-            return self.__fastq1
-
-        @property
-        def fastq2(self):
-            return self.__fastq2
-
-        @property
         def ref_fasta_name(self):
-            return self.__get_name(self.__ref_fasta)
+            return self.__get_name(self.ref_fasta)
 
         @property
         def fastq1_name(self):
-            return self.__get_name(self.__fastq1)
+            return self.__get_name(self.fastq1)
 
         @property
         def fastq2_name(self):
-            return self.__get_name(self.__fastq2)
+            return self.__get_name(self.fastq2)
 
     class _Dirs(object):
         def __init__(self):
-            self.__resources = settings.get_lib_path() + "/resources/"
-            self.__input = "input"
-            self.__output = "output"
-            self.__log = "log"
-            self.__mapping = self.__output + "/Mapping_Files/"
-            self.__bitvector = self.__output + "/BitVector_Files/"
-            self.__cluster = self.__output + "/"
-
-        @property
-        def resources(self):
-            return self.__resources
-
-        @property
-        def input(self):
-            return self.__input
-
-        @property
-        def output(self):
-            return self.__output
-
-        @property
-        def log(self):
-            return self.__log
-
-        @property
-        def mapping(self):
-            return self.__mapping
-
-        @property
-        def bitvector(self):
-            return self.__bitvector
-
-        @property
-        def cluster(self):
-            return self.__cluster
+            self.resources = settings.get_lib_path() + "/resources/"
+            self.input = "input/"
+            self.output = "output/"
+            self.log = "log/"
+            self.mapping = self.output + "Mapping_Files/"
+            self.bitvector = self.output + "BitVector_Files/"
+            self.cluster = self.output + "/"
 
     class _Files(object):
         def __init__(self, dirs, inputs):
-            self.__qhred_ascii = dirs.resources + "/phred_ascii.txt"
-            self.__tg_fastq1 = dirs.mapping + "/" + inputs.fastq1 + "_val_1.fq"
-            self.__tg_fastq2 = dirs.mapping + "/" + inputs.fastq2 + "_val_2.fq"
-            self.__bt2_index = dirs.input + "/" + inputs.ref_fasta_name
-            self.__bt2_alignment_output = dirs.mapping + "aligned.sam"
-            self.__picard_bam_output = dirs.mapping + "aligned.bam"
-            self.__picard_sam_output = dirs.mapping + "converted.sam"
-
-        @property
-        def qhred_ascii(self):
-            return self.__qhred_ascii
-
-        @property
-        def tg_fastq1(self):
-            return self.__tg_fastq1
-
-        @property
-        def tg_fastq2(self):
-            return self.__tg_fastq2
-
-        @property
-        def bt2_index(self):
-            return self.__bt2_index
-
-        @property
-        def bt2_alignment_output(self):
-            return self.__bt2_alignment_output
-
-        @property
-        def picard_bam_output(self):
-            return self.__picard_bam_output
-
-        @property
-        def picard_sam_output(self):
-            return self.__picard_sam_output
+            self.qhred_ascii = dirs.resources + "/phred_ascii.txt"
+            self.tg_fastq1 = dirs.mapping + inputs.fastq1_name + "_val_1.fq"
+            self.tg_fastq2 = dirs.mapping + inputs.fastq2_name + "_val_2.fq"
+            self.bt2_index = dirs.input + inputs.ref_fasta_name
+            self.bt2_alignment_output = dirs.mapping + "aligned.sam"
+            self.picard_bam_output = dirs.mapping + "aligned.bam"
+            self.picard_sam_output = dirs.mapping + "converted.sam"
 
     class _Map(object):
         def __init__(self):
@@ -168,7 +100,6 @@ class ParametersFactory(object):
 
         if args.params is not None:
             self.__parse_param_file(args.params, p)
-        exit()
         return p
 
 
