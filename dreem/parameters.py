@@ -1,4 +1,5 @@
 import os
+import logging
 from future import types
 from dreem import settings
 from dreem.logger import *
@@ -56,6 +57,8 @@ class ParametersFactory(object):
             self.bt2_alignment_output = dirs.mapping + "aligned.sam"
             self.picard_bam_output = dirs.mapping + "aligned.bam"
             self.picard_sam_output = dirs.mapping + "converted.sam"
+            self.picard_sorted_bam_output = dirs.mapping + "aligned_sorted.bam"
+            self.picard_metrics_output = dirs.mapping + "metrics.txt"
 
     class _Map(object):
         def __init__(self):
@@ -95,11 +98,15 @@ class ParametersFactory(object):
         p = Parameters(inputs, dirs, files)
         if args.fastq2 is not None:
             p.paired = True
-        if args.overwrite is not None:
+        if args.overwrite:
+            log.info(
+                "-o/--overwrite supplied, will overwrite previous results with same name"
+            )
             p.overwrite = True
-
         if args.params is not None:
             self.__parse_param_file(args.params, p)
+        if args.log_level is not None:
+            p.log_level = str_to_log_level(args.log_level)
         return p
 
 
@@ -113,6 +120,7 @@ class Parameters(object):
         # general global options
         self.overwrite = False
         self.paired = False
+        self.log_level = logging.INFO
         # parameter groups
         self.map = ParametersFactory._Map()
         self.ins: ParametersFactory._Inputs = inputs
