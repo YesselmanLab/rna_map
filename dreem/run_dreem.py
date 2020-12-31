@@ -6,7 +6,7 @@ import os
 import subprocess
 import shutil
 
-from dreem import BitVector, settings, logger, mapping
+from dreem import settings, logger, mapping, bit_vector
 from dreem.parameters import *
 from dreem.util import *
 
@@ -63,13 +63,16 @@ def main():
     log.info(" ".join(sys.argv))
     args = parse_args()
     log.setLevel(str_to_log_level(args.log_level))
-
+    # setup parameters
     setup_parameters(args)
     p = get_parameters()
     build_directories(p)
-    m = mapping.Mapper()
-    m.run(p)
-    exit()
+    # perform read mapping to reference sequences
+    # m = mapping.Mapper()
+    # m.run(p)
+    # convert aligned reads to bit vectors
+    bt = bit_vector.BitVectorGenerator()
+    bt.run(p)
 
     # bit_vector.get_bit_vectors(fl, p)
 

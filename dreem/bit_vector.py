@@ -1,13 +1,14 @@
-from dreem import settings
-from dreem import logger
-
 import os
 import re
 import numpy as np
 
-from Bio import SeqIO
+from dreem import settings, fastq
+from dreem.parameters import Parameters
+from dreem.logger import *
+from dreem.util import *
+from dreem.fastq import *
 
-log = logger.init_logger("bit_vector.py")
+log = init_logger("bit_vector.py")
 
 
 class MutationHistogram(object):
@@ -60,19 +61,92 @@ class BitVectorFileReader(object):
 
 
 class BitVectorGenerator(object):
-    def __init__(self, qscore_cutoff, num_of_surbases):
-        self._cigar_pattern = re.compile(r"(\d+)([A-Z]{1})")
-        self._phred_qscores = self._parse_phred_qscore_file(
+    def __init__(self):
+        self.__cigar_pattern = re.compile(r"(\d+)([A-Z]{1})")
+        self.__phred_qscores = self.__parse_phred_qscore_file(
             settings.get_lib_path() + "/resources/phred_ascii.txt"
         )
-        self._qscore_cutoff = qscore_cutoff
-        self._num_of_surbases = num_of_surbases
-        self._miss_info = "."
-        self._ambig_info = "?"
-        self._nomut_bit = "0"
-        self._del_bit = "1"
+        self.__qscore_cutoff = 25
+        self.__num_of_surbases = 10
+        self.__miss_info = "."
+        self.__ambig_info = "?"
+        self.__nomut_bit = "0"
+        self.__del_bit = "1"
 
-    def _parse_phred_qscore_file(self, qscore_filename):
+    def run(self, p: Parameters):
+        log.info("starting bitvector generation")
+        self._p = p
+        self._ref_seqs = fasta_to_dict(self._p.ins.ref_fasta)
+        log.setLevel(p.log_level)
+        self.__run_picard_sam_convert()
+
+        self._mut_histos = {}
+        self._bit_vector_writers = {}
+        for ref_name, seq in self._ref_seqs.items():
+            self._mut_histos[ref_name] = MutationHistogram(ref_name, seq, "DMS")
+            self._bit_vector_writers[ref_name] = BitVectorFileWriter(
+                self._p.dirs.bitvector, ref_name, seq, "DMS"
+            )
+        fastq_iterator = None
+        if self._p.paired:
+            fastq_iterator = fastq.PairedFastqIterator(
+                self._p.files.picard_sam_output, self._ref_seqs
+            )
+        for read in fastq_iterator:
+            if self._p.paired:
+                bit_vector = self.__get_bit_vector_paired(read[0], read[1])
+            exit()
+
+    def __get_bit_vector_single(self, read):
+        pass
+
+    def __get_bit_vector_paired(self, read_1, read_2):
+        if read_1.RNAME not in self._ref_seqs:
+            log_error_and_exit(
+                "read {} aligned to {} which is not in the reference fasta".format(
+                    read_1.QNAME, read_1.RNAME
+                )
+            )
+        ref_seq = self._ref_seqs[read_1.RNAME]
+        print(ref_seq)
+        exit()
+
+    def __run_picard_sam_convert(self):
+        if os.path.isfile(self._p.files.picard_sam_output) and not self._p.overwrite:
+            log.info(
+                "SKIPPING picard SAM convert, it has been run already! specify "
+                + "-overwrite to rerun"
+            )
+            return
+
+        picard_path = self._p.dirs.resources + "/picard.jar"
+        picard_cmd = (
+            "java -jar "
+            + picard_path
+            + " SamFormatConverter I={} O={}".format(
+                self._p.files.picard_bam_output, self._p.files.picard_sam_output
+            )
+        )
+        self.__run_command("picard SAM convert", picard_cmd)
+
+    # TODO copied from mapping ... centralize or remove
+    def __run_command(self, method_name, cmd):
+        log.info("running {}".format(method_name))
+        log.debug(cmd)
+        output, error_msg = run_command(cmd)
+        if error_msg is not None:
+            self.__log_error_msg_and_exit(log, method_name, error_msg)
+        else:
+            log.info("{} ran without errors".format(method_name))
+        return output, error_msg
+
+    def __log_error_msg_and_exit(self, log, pname, error_msg):
+        log.error("{} returned error:".format(pname))
+        log.error(error_msg)
+        log.error("EXITING")
+        exit()
+
+    def __parse_phred_qscore_file(self, qscore_filename):
         phred_qscore = {}
         qscore_file = open(qscore_filename)
         qscore_file.readline()  # Ignore header line
@@ -83,8 +157,11 @@ class BitVectorGenerator(object):
         qscore_file.close()
         return phred_qscore
 
-    def get_bit_vector(self, read: Mate, ref_seq: str):
-        bitvector_mate = {}
+    def _parse_cigar(self, cigar_string):
+        return re.findall(self.__cigar_pattern, cigar_string)
+
+    def __convert_read_to_bit_vector(self, read: AlignedRead):
+        bitvector = {}
         read_seq = read.SEQ
         q_scores = read.QUAL
         i = read.POS  # Pos in the ref sequence
@@ -96,26 +173,26 @@ class BitVectorGenerator(object):
             desc, length = op[1], int(op[0])
             if desc == "M":  # Match or mismatch
                 for k in range(length):
-                    if self._phred_qscores[q_scores[j]] > self._qscore_cutoff:
+                    if self.__phred_qscores[q_scores[j]] > self.__qscore_cutoff:
                         if read_seq[j] != ref_seq[i - 1]:
-                            bitvector_mate[i] = read_seq[j]
+                            bitvector[i] = read_seq[j]
                         else:
-                            bitvector_mate[i] = self._nomut_bit
+                            bitvector[i] = self.__nomut_bit
                     else:
-                        bitvector_mate[i] = self._ambig_info
+                        bitvector[i] = self.__ambig_info
                     i += 1
                     j += 1
             elif desc == "D":  # Deletion
                 for k in range(length - 1):
-                    bitvector_mate[i] = self._ambig_info
+                    bitvector[i] = self.__ambig_info
                     i += 1
                 is_ambig = self._calc_ambig_reads(
-                    ref_seq, i, length, self._num_of_surbases
+                    ref_seq, i, length, self.__num_of_surbases
                 )
                 if is_ambig:
-                    bitvector_mate[i] = self._ambig_info
+                    bitvector_mate[i] = self.__ambig_info
                 else:
-                    bitvector_mate[i] = self._del_bit
+                    bitvector_mate[i] = self.__del_bit
                 i += 1
             elif desc == "I":  # Insertion
                 j += length  # Update read index
@@ -123,7 +200,7 @@ class BitVectorGenerator(object):
                 j += length  # Update read index
                 if op_index == len(cigar_ops) - 1:  # Soft clipped at the end
                     for k in range(length):
-                        bitvector_mate[i] = self._miss_info
+                        bitvector_mate[i] = self.__miss_info
                         i += 1
             else:
                 log.warn("unknown cigar op encounters: {}".format(desc))
@@ -131,8 +208,43 @@ class BitVectorGenerator(object):
             op_index += 1
         return bitvector_mate
 
-    def _parse_cigar(self, cigar_string):
-        return re.findall(self._cigar_pattern, cigar_string)
+
+def parse_bit_vectors_paired(sam_file, mut_histos, bit_vector_writers, p):
+    bvg = PairedBitVectorGenerator(p.qscore_cutoff, p.sur_bases)
+    read_1_line, read_2_line = "", ""
+    while True:
+        read_1_line = sam_file.readline().strip()
+        read_2_line = sam_file.readline().strip()
+        if len(read_1_line) == 0 or len(read_2_line) == 0:
+            break
+        read_1 = Mate(read_1_line)
+        read_2 = Mate(read_2_line)
+        # check if reads are paired
+        if not (
+            read_1.PNEXT == read_2.POS
+            and read_1.RNAME == read_2.RNAME
+            and read_1.RNEXT == "="
+        ):
+            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
+            continue
+        if not (read_1.QNAME == read_2.QNAME and read_1.MAPQ == read_2.MAPQ):
+            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
+            continue
+        if read_1.RNAME not in mut_histos:
+            log.error("unknown ref sequence: " + read_1.RNAME)
+            exit()
+        bit_vector = bvg.get_paired_bit_vector(
+            read_1, read_2, mut_histos[read_1.RNAME].sequence
+        )
+        bit_vector_writers[read_1.RNAME].write_bit_vector(read_1.QNAME, bit_vector)
+
+
+"""
+class BitVectorGeneratorOld(object):
+    
+   
+
+ 
 
     def _calc_ambig_reads(self, ref_seq, i, length, num_surBases):
         orig_del_start = i - length + 1
@@ -168,8 +280,8 @@ class PairedBitVectorGenerator(BitVectorGenerator):
                 bit_vector[pos] = bit
             elif bit != bit_vector[pos]:  # keys in both and bits not the same
                 bits = set([bit_vector_1[pos], bit])
-                if self._nomut_bit in bits:  # one of the bits is not mutated take that
-                    bit_vector[pos] = self._nomut_bit
+                if self.__nomut_bit in bits:  # one of the bits is not mutated take that
+                    bit_vector[pos] = self.__nomut_bit
                 # one of the bits is ambig take the other
                 elif self._ambig_info in bits:
                     other_bit = list(bits - set(self._ambig_info))[0]
@@ -190,80 +302,4 @@ class PairedBitVectorGenerator(BitVectorGenerator):
 
         return bit_vector
 
-
-def parse_fasta_file(fasta_file):
-    """
-    Parse a FASTA file
-    Args:
-        fasta_file (string): Path to FASTA file
-    Returns:
-        refs_seq (dict): Sequences of the ref genomes in the file
-    """
-
-    refs_seq = {}
-    with open(fasta_file, "rU") as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            refs_seq[record.id] = str(record.seq)
-    return refs_seq
-
-
-# TODO probably can just use samtools instead
-def __setup_sam_file(file_locations):
-    print("Converting BAM file to SAM file format")
-    picard_path = settings.get_lib_path() + "/resources/picard.jar"
-    convert_cmd = "java -jar {} SamFormatConverter I={} O={} >> log.txt"
-    convert_cmd = convert_cmd.format(
-        picard_path, file_locations.bam_file, file_locations.new_sam_file
-    )
-    os.system(convert_cmd)
-
-
-def get_bit_vectors(file_locations, p):
-    ref_seqs = parse_fasta_file(file_locations.fasta)
-    mut_histos = {}
-    bit_vector_writers = {}
-    for ref_name, seq in ref_seqs.items():
-        mut_histos[ref_name] = MutationHistogram(ref_name, seq, "DMS")
-        bit_vector_writers[ref_name] = BitVectorFileWriter(
-            file_locations.bitvector_files_dir, ref_name, seq, "DMS"
-        )
-    # __setup_sam_file(file_locations)
-    ignore_lines = len(ref_seqs.keys()) + 2
-    sam_file = open(file_locations.new_sam_file, "r")
-    for line_index in range(ignore_lines):  # Ignore header lines
-        sam_file.readline()
-
-    if p.paired:
-        parse_bit_vectors_paired(sam_file, mut_histos, bit_vector_writers, p)
-    else:
-        raise ValueError("not supported")
-
-
-def parse_bit_vectors_paired(sam_file, mut_histos, bit_vector_writers, p):
-    bvg = PairedBitVectorGenerator(p.qscore_cutoff, p.sur_bases)
-    read_1_line, read_2_line = "", ""
-    while True:
-        read_1_line = sam_file.readline().strip()
-        read_2_line = sam_file.readline().strip()
-        if len(read_1_line) == 0 or len(read_2_line) == 0:
-            break
-        read_1 = Mate(read_1_line)
-        read_2 = Mate(read_2_line)
-        # check if reads are paired
-        if not (
-            read_1.PNEXT == read_2.POS
-            and read_1.RNAME == read_2.RNAME
-            and read_1.RNEXT == "="
-        ):
-            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
-            continue
-        if not (read_1.QNAME == read_2.QNAME and read_1.MAPQ == read_2.MAPQ):
-            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
-            continue
-        if read_1.RNAME not in mut_histos:
-            log.error("unknown ref sequence: " + read_1.RNAME)
-            exit()
-        bit_vector = bvg.get_paired_bit_vector(
-            read_1, read_2, mut_histos[read_1.RNAME].sequence
-        )
-        bit_vector_writers[read_1.RNAME].write_bit_vector(read_1.QNAME, bit_vector)
+"""

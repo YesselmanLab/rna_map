@@ -2,6 +2,8 @@ import os
 import subprocess
 import shutil
 
+from Bio import SeqIO
+
 
 def safe_mkdir(dir_name):
     if not os.path.isdir(dir_name):
@@ -66,3 +68,19 @@ def get_cutadapt_version():
         raise ValueError("cannot get cutadapt version, cannot find the exe")
     output = subprocess.check_output("cutadapt --version", shell=True).decode("utf8")
     return output.rstrip().lstrip()
+
+
+def fasta_to_dict(fasta_file):
+    """
+    Parse a FASTA file
+    Args:
+        fasta_file (string): Path to FASTA file
+    Returns:
+        refs_seq (dict): Sequences of the ref genomes in the file
+    """
+
+    refs_seq = {}
+    with open(fasta_file, "rU") as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            refs_seq[record.id] = str(record.seq)
+    return refs_seq
