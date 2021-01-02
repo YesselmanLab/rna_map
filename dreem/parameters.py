@@ -70,7 +70,20 @@ class ParametersFactory(object):
                 "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
             )
 
-    class __BitVector(object):
+    class _BitVector(object):
+        def __init__(self):
+            self.skip = False
+            self.qscore_cutoff = 25
+            self.num_of_surbases = 10
+            self.map_score_cutoff = 15
+            self.mutation_count_cutoff = 10
+            self.percent_length_cutoff = 0.01
+            self.miss_info = "."
+            self.ambig_info = "?"
+            self.nomut_bit = "0"
+            self.del_bit = "1"
+
+    class _EMCluster(object):
         def __init__(self):
             pass
 
@@ -123,6 +136,7 @@ class Parameters(object):
         self.log_level = logging.INFO
         # parameter groups
         self.map = ParametersFactory._Map()
+        self.bit_vector = ParametersFactory._BitVector()
         self.ins: ParametersFactory._Inputs = inputs
         self.dirs: ParametersFactory._Dirs = dirs
         self.files: ParametersFactory._Files = files

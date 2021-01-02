@@ -63,12 +63,20 @@ class PairedFastqIterator(object):
             and self._read_1.RNAME == self._read_2.RNAME
             and self._read_1.RNEXT == "="
         ):
-            log.warn("mate_2 is inconsistent with mate_1 SKIPPING!")
+            log.warning(
+                "mate_2 is inconsistent with mate_1 for read: {} SKIPPING!".format(
+                    self._read_1.QNAME
+                )
+            )
             self.__next__()
         if not (
             self._read_1.QNAME == self._read_2.QNAME
             and self._read_1.MAPQ == self._read_2.MAPQ
         ):
-            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
+            log.warning(
+                "mate_2 is inconsistent with mate_1 for read: {} SKIPPING!".format(
+                    self._read_1.QNAME
+                )
+            )
             self.__next__()
         return [self._read_1, self._read_2]

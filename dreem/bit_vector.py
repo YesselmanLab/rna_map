@@ -1,6 +1,15 @@
 import os
 import re
 import numpy as np
+import pickle
+
+import plotly
+import plotly.graph_objs as go
+from plotly import tools
+import datetime
+import matplotlib
+import matplotlib.pyplot as plt
+import pandas as pd
 
 from dreem import settings, fastq
 from dreem.parameters import Parameters
@@ -12,13 +21,29 @@ log = init_logger("bit_vector.py")
 
 
 class MutationHistogram(object):
-    def __init__(self, name, sequence, data_type):
+    def __init__(self, name, sequence, data_type, start=None, end=None):
+        self.__bases = ["A", "C", "G", "T"]
         self.name = name
         self.sequence = sequence
         self.data_type = data_type
         self.num_reads = 0
         self.mut_bases = np.zeros(len(sequence))
         self.info_bases = np.zeros(len(sequence))
+        self.del_bases = np.zeros(len(sequence))
+        self.ins_bases = np.zeros(len(sequence))
+        self.cov_bases = np.zeros(len(sequence))
+        self.mod_bases = {
+            "A": np.zeros(len(sequence)),
+            "C": np.zeros(len(sequence)),
+            "G": np.zeros(len(sequence)),
+            "T": np.zeros(len(sequence)),
+        }
+        self.start = start
+        self.end = end
+        if self.start is None:
+            self.start = 0
+        if self.end is None:
+            self.end = len(self.sequence) - 1
 
     @classmethod
     def from_file(cls, file_name):
@@ -27,8 +52,89 @@ class MutationHistogram(object):
     def to_file(self):
         pass
 
-    def record_bit_vector(self, bit_vector):
-        pass
+    def record_bit_vector(self, bit_vector, p):
+        self.num_reads += 1
+        for pos in range(self.start, self.end + 1):
+            if pos not in bit_vector:
+                continue
+            read_bit = bit_vector[pos]
+            if read_bit != p.bit_vector.ambig_info:
+                self.cov_bases[pos] += 1
+                self.info_bases[pos] += 1
+            if read_bit in self.__bases:
+                self.mod_bases[read_bit][pos] += 1
+                self.mut_bases[pos] += 1
+            elif read_bit == p.bit_vector.del_bit:
+                self.del_bases[pos] += 1
+
+
+# plotting functions ###############################################################
+def plot_read_coverage(mh: MutationHistogram, p: Parameters):
+    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    file_base_name = (
+        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+    )
+    read_cov = []
+    for pos in range(mh.start, mh.end + 1):
+        try:
+            cov_frac = mh.cov_bases[pos] / mh.num_reads
+        except ZeroDivisionError:
+            cov_frac = 0.0
+        read_cov.append(cov_frac)
+    cov_trace = go.Bar(x=xaxis_coordinates, y=read_cov)
+    cov_data = [cov_trace]
+    cov_layout = go.Layout(
+        title="Read coverage: "
+        + mh.name
+        + ", Number of bit vectors: "
+        + str(mh.num_reads),
+        xaxis=dict(title="Position"),
+        yaxis=dict(title="Coverage fraction"),
+    )
+    cov_fig = go.Figure(data=cov_data, layout=cov_layout)
+    plotly.offline.plot(
+        cov_fig, filename=file_base_name + "read_coverage.html", auto_open=False,
+    )
+    plotly.io.write_image(
+        cov_fig, file_base_name + "read_coverage.pdf",
+    )
+
+
+def plot_modified_bases(mh: MutationHistogram, p: Parameters):
+    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    file_base_name = (
+        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+    )
+    modbases_data = []
+    cmap = {"A": "red", "T": "green", "G": "orange", "C": "blue"}  # Color map
+    for base in ["A", "C", "G", "T"]:
+        y_list = [mh.mod_bases[base][pos] for pos in range(mh.start, mh.end + 1)]
+        trace = go.Bar(
+            x=xaxis_coordinates, y=y_list, name=base, marker_color=cmap[base]
+        )
+        modbases_data.append(trace)
+    modbases_layout = go.Layout(
+        title="DMS modifications: " + mh.name,
+        xaxis=dict(title="Position"),
+        yaxis=dict(title="Abundance"),
+        barmode="stack",
+    )
+    modbases_fig = go.Figure(data=modbases_data, layout=modbases_layout)
+    modbases_fig
+    plotly.offline.plot(
+        modbases_fig, filename=file_base_name + "mutations.html", auto_open=False,
+    )
+    # add pdf
+    plotly.io.write_image(
+        modbases_fig, file_base_name + "mutations.pdf",
+    )
+
+
+def plot_mutation_histogram():
+    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    file_base_name = (
+        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+    )
 
 
 class BitVectorFileWriter(object):
@@ -66,16 +172,25 @@ class BitVectorGenerator(object):
         self.__phred_qscores = self.__parse_phred_qscore_file(
             settings.get_lib_path() + "/resources/phred_ascii.txt"
         )
-        self.__qscore_cutoff = 25
-        self.__num_of_surbases = 10
-        self.__miss_info = "."
-        self.__ambig_info = "?"
-        self.__nomut_bit = "0"
-        self.__del_bit = "1"
+        self.__bases = ["A", "C", "G", "T"]
+
+    # TODO not big on this ... streamline somehow?
+    def __setup_params(self, p: Parameters):
+        self.__qscore_cutoff = p.bit_vector.qscore_cutoff
+        self.__num_of_surbases = p.bit_vector.num_of_surbases
+        self.__miss_info = p.bit_vector.miss_info
+        self.__ambig_info = p.bit_vector.ambig_info
+        self.__nomut_bit = p.bit_vector.nomut_bit
+        self.__del_bit = p.bit_vector.del_bit
+        self.__map_score_cutoff = p.bit_vector.map_score_cutoff
+        self.__mutation_count_cutoff = p.bit_vector.mutation_count_cutoff
+        self.__percent_length_cutoff = p.bit_vector.percent_length_cutoff
 
     def run(self, p: Parameters):
         log.info("starting bitvector generation")
         self._p = p
+        # setup parameters about generating bit vectors
+        self.__setup_params(p)
         self._ref_seqs = fasta_to_dict(self._p.ins.ref_fasta)
         log.setLevel(p.log_level)
         self.__run_picard_sam_convert()
@@ -95,10 +210,17 @@ class BitVectorGenerator(object):
         for read in fastq_iterator:
             if self._p.paired:
                 bit_vector = self.__get_bit_vector_paired(read[0], read[1])
-            exit()
+            else:
+                bit_vector = self.__get_bit_vector_single(read)
+        f = open(self._p.dirs.bitvector + "mutation_histos.p", "wb")
+        pickle.dump(self._mut_histos, f)
+
+        for mh in self._mut_histos.values():
+            plot_read_coverage(mh, p)
+            plot_modified_bases(mh, p)
 
     def __get_bit_vector_single(self, read):
-        pass
+        raise NotImplemented()
 
     def __get_bit_vector_paired(self, read_1, read_2):
         if read_1.RNAME not in self._ref_seqs:
@@ -108,8 +230,14 @@ class BitVectorGenerator(object):
                 )
             )
         ref_seq = self._ref_seqs[read_1.RNAME]
-        print(ref_seq)
-        exit()
+        bit_vector_1 = self.__convert_read_to_bit_vector(read_1, ref_seq)
+        bit_vector_2 = self.__convert_read_to_bit_vector(read_2, ref_seq)
+        bit_vector = self.__merge_paired_bit_vectors(bit_vector_1, bit_vector_2)
+        self._bit_vector_writers[read_1.RNAME].write_bit_vector(
+            read_1.QNAME, bit_vector
+        )
+        self._mut_histos[read_1.RNAME].record_bit_vector(bit_vector, self._p)
+        return bit_vector
 
     def __run_picard_sam_convert(self):
         if os.path.isfile(self._p.files.picard_sam_output) and not self._p.overwrite:
@@ -160,7 +288,7 @@ class BitVectorGenerator(object):
     def _parse_cigar(self, cigar_string):
         return re.findall(self.__cigar_pattern, cigar_string)
 
-    def __convert_read_to_bit_vector(self, read: AlignedRead):
+    def __convert_read_to_bit_vector(self, read: AlignedRead, ref_seq: str):
         bitvector = {}
         read_seq = read.SEQ
         q_scores = read.QUAL
@@ -186,13 +314,11 @@ class BitVectorGenerator(object):
                 for k in range(length - 1):
                     bitvector[i] = self.__ambig_info
                     i += 1
-                is_ambig = self._calc_ambig_reads(
-                    ref_seq, i, length, self.__num_of_surbases
-                )
+                is_ambig = self.__calc_ambig_reads(ref_seq, i, length)
                 if is_ambig:
-                    bitvector_mate[i] = self.__ambig_info
+                    bitvector[i] = self.__ambig_info
                 else:
-                    bitvector_mate[i] = self.__del_bit
+                    bitvector[i] = self.__del_bit
                 i += 1
             elif desc == "I":  # Insertion
                 j += length  # Update read index
@@ -200,56 +326,46 @@ class BitVectorGenerator(object):
                 j += length  # Update read index
                 if op_index == len(cigar_ops) - 1:  # Soft clipped at the end
                     for k in range(length):
-                        bitvector_mate[i] = self.__miss_info
+                        bitvector[i] = self.__miss_info
                         i += 1
             else:
                 log.warn("unknown cigar op encounters: {}".format(desc))
                 return {}
             op_index += 1
-        return bitvector_mate
+        return bitvector
 
+    def __merge_paired_bit_vectors(self, bit_vector_1, bit_vector_2):
+        bit_vector = dict(bit_vector_1)
+        for pos, bit in bit_vector_2.items():
+            if pos not in bit_vector:  # unique to bit_vector_2
+                bit_vector[pos] = bit
+            elif bit != bit_vector[pos]:  # keys in both and bits not the same
+                bits = set([bit_vector_1[pos], bit])
+                if self.__nomut_bit in bits:  # one of the bits is not mutated take that
+                    bit_vector[pos] = self.__nomut_bit
+                # one of the bits is ambig take the other
+                elif self.__ambig_info in bits:
+                    other_bit = list(bits - set(self.__ambig_info))[0]
+                    bit_vector[pos] = other_bit
+                # one of the bits is missing take the other
+                elif self.__miss_info in bits:
+                    other_bit = list(bits - set(self.__miss_info))[0]
+                    bit_vector[pos] = other_bit
+                # both bits are mutations and different set to "?"
+                elif bit_vector_1[pos] in self.__bases and bit in self.__bases:
+                    bit_vector[pos] = self.__ambig_info
+                else:
+                    raise ValueError(
+                        "unable to merge bit_vectors with bits: {} {}".format(
+                            bit_vector_1[pos], bit
+                        )
+                    )
+        return bit_vector
 
-def parse_bit_vectors_paired(sam_file, mut_histos, bit_vector_writers, p):
-    bvg = PairedBitVectorGenerator(p.qscore_cutoff, p.sur_bases)
-    read_1_line, read_2_line = "", ""
-    while True:
-        read_1_line = sam_file.readline().strip()
-        read_2_line = sam_file.readline().strip()
-        if len(read_1_line) == 0 or len(read_2_line) == 0:
-            break
-        read_1 = Mate(read_1_line)
-        read_2 = Mate(read_2_line)
-        # check if reads are paired
-        if not (
-            read_1.PNEXT == read_2.POS
-            and read_1.RNAME == read_2.RNAME
-            and read_1.RNEXT == "="
-        ):
-            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
-            continue
-        if not (read_1.QNAME == read_2.QNAME and read_1.MAPQ == read_2.MAPQ):
-            log.debug("mate_2 is inconsistent with mate_1 SKIPPING!")
-            continue
-        if read_1.RNAME not in mut_histos:
-            log.error("unknown ref sequence: " + read_1.RNAME)
-            exit()
-        bit_vector = bvg.get_paired_bit_vector(
-            read_1, read_2, mut_histos[read_1.RNAME].sequence
-        )
-        bit_vector_writers[read_1.RNAME].write_bit_vector(read_1.QNAME, bit_vector)
-
-
-"""
-class BitVectorGeneratorOld(object):
-    
-   
-
- 
-
-    def _calc_ambig_reads(self, ref_seq, i, length, num_surBases):
+    def __calc_ambig_reads(self, ref_seq, i, length):
         orig_del_start = i - length + 1
-        orig_sur_start = orig_del_start - num_surBases
-        orig_sur_end = i + num_surBases
+        orig_sur_start = orig_del_start - self.__num_of_surbases
+        orig_sur_end = i + self.__num_of_surbases
         orig_sur_seq = (
             ref_seq[orig_sur_start - 1 : orig_del_start - 1] + ref_seq[i:orig_sur_end]
         )
@@ -264,42 +380,3 @@ class BitVectorGeneratorOld(object):
             if sur_seq == orig_sur_seq:
                 return True
         return False
-
-
-class PairedBitVectorGenerator(BitVectorGenerator):
-    def __init__(self, qscore_cutoff, num_of_surbases):
-        super().__init__(qscore_cutoff, num_of_surbases)
-        self._bases = ["A", "C", "G", "T"]
-
-    def get_paired_bit_vector(self, read_1, read_2, ref_seq):
-        bit_vector_1 = self.get_bit_vector(read_1, ref_seq)
-        bit_vector_2 = self.get_bit_vector(read_2, ref_seq)
-        bit_vector = dict(bit_vector_1)
-        for pos, bit in bit_vector_2.items():
-            if pos not in bit_vector:  # unique to bit_vector_2
-                bit_vector[pos] = bit
-            elif bit != bit_vector[pos]:  # keys in both and bits not the same
-                bits = set([bit_vector_1[pos], bit])
-                if self.__nomut_bit in bits:  # one of the bits is not mutated take that
-                    bit_vector[pos] = self.__nomut_bit
-                # one of the bits is ambig take the other
-                elif self._ambig_info in bits:
-                    other_bit = list(bits - set(self._ambig_info))[0]
-                    bit_vector[pos] = other_bit
-                # one of the bits is missing take the other
-                elif self._miss_info in bits:
-                    other_bit = list(bits - set(self._miss_info))[0]
-                    bit_vector[pos] = other_bit
-                # both bits are mutations and different set to "?"
-                elif bit_vector_1[pos] in self._bases and bit in self._bases:
-                    bit_vector[pos] = self._ambig_info
-                else:
-                    raise ValueError(
-                        "unable to merge bit_vectors with bits: {} {}".format(
-                            bit_vector_1[pos], bit
-                        )
-                    )
-
-        return bit_vector
-
-"""
