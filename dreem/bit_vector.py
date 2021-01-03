@@ -2,11 +2,12 @@ import os
 import re
 import numpy as np
 import pickle
+import random
+import datetime
 
 import plotly
 import plotly.graph_objs as go
-from plotly import tools
-import datetime
+from plotly.subplots import make_subplots
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -27,11 +28,11 @@ class MutationHistogram(object):
         self.sequence = sequence
         self.data_type = data_type
         self.num_reads = 0
-        self.mut_bases = np.zeros(len(sequence))
-        self.info_bases = np.zeros(len(sequence))
-        self.del_bases = np.zeros(len(sequence))
-        self.ins_bases = np.zeros(len(sequence))
-        self.cov_bases = np.zeros(len(sequence))
+        self.mut_bases = np.zeros(len(sequence) + 1)
+        self.info_bases = np.zeros(len(sequence) + 1)
+        self.del_bases = np.zeros(len(sequence) + 1)
+        self.ins_bases = np.zeros(len(sequence) + 1)
+        self.cov_bases = np.zeros(len(sequence) + 1)
         self.mod_bases = {
             "A": np.zeros(len(sequence)),
             "C": np.zeros(len(sequence)),
@@ -41,9 +42,9 @@ class MutationHistogram(object):
         self.start = start
         self.end = end
         if self.start is None:
-            self.start = 0
+            self.start = 1
         if self.end is None:
-            self.end = len(self.sequence) - 1
+            self.end = len(self.sequence)
 
     @classmethod
     def from_file(cls, file_name):
@@ -130,15 +131,179 @@ def plot_modified_bases(mh: MutationHistogram, p: Parameters):
     )
 
 
-def plot_mutation_histogram():
+def plot_mutation_histogram(mh: MutationHistogram, p: Parameters):
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
     file_base_name = (
         p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
+    mut_hist_data = [go.Histogram(x=mh.mut_bases)]
+    mut_hist_layout = go.Layout(
+        title="Mutations: " + mh.name,
+        xaxis=dict(title="Number of mutations per read"),
+        yaxis=dict(title="Abundance"),
+    )
+    mut_hist_fig = go.Figure(data=mut_hist_data, layout=mut_hist_layout)
+    plotly.offline.plot(
+        mut_hist_fig,
+        filename=file_base_name + "mutation_histogram.html",
+        auto_open=False,
+    )
+    # add pdf
+    plotly.io.write_image(mut_hist_fig, file_base_name + "mutation_histogram.pdf")
+
+
+def plot_population_avg(mh: MutationHistogram, p: Parameters):
+    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    file_base_name = (
+        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+    )
+    popavg_filename = file_base_name + "popavg_reacts.txt"
+    popavg_file = open(popavg_filename, "w")
+    popavg_file.write("Position\tMismatches\tMismatches + Deletions\n")
+    delmut_y, mut_y = [], []
+    for pos in range(mh.start, mh.end + 1):
+        try:
+            delmut_frac = (mh.del_bases[pos] + mh.mut_bases[pos]) / mh.info_bases[pos]
+            mut_frac = mh.mut_bases[pos] / mh.info_bases[pos]
+        except ZeroDivisionError:
+            delmut_frac = 0.0
+            mut_frac = 0.0
+        delmut_y.append(delmut_frac)
+        mut_y.append(mut_frac)
+        mut_frac, delmut_frac = round(mut_frac, 5), round(delmut_frac, 5)
+        s = "{}\t{}\t{}\n".format(pos, mut_frac, delmut_frac)
+        popavg_file.write(s)
+    popavg_file.close()
+
+    cmap = {"A": "red", "T": "green", "G": "orange", "C": "blue"}  # Color map
+    colors = []
+    ref_bases = []
+    for i in range(mh.start, mh.end + 1):
+        if i >= len(mh.sequence):
+            continue
+        colors.append(cmap[mh.sequence[i - 1]])
+        ref_bases.append(mh.sequence[i - 1])
+    delmut_trace = go.Bar(
+        x=xaxis_coordinates,
+        y=delmut_y,
+        text=ref_bases,
+        marker=dict(color=colors),
+        showlegend=False,
+    )
+    mut_trace = go.Bar(
+        x=xaxis_coordinates,
+        y=mut_y,
+        text=ref_bases,
+        marker=dict(color=colors),
+        showlegend=False,
+    )
+    title1 = "Mismatches + Deletions: " + mh.name
+    title2 = "Mismatches: " + mh.name
+    mut_fig = make_subplots(rows=2, cols=1, subplot_titles=(title1, title2))
+    mut_fig.append_trace(delmut_trace, 1, 1)
+    mut_fig.append_trace(mut_trace, 2, 1)
+    max_y = max(mut_y + delmut_y)
+    mut_fig["layout"]["xaxis1"].update(title="Position")
+    mut_fig["layout"]["xaxis2"].update(title="Position")
+    mut_fig["layout"]["yaxis1"].update(title="Fraction", range=[0, max_y])
+    mut_fig["layout"]["yaxis2"].update(title="Fraction", range=[0, max_y])
+    plotly.offline.plot(
+        mut_fig, filename=file_base_name + "pop_avg.html", auto_open=False,
+    )
+    # add pdf
+    plotly.io.write_image(mut_fig, file_base_name + "pop_avg.pdf")
+
+
+# analysis functions ###############################################################
+
+
+def generate_quality_control_file(mh: MutationHistogram, p: Parameters):
+    file_base_name = (
+        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+    )
+    qc_filename = file_base_name + "Quality_Control.txt"
+    qc_file = open(qc_filename, "w")
+
+    # Read coverage
+    qc_file.write(mh.name + " has " + str(mh.num_reads) + " reads mapping to it")
+    qc_file.write(". This is: ")
+    if mh.num_reads < 50000:
+        qc_file.write("BAD.\n")
+    elif 50000 <= mh.num_reads < 100000:
+        qc_file.write("MEDIUM.\n")
+    else:
+        qc_file.write("GOOD.\n")
+
+    # Signal-noise ratio
+    A_frac = mh.sequence.count("A") / len(mh.sequence)
+    G_frac = mh.sequence.count("G") / len(mh.sequence)
+    T_frac = mh.sequence.count("T") / len(mh.sequence)
+    C_frac = mh.sequence.count("C") / len(mh.sequence)
+    sig = (A_frac * np.sum(mh.mod_bases["A"])) + (C_frac * np.sum(mh.mod_bases["C"]))
+    noise = (T_frac * np.sum(mh.mod_bases["T"])) + (G_frac * np.sum(mh.mod_bases["G"]))
+    denom = sig + noise
+    sig_noise = round(sig / denom, 2)
+    qc_file.write("The signal-to-noise ratio for the sample is: " + str(sig_noise))
+    qc_file.write(". This is: ")
+    if sig_noise < 0.75:
+        qc_file.write("BAD.\n")
+    elif 0.75 <= sig_noise < 0.9:
+        qc_file.write("MEDIUM.\n")
+    else:
+        qc_file.write("GOOD.\n")
+
+    # Distribution of coverage
+    qc_file.write("Distribution of coverage:\n")
+    m = max(mh.cov_bases)
+    norm_read_cov = [i / m for i in mh.cov_bases]
+    n1, n2, n3 = 0, 0, 0
+    for cov in norm_read_cov:
+        if cov < 0.5:
+            n1 += 1
+        elif 0.5 <= cov < 0.75:
+            n2 += 1
+        elif 0.75 <= cov:
+            n3 += 1
+    n1 = str(round(n1 * 100 / len(mh.cov_bases), 2))
+    n2 = str(round(n2 * 100 / len(mh.cov_bases), 2))
+    n3 = str(round(n3 * 100 / len(mh.cov_bases), 2))
+    n1_s = "{}% of bases have less than {}% of reads mapping to them\n"
+    n1_s = n1_s.format(n1, 50)
+    n2_s = "{}% of bases have between {}% and {}% of reads mapping to them\n"
+    n2_s = n2_s.format(n2, 50, 75)
+    n3_s = "{}% of bases have greater than {}% of reads mapping to them\n\n"
+    n3_s = n3_s.format(n3, 75)
+    qc_file.write(n1_s)
+    qc_file.write(n2_s)
+    qc_file.write(n3_s)
+
+    # Info on numbers:
+    qc_file.write("FOR REFERENCE:\n")
+
+    # Read coverage
+    qc_file.write("Read coverage:\n")
+    qc_file.write("Number of reads < 50000: BAD\n")
+    qc_file.write("50000 < Number of reads < 100000: MEDIUM\n")
+    qc_file.write("Number of reads > 100000: GOOD\n\n")
+
+    # Signal-to-noise ratio
+    qc_file.write("Signal-to-noise ratio:\n")
+    qc_file.write("Signal-noise ratio < 0.75: BAD\n")
+    qc_file.write("0.75 < Signal-noise ratio < 0.9: MEDIUM\n")
+    qc_file.write("Signal-noise ratio > 0.9: GOOD\n\n")
+
+    qc_file.write(
+        "If you are only interested in the population average"
+        + " and not clustering, 1000-10000 reads might be sufficient.\n\n"
+    )
+
+    qc_file.close()
 
 
 class BitVectorFileWriter(object):
-    def __init__(self, path, name, sequence, data_type):
+    def __init__(self, path, name, sequence, data_type, start, end):
+        self.start = start
+        self.end = end
         self.sequence = sequence
         self.f = open(path + name + "_bitvectors.txt", "w")
         self.f.write("@ref\t{}\t{}\t{}\n".format(name, sequence, data_type))
@@ -150,7 +315,7 @@ class BitVectorFileWriter(object):
     def write_bit_vector(self, q_name, bit_vector):
         n_mutations = 0
         bit_string = ""
-        for pos in range(0, len(self.sequence)):
+        for pos in range(self.start, self.end + 1):
             if pos not in bit_vector:
                 bit_string += "."
             else:
@@ -194,13 +359,33 @@ class BitVectorGenerator(object):
         self._ref_seqs = fasta_to_dict(self._p.ins.ref_fasta)
         log.setLevel(p.log_level)
         self.__run_picard_sam_convert()
+        self.__generate_all_bit_vectors()
+        for mh in self._mut_histos.values():
+            # plot_read_coverage(mh, p)
+            # plot_modified_bases(mh, p)
+            # plot_mutation_histogram(mh, p)
+            # plot_population_avg(mh, p)
+            generate_quality_control_file(mh, p)
 
+    def __generate_all_bit_vectors(self):
         self._mut_histos = {}
+        bit_vector_pickle_file = self._p.dirs.bitvector + "mutation_histos.p"
+        if os.path.isfile(bit_vector_pickle_file) and not self._p.overwrite:
+            log.info(
+                "SKIPPING bit vector generation, it has run already! specify -overwrite "
+                + "to rerun"
+            )
+            with open(bit_vector_pickle_file, "rb") as handle:
+                self._mut_histos = pickle.load(handle)
+            return
+
         self._bit_vector_writers = {}
         for ref_name, seq in self._ref_seqs.items():
-            self._mut_histos[ref_name] = MutationHistogram(ref_name, seq, "DMS")
+            self._mut_histos[ref_name] = MutationHistogram(
+                ref_name, seq, "DMS", 1, len(seq)
+            )
             self._bit_vector_writers[ref_name] = BitVectorFileWriter(
-                self._p.dirs.bitvector, ref_name, seq, "DMS"
+                self._p.dirs.bitvector, ref_name, seq, "DMS", 1, len(seq)
             )
         fastq_iterator = None
         if self._p.paired:
@@ -214,10 +399,6 @@ class BitVectorGenerator(object):
                 bit_vector = self.__get_bit_vector_single(read)
         f = open(self._p.dirs.bitvector + "mutation_histos.p", "wb")
         pickle.dump(self._mut_histos, f)
-
-        for mh in self._mut_histos.values():
-            plot_read_coverage(mh, p)
-            plot_modified_bases(mh, p)
 
     def __get_bit_vector_single(self, read):
         raise NotImplemented()
