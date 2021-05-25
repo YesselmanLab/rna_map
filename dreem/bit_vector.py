@@ -26,6 +26,7 @@ class MutationHistogram(object):
         self.__bases = ["A", "C", "G", "T"]
         self.name = name
         self.sequence = sequence
+        self.structure = None
         self.data_type = data_type
         self.num_reads = 0
         self.mut_bases = np.zeros(len(sequence) + 1)
@@ -72,6 +73,7 @@ class MutationHistogram(object):
 # plotting functions ###############################################################
 def plot_read_coverage(mh: MutationHistogram, p: Parameters):
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    xaxis_coordinates = np.array(xaxis_coordinates)
     file_base_name = (
         p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
@@ -96,9 +98,6 @@ def plot_read_coverage(mh: MutationHistogram, p: Parameters):
     plotly.offline.plot(
         cov_fig, filename=file_base_name + "read_coverage.html", auto_open=False,
     )
-    plotly.io.write_image(
-        cov_fig, file_base_name + "read_coverage.pdf",
-    )
 
 
 def plot_modified_bases(mh: MutationHistogram, p: Parameters):
@@ -109,7 +108,7 @@ def plot_modified_bases(mh: MutationHistogram, p: Parameters):
     modbases_data = []
     cmap = {"A": "red", "T": "green", "G": "orange", "C": "blue"}  # Color map
     for base in ["A", "C", "G", "T"]:
-        y_list = [mh.mod_bases[base][pos] for pos in range(mh.start, mh.end + 1)]
+        y_list = [mh.mod_bases[base][pos] for pos in range(mh.start, mh.end)]
         trace = go.Bar(
             x=xaxis_coordinates, y=y_list, name=base, marker_color=cmap[base]
         )
@@ -124,10 +123,6 @@ def plot_modified_bases(mh: MutationHistogram, p: Parameters):
     modbases_fig
     plotly.offline.plot(
         modbases_fig, filename=file_base_name + "mutations.html", auto_open=False,
-    )
-    # add pdf
-    plotly.io.write_image(
-        modbases_fig, file_base_name + "mutations.pdf",
     )
 
 
@@ -148,8 +143,6 @@ def plot_mutation_histogram(mh: MutationHistogram, p: Parameters):
         filename=file_base_name + "mutation_histogram.html",
         auto_open=False,
     )
-    # add pdf
-    plotly.io.write_image(mut_hist_fig, file_base_name + "mutation_histogram.pdf")
 
 
 def plot_population_avg(mh: MutationHistogram, p: Parameters):
@@ -207,11 +200,19 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
     mut_fig["layout"]["xaxis2"].update(title="Position")
     mut_fig["layout"]["yaxis1"].update(title="Fraction", range=[0, max_y])
     mut_fig["layout"]["yaxis2"].update(title="Fraction", range=[0, max_y])
+    seqs = list(mh.sequence)
+    if mh.structure is not None:
+        db  = list(mh.structure)
+    else:
+        db = " "*len(seqs)
+    mut_fig.update_xaxes(
+            tickvals=xaxis_coordinates,
+            ticktext=["%s<br>%s" % (x, y) for (x, y) in zip(seqs, db)],
+            tickangle = 0
+    )
     plotly.offline.plot(
         mut_fig, filename=file_base_name + "pop_avg.html", auto_open=False,
     )
-    # add pdf
-    plotly.io.write_image(mut_fig, file_base_name + "pop_avg.pdf")
 
 
 # analysis functions ###############################################################
@@ -335,12 +336,13 @@ class BitVectorGenerator(object):
     def __init__(self):
         self.__cigar_pattern = re.compile(r"(\d+)([A-Z]{1})")
         self.__phred_qscores = self.__parse_phred_qscore_file(
-            settings.get_lib_path() + "/resources/phred_ascii.txt"
+            settings.get_py_path() + "/resources/phred_ascii.txt"
         )
         self.__bases = ["A", "C", "G", "T"]
 
     # TODO not big on this ... streamline somehow?
     def __setup_params(self, p: Parameters):
+        self.__csv = p.ins.csv
         self.__qscore_cutoff = p.bit_vector.qscore_cutoff
         self.__num_of_surbases = p.bit_vector.num_of_surbases
         self.__miss_info = p.bit_vector.miss_info
@@ -361,10 +363,10 @@ class BitVectorGenerator(object):
         self.__run_picard_sam_convert()
         self.__generate_all_bit_vectors()
         for mh in self._mut_histos.values():
-            # plot_read_coverage(mh, p)
-            # plot_modified_bases(mh, p)
-            # plot_mutation_histogram(mh, p)
-            # plot_population_avg(mh, p)
+            plot_read_coverage(mh, p)
+            plot_modified_bases(mh, p)
+            plot_mutation_histogram(mh, p)
+            plot_population_avg(mh, p)
             generate_quality_control_file(mh, p)
 
     def __generate_all_bit_vectors(self):
@@ -397,6 +399,12 @@ class BitVectorGenerator(object):
                 bit_vector = self.__get_bit_vector_paired(read[0], read[1])
             else:
                 bit_vector = self.__get_bit_vector_single(read)
+
+        if self.__csv is not None:
+            df = pd.read_csv(self.__csv)
+            for i, row in df.iterrows():
+                if row["name"] in self._mut_histos:
+                    self._mut_histos[row["name"]].structure = row["structure"]
         f = open(self._p.dirs.bitvector + "mutation_histos.p", "wb")
         pickle.dump(self._mut_histos, f)
 

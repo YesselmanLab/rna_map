@@ -5,6 +5,11 @@ import shutil
 from Bio import SeqIO
 
 
+def safe_rmdir(dir_name):
+    if os.path.exists(dir_name):
+        os.rmdir(dir_name)
+
+
 def safe_mkdir(dir_name):
     if not os.path.isdir(dir_name):
         os.mkdir(dir_name)
@@ -14,7 +19,7 @@ def run_command(cmd):
     output, error_msg = None, None
     try:
         output = subprocess.check_output(
-            cmd, shell=True, stderr=subprocess.STDOUT
+                cmd, shell=True, stderr=subprocess.STDOUT
         ).decode("utf8")
     except subprocess.CalledProcessError as exc:
         error_msg = exc.output.decode("utf8")
@@ -44,9 +49,9 @@ def get_fastqc_version():
     lines = output.split("\n")
     if len(lines) < 1:
         raise ValueError(
-            "cannot get fastqc version, output is not valid: {}".format(output)
+                "cannot get fastqc version, output is not valid: {}".format(output)
         )
-    l_spl = lines[1].split()
+    l_spl = lines[0].split()
     return l_spl[1]
 
 
@@ -57,7 +62,7 @@ def get_trim_galore_version():
     lines = output.split("\n")
     if len(lines) < 4:
         raise ValueError(
-            "cannot get fastqc version, output is not valid: {}".format(output)
+                "cannot get fastqc version, output is not valid: {}".format(output)
         )
     l_spl = lines[3].split()
     return l_spl[1]
@@ -80,7 +85,7 @@ def fasta_to_dict(fasta_file):
     """
 
     refs_seq = {}
-    with open(fasta_file, "rU") as handle:
+    with open(fasta_file, "r") as handle:
         for record in SeqIO.parse(handle, "fasta"):
             refs_seq[record.id] = str(record.seq)
     return refs_seq

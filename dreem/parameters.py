@@ -20,6 +20,7 @@ class ParametersFactory(object):
             self.ref_fasta = paths[0]  # fasta input file
             self.fastq1 = paths[1]  # fastq1 input file
             self.fastq2 = paths[2]  # fastq2 input file
+            self.csv = None
 
         def __get_name(self, path):
             fname = path.split("/")[-1]
@@ -40,7 +41,7 @@ class ParametersFactory(object):
 
     class _Dirs(object):
         def __init__(self):
-            self.resources = settings.get_lib_path() + "/resources/"
+            self.resources = settings.get_py_path() + "/resources/"
             self.input = "input/"
             self.output = "output/"
             self.log = "log/"
@@ -106,20 +107,22 @@ class ParametersFactory(object):
     def get_parameters(self, args):
         input_files = validate_files(args)
         inputs = ParametersFactory._Inputs(input_files)
+        if args["csv"] is not None:
+            inputs.csv = args["csv"]
         dirs = ParametersFactory._Dirs()
         files = ParametersFactory._Files(dirs, inputs)
         p = Parameters(inputs, dirs, files)
-        if args.fastq2 is not None:
+        if args['fastq2'] is not None:
             p.paired = True
-        if args.overwrite:
+        if args['overwrite']:
             log.info(
                 "-o/--overwrite supplied, will overwrite previous results with same name"
             )
             p.overwrite = True
-        if args.params is not None:
-            self.__parse_param_file(args.params, p)
-        if args.log_level is not None:
-            p.log_level = str_to_log_level(args.log_level)
+        if args['param_file'] is not None:
+            self.__parse_param_file(args['param_file'], p)
+        if args['log_level'] is not None:
+            p.log_level = str_to_log_level(args['log_level'])
         return p
 
 
@@ -180,23 +183,23 @@ def validate_fasta_file(fpath):
 
 
 def validate_files(args):
-    if not os.path.isfile(args.fasta):
-        raise ValueError("fasta file: does not exist {}!".format(args.fasta))
+    if not os.path.isfile(args["fasta"]):
+        raise ValueError(f"fasta file: does not exist {args['fasta']}!")
     else:
-        log.info("fasta file: {} exists".format(args.fasta))
-    if not os.path.isfile(args.fastq1):
-        raise ValueError("fastq1 file: does not exist {}!".format(args.fastq1))
+        log.info(f"fasta file: {args['fasta']} exists")
+    if not os.path.isfile(args['fastq1']):
+        raise ValueError("fastq1 file: does not exist {}!".format(args['fastq1']))
     else:
-        log.info("fastq file: {} exists".format(args.fastq1))
-    if args.fastq2:
-        if not os.path.isfile(args.fastq2):
-            raise ValueError("fastq2 file: does not exist {}!".format(args.fastq2))
+        log.info("fastq file: {} exists".format(args['fastq1']))
+    if args['fastq2']:
+        if not os.path.isfile(args['fastq2']):
+            raise ValueError("fastq2 file: does not exist {}!".format(args['fastq2']))
         else:
-            log.info("fastq2 file: {} exists".format(args.fastq2))
+            log.info("fastq2 file: {} exists".format(args['fastq2']))
             log.info("two fastq files supplied, thus assuming paired reads")
-        return [args.fasta, args.fastq1, args.fastq2]
+        return [args['fasta'], args['fastq1'], args['fastq2']]
     else:
-        return [args.fasta, args.fastq1]
+        return [args['fasta'], args['fastq1']]
 
 
 def setup_parameters(args):
