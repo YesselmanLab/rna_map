@@ -74,7 +74,7 @@ def build_directories(p: Parameters):
 @click.option(
         "-ll", "--log-level", help="set log level", default="INFO"
 )
-def run(**args):
+def main(**args):
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
     log.setLevel(str_to_log_level(args["log_level"]))
@@ -92,4 +92,4 @@ def run(**args):
 
 
 if __name__ == "__main__":
-    run_dream()
+    main()
