@@ -1,5 +1,6 @@
 import os
 import logging
+import yaml
 from future import types
 from dreem import settings
 from dreem.logger import *
@@ -93,16 +94,11 @@ class ParametersFactory(object):
             log.error("parameter file {} supplied does not exist!".format(pf_path))
             exit()
         f = open(pf_path)
-        lines = f.readlines()
-        f.close()
-        if len(lines) == 0:
-            log.warn("parameter file {} supplied but is empty!".format(pf_path))
-        for l in lines:
-            spl = [x.rstrip().lstrip() for x in l.split("=")]
-            if len(spl) == 1:
-                p.update(spl[0], True)
-            else:
-                p.update(spl[0], spl[1])
+        params = yaml.load(f, Loader=yaml.FullLoader)
+        for group, vals in params.items():
+            for param in vals:
+                k, v = next(iter(param.items()))
+                p.update(group + "." + k, v)
 
     def get_parameters(self, args):
         input_files = validate_files(args)
@@ -152,7 +148,7 @@ class Parameters(object):
             self.__update_parameter(spl[0], spl[1], val)
 
     def __update_parameter(self, sub, param, val):
-        valid = "map,files,dirs".split(",")
+        valid = "map,files,dirs,bit_vector".split(",")
         if sub not in valid:
             log_error_and_exit(log, "unknown parameter group: {}".format(sub))
         sub_obj = self.__dict__[sub]
@@ -168,6 +164,8 @@ class Parameters(object):
                 )
             )
 
+    def to_yaml_file(self, fname):
+        print(self._Dirs.__dict__)
 
 parameters: Parameters = None
 

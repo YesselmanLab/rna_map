@@ -75,6 +75,8 @@ def build_directories(p: Parameters):
         "-ll", "--log-level", help="set log level", default="INFO"
 )
 def main(**args):
+    print(args)
+    exit()
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
     log.setLevel(str_to_log_level(args["log_level"]))
