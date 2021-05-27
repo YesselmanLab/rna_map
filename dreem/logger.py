@@ -3,7 +3,7 @@ import logging
 import colorlog
 
 
-def init_logger(dunder_name, testing_mode=False, log_outfile=None) -> logging.Logger:
+def init_logger(dunder_name, log_outfile=None, testing_mode=False) -> logging.Logger:
     log_format = (
         "[%(asctime)s " "%(name)s " "%(funcName)s] " "%(levelname)s " "%(message)s"
     )

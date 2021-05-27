@@ -1,5 +1,6 @@
 colorlog
 click
+click-option-group
 biopython
 plotly
 matplotlib

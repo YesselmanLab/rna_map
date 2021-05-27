@@ -1,4 +1,6 @@
 import pytest
+import yaml
+import os
 
 from dreem import parameters, settings
 
@@ -38,4 +40,15 @@ def test_parse_new_param_file():
 
 def test_write_to_yaml():
     p = get_default_args()
-    p.write_to_yaml("test.yml")
+    params = parameters.ParametersFactory().get_parameters(p)
+    params.to_yaml_file("test.yml")
+    loaded_p = yaml.load(open("test.yml"), Loader=yaml.FullLoader)
+    k, v = next(iter(loaded_p['bit_vector'][0].items()))
+    assert k == "skip"
+    os.remove("test.yml")
+
+
+def test_get_sub_params():
+    pf = parameters.ParametersFactory()
+    map = pf._Map()
+    assert map.skip == False

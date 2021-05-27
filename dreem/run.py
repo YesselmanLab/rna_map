@@ -5,8 +5,9 @@ import os
 import subprocess
 import shutil
 import click
+from click_option_group import optgroup
 
-from dreem import settings, logger, mapping, bit_vector
+from dreem import settings, logger, mapping, bit_vector, args
 from dreem.parameters import *
 from dreem.util import *
 
@@ -23,7 +24,7 @@ def write_log_file(fname, output):
 
 
 # universal logger
-log = logger.init_logger("DREEM")
+log = logger.init_logger("DREEM", log_outfile="dreem.log")
 
 
 def build_directories(p: Parameters):
@@ -34,52 +35,18 @@ def build_directories(p: Parameters):
     safe_mkdir(p.dirs.mapping)
     safe_mkdir(p.dirs.bitvector)
 
-
 @click.command()
-# required options
-@click.option(
-        "-fa",
-        "--fasta",
-        type=click.Path(exists=True),
-        required=True,
-        help="reference sequences in fasta format",
-)
-@click.option(
-        "-fq1",
-        "--fastq1",
-        type=click.Path(exists=True),
-        required=True,
-        help="fastq sequencing file of mate 1",
-)
-@click.option(
-        "-fq2",
-        "--fastq2",
-        type=click.Path(exists=True),
-        required=False,
-        help="fastq sequencing file of mate 1",
-)
-@click.option(
-        "-ow",
-        "--overwrite",
-        is_flag=True,
-        help="overwrites previous results, if not set will keep previous calculation "
-             + "checkpoints",
-)
-@click.option(
-        "--csv",
-        required=False)
-@click.option(
-        "-pf", "--param-file", type=click.Path(exists=True), help="parameter files cans upply ",
-)
-@click.option(
-        "-ll", "--log-level", help="set log level", default="INFO"
-)
+@optgroup.group("main arguments and options")
 def main(**args):
-    print(args)
-    exit()
+    """
+    DREEM processes DMS next generation sequencing data to produce mutational
+    profiles that relate to DMS modification rates written by Silvi Rouskin and the
+    Rouskin lab (https://www.rouskinlab.com/)
+    """
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
     log.setLevel(str_to_log_level(args["log_level"]))
+    exit()
     # setup parameters
     setup_parameters(args)
     p = get_parameters()
@@ -90,7 +57,6 @@ def main(**args):
     # convert aligned reads to bit vectors
     bt = bit_vector.BitVectorGenerator()
     bt.run(p)
-
 
 
 if __name__ == "__main__":

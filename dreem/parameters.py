@@ -5,7 +5,7 @@ from future import types
 from dreem import settings
 from dreem.logger import *
 
-log = init_logger("parameters.py")
+log = init_logger("parameters.py", "dreem.log")
 
 # abbreviations
 # tg -> trim galore
@@ -71,6 +71,13 @@ class ParametersFactory(object):
             self.bt2_alignment_args = (
                 "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
             )
+            self.description = {
+                'skip' : 'do not perform sequence mapping, not recommended',
+                'skip_fastqc' : 'do not run fastqc for quality control of sequence data',
+                'skip_trim_galore' : 'do not run trim galore to remove adapter sequences at ends',
+                'tg_q_cutoff' : 'the quality score cutoff for reads that are removed by trim_galore',
+                'bt2_alignment_args' : ''
+            }
 
     class _BitVector(object):
         def __init__(self):
@@ -112,7 +119,7 @@ class ParametersFactory(object):
             p.paired = True
         if args['overwrite']:
             log.info(
-                "-o/--overwrite supplied, will overwrite previous results with same name"
+                    "-o/--overwrite supplied, will overwrite previous results with same name"
             )
             p.overwrite = True
         if args['param_file'] is not None:
@@ -124,10 +131,10 @@ class ParametersFactory(object):
 
 class Parameters(object):
     def __init__(
-        self,
-        inputs: ParametersFactory._Inputs,
-        dirs: ParametersFactory._Dirs,
-        files: ParametersFactory._Files,
+            self,
+            inputs: ParametersFactory._Inputs,
+            dirs: ParametersFactory._Dirs,
+            files: ParametersFactory._Files,
     ):
         # general global options
         self.overwrite = False
@@ -154,18 +161,34 @@ class Parameters(object):
         sub_obj = self.__dict__[sub]
         if param not in sub_obj.__dict__:
             log_error_and_exit(
-                log, "unknown parameter {} in group {}".format(sub, param)
+                    log, "unknown parameter {} in group {}".format(sub, param)
             )
         else:
             sub_obj.__dict__.update({param: val})
             log.info(
-                "setting parameter {}.{} to {} specified by parameter file".format(
-                    sub, param, val
-                )
+                    "setting parameter {}.{} to {} specified by parameter file".format(
+                            sub, param, val
+                    )
             )
 
     def to_yaml_file(self, fname):
-        print(self._Dirs.__dict__)
+        output = {}
+        output["dirs"] = self.__get_args(self.dirs, "resources".split(","))
+        output["map"] = self.__get_args(self.map, "".split(","))
+        output["bit_vector"] = self.__get_args(self.bit_vector,
+                                               "miss_info,ambig_info,nomut_bit,del_bit".split(","))
+        f = open(fname, "w")
+        yaml.dump(output, f)
+        f.close()
+
+    def __get_args(self, group, skip):
+        args = []
+        for k, v in group.__dict__.items():
+            if k in skip:
+                continue
+            args.append({k: v})
+        return args
+
 
 parameters: Parameters = None
 
