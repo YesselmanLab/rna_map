@@ -64,6 +64,7 @@ class ParametersFactory(object):
 
     class _Map(object):
         def __init__(self):
+            self.overwrite = False
             self.skip = False
             self.skip_fastqc = False
             self.skip_trim_galore = False
@@ -72,6 +73,7 @@ class ParametersFactory(object):
                 "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
             )
             self.description = {
+                'overwrite' : 'overwrite mapping calculation',
                 'skip' : 'do not perform sequence mapping, not recommended',
                 'skip_fastqc' : 'do not run fastqc for quality control of sequence data',
                 'skip_trim_galore' : 'do not run trim galore to remove adapter sequences at ends',
@@ -81,6 +83,7 @@ class ParametersFactory(object):
 
     class _BitVector(object):
         def __init__(self):
+            self.overwrite = False
             self.skip = False
             self.qscore_cutoff = 25
             self.num_of_surbases = 10
@@ -91,6 +94,16 @@ class ParametersFactory(object):
             self.ambig_info = "?"
             self.nomut_bit = "0"
             self.del_bit = "1"
+
+            self.description = {
+                'overwrite' : "overwrite bit vector calculation",
+                'skip' : "skip bit vector generation step, not recommended",
+                'qscore_cutoff' : "quality score of read nucleotide, sets to ambigious if under this val",
+                'num_of_surbases' : "number of bases around a mutation",
+                'map_score_cutoff' : "map alignment score cutoff for a read, read is discarded if under this value",
+                "mutation_count_cutoff" : "maximum number of mutations in a read allowable",
+                "percent_length_cutoff" : "read is discarded if less than this percent of a ref sequence is included",
+            }
 
     class _EMCluster(object):
         def __init__(self):
@@ -110,8 +123,8 @@ class ParametersFactory(object):
     def get_parameters(self, args):
         input_files = validate_files(args)
         inputs = ParametersFactory._Inputs(input_files)
-        if args["csv"] is not None:
-            inputs.csv = args["csv"]
+        #if args["csv"] is not None:
+        #    inputs.csv = args["csv"]
         dirs = ParametersFactory._Dirs()
         files = ParametersFactory._Files(dirs, inputs)
         p = Parameters(inputs, dirs, files)
@@ -122,6 +135,8 @@ class ParametersFactory(object):
                     "-o/--overwrite supplied, will overwrite previous results with same name"
             )
             p.overwrite = True
+            p.map.overwrite = True
+            p.bit_vector.overwrite = True
         if args['param_file'] is not None:
             self.__parse_param_file(args['param_file'], p)
         if args['log_level'] is not None:

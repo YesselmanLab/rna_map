@@ -12,11 +12,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from dreem import settings, fastq
+from dreem import settings, sam
 from dreem.parameters import Parameters
 from dreem.logger import *
 from dreem.util import *
-from dreem.fastq import *
+from dreem.sam import *
 
 log = init_logger("bit_vector.py")
 
@@ -29,6 +29,7 @@ class MutationHistogram(object):
         self.structure = None
         self.data_type = data_type
         self.num_reads = 0
+        self.num_of_mutations = [0]*len(sequence)
         self.mut_bases = np.zeros(len(sequence) + 1)
         self.info_bases = np.zeros(len(sequence) + 1)
         self.del_bases = np.zeros(len(sequence) + 1)
@@ -56,6 +57,7 @@ class MutationHistogram(object):
 
     def record_bit_vector(self, bit_vector, p):
         self.num_reads += 1
+        total_muts = 0
         for pos in range(self.start, self.end + 1):
             if pos not in bit_vector:
                 continue
@@ -64,10 +66,12 @@ class MutationHistogram(object):
                 self.cov_bases[pos] += 1
                 self.info_bases[pos] += 1
             if read_bit in self.__bases:
+                total_muts += 1
                 self.mod_bases[read_bit][pos] += 1
                 self.mut_bases[pos] += 1
             elif read_bit == p.bit_vector.del_bit:
                 self.del_bases[pos] += 1
+        self.num_of_mutations[total_muts] += 1
 
 
 # plotting functions ###############################################################
@@ -75,7 +79,7 @@ def plot_read_coverage(mh: MutationHistogram, p: Parameters):
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
     xaxis_coordinates = np.array(xaxis_coordinates)
     file_base_name = (
-        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+            p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
     read_cov = []
     for pos in range(mh.start, mh.end + 1):
@@ -87,68 +91,75 @@ def plot_read_coverage(mh: MutationHistogram, p: Parameters):
     cov_trace = go.Bar(x=xaxis_coordinates, y=read_cov)
     cov_data = [cov_trace]
     cov_layout = go.Layout(
-        title="Read coverage: "
-        + mh.name
-        + ", Number of bit vectors: "
-        + str(mh.num_reads),
-        xaxis=dict(title="Position"),
-        yaxis=dict(title="Coverage fraction"),
+            title="Read coverage: "
+                  + mh.name
+                  + ", Number of bit vectors: "
+                  + str(mh.num_reads),
+            xaxis=dict(title="Position"),
+            yaxis=dict(title="Coverage fraction"),
     )
     cov_fig = go.Figure(data=cov_data, layout=cov_layout)
     plotly.offline.plot(
-        cov_fig, filename=file_base_name + "read_coverage.html", auto_open=False,
+            cov_fig, filename=file_base_name + "read_coverage.html", auto_open=False,
     )
 
 
 def plot_modified_bases(mh: MutationHistogram, p: Parameters):
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
     file_base_name = (
-        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+            p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
     modbases_data = []
     cmap = {"A": "red", "T": "green", "G": "orange", "C": "blue"}  # Color map
     for base in ["A", "C", "G", "T"]:
         y_list = [mh.mod_bases[base][pos] for pos in range(mh.start, mh.end)]
         trace = go.Bar(
-            x=xaxis_coordinates, y=y_list, name=base, marker_color=cmap[base]
+                x=xaxis_coordinates, y=y_list, name=base, marker_color=cmap[base]
         )
         modbases_data.append(trace)
     modbases_layout = go.Layout(
-        title="DMS modifications: " + mh.name,
-        xaxis=dict(title="Position"),
-        yaxis=dict(title="Abundance"),
-        barmode="stack",
+            title="DMS modifications: " + mh.name,
+            xaxis=dict(title="Position"),
+            yaxis=dict(title="Abundance"),
+            barmode="stack",
     )
     modbases_fig = go.Figure(data=modbases_data, layout=modbases_layout)
     modbases_fig
     plotly.offline.plot(
-        modbases_fig, filename=file_base_name + "mutations.html", auto_open=False,
+            modbases_fig, filename=file_base_name + "mutations.html", auto_open=False,
     )
 
 
 def plot_mutation_histogram(mh: MutationHistogram, p: Parameters):
-    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    min_x = 0
+    max_x = 0
+    for i in range(len(mh.sequence)-1, 0, -1):
+        if mh.num_of_mutations[i] != 0:
+            max_x = i
+            break
+
+    xaxis_coordinates = [i for i in range(min_x, max_x+1)]
     file_base_name = (
-        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+            p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
-    mut_hist_data = [go.Histogram(x=mh.mut_bases)]
+    mut_hist_data = go.Bar(x=xaxis_coordinates, y=mh.num_of_mutations[min_x:max_x])
     mut_hist_layout = go.Layout(
-        title="Mutations: " + mh.name,
-        xaxis=dict(title="Number of mutations per read"),
-        yaxis=dict(title="Abundance"),
+            title="Mutations: " + mh.name,
+            xaxis=dict(title="Number of mutations per read"),
+            yaxis=dict(title="Abundance"),
     )
     mut_hist_fig = go.Figure(data=mut_hist_data, layout=mut_hist_layout)
     plotly.offline.plot(
-        mut_hist_fig,
-        filename=file_base_name + "mutation_histogram.html",
-        auto_open=False,
+            mut_hist_fig,
+            filename=file_base_name + "mutation_histogram.html",
+            auto_open=False,
     )
 
 
 def plot_population_avg(mh: MutationHistogram, p: Parameters):
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
     file_base_name = (
-        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+            p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
     popavg_filename = file_base_name + "popavg_reacts.txt"
     popavg_file = open(popavg_filename, "w")
@@ -177,18 +188,18 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
         colors.append(cmap[mh.sequence[i - 1]])
         ref_bases.append(mh.sequence[i - 1])
     delmut_trace = go.Bar(
-        x=xaxis_coordinates,
-        y=delmut_y,
-        text=ref_bases,
-        marker=dict(color=colors),
-        showlegend=False,
+            x=xaxis_coordinates,
+            y=delmut_y,
+            text=ref_bases,
+            marker=dict(color=colors),
+            showlegend=False,
     )
     mut_trace = go.Bar(
-        x=xaxis_coordinates,
-        y=mut_y,
-        text=ref_bases,
-        marker=dict(color=colors),
-        showlegend=False,
+            x=xaxis_coordinates,
+            y=mut_y,
+            text=ref_bases,
+            marker=dict(color=colors),
+            showlegend=False,
     )
     title1 = "Mismatches + Deletions: " + mh.name
     title2 = "Mismatches: " + mh.name
@@ -198,20 +209,20 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
     max_y = max(mut_y + delmut_y)
     mut_fig["layout"]["xaxis1"].update(title="Position")
     mut_fig["layout"]["xaxis2"].update(title="Position")
-    mut_fig["layout"]["yaxis1"].update(title="Fraction", range=[0, max_y])
-    mut_fig["layout"]["yaxis2"].update(title="Fraction", range=[0, max_y])
+    mut_fig["layout"]["yaxis1"].update(title="Fraction", range=[0, 0.1])
+    mut_fig["layout"]["yaxis2"].update(title="Fraction", range=[0, 0.1])
     seqs = list(mh.sequence)
     if mh.structure is not None:
-        db  = list(mh.structure)
+        db = list(mh.structure)
     else:
-        db = " "*len(seqs)
+        db = " " * len(seqs)
     mut_fig.update_xaxes(
             tickvals=xaxis_coordinates,
             ticktext=["%s<br>%s" % (x, y) for (x, y) in zip(seqs, db)],
-            tickangle = 0
+            tickangle=0
     )
     plotly.offline.plot(
-        mut_fig, filename=file_base_name + "pop_avg.html", auto_open=False,
+            mut_fig, filename=file_base_name + "pop_avg.html", auto_open=False,
     )
 
 
@@ -220,7 +231,7 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
 
 def generate_quality_control_file(mh: MutationHistogram, p: Parameters):
     file_base_name = (
-        p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+            p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
     qc_filename = file_base_name + "Quality_Control.txt"
     qc_file = open(qc_filename, "w")
@@ -294,8 +305,8 @@ def generate_quality_control_file(mh: MutationHistogram, p: Parameters):
     qc_file.write("Signal-noise ratio > 0.9: GOOD\n\n")
 
     qc_file.write(
-        "If you are only interested in the population average"
-        + " and not clustering, 1000-10000 reads might be sufficient.\n\n"
+            "If you are only interested in the population average"
+            + " and not clustering, 1000-10000 reads might be sufficient.\n\n"
     )
 
     qc_file.close()
@@ -309,7 +320,7 @@ class BitVectorFileWriter(object):
         self.f = open(path + name + "_bitvectors.txt", "w")
         self.f.write("@ref\t{}\t{}\t{}\n".format(name, sequence, data_type))
         self.f.write(
-            "@coordinates:\t{},{}:{}\n".format(0, len(sequence), len(sequence))
+                "@coordinates:\t{},{}:{}\n".format(0, len(sequence), len(sequence))
         )
         self.f.write("Query_name\tBit_vector\tN_Mutations\n")
 
@@ -336,7 +347,7 @@ class BitVectorGenerator(object):
     def __init__(self):
         self.__cigar_pattern = re.compile(r"(\d+)([A-Z]{1})")
         self.__phred_qscores = self.__parse_phred_qscore_file(
-            settings.get_py_path() + "/resources/phred_ascii.txt"
+                settings.get_py_path() + "/resources/phred_ascii.txt"
         )
         self.__bases = ["A", "C", "G", "T"]
 
@@ -374,8 +385,8 @@ class BitVectorGenerator(object):
         bit_vector_pickle_file = self._p.dirs.bitvector + "mutation_histos.p"
         if os.path.isfile(bit_vector_pickle_file) and not self._p.overwrite:
             log.info(
-                "SKIPPING bit vector generation, it has run already! specify -overwrite "
-                + "to rerun"
+                    "SKIPPING bit vector generation, it has run already! specify -overwrite "
+                    + "to rerun"
             )
             with open(bit_vector_pickle_file, "rb") as handle:
                 self._mut_histos = pickle.load(handle)
@@ -384,17 +395,19 @@ class BitVectorGenerator(object):
         self._bit_vector_writers = {}
         for ref_name, seq in self._ref_seqs.items():
             self._mut_histos[ref_name] = MutationHistogram(
-                ref_name, seq, "DMS", 1, len(seq)
+                    ref_name, seq, "DMS", 1, len(seq)
             )
             self._bit_vector_writers[ref_name] = BitVectorFileWriter(
-                self._p.dirs.bitvector, ref_name, seq, "DMS", 1, len(seq)
+                    self._p.dirs.bitvector, ref_name, seq, "DMS", 1, len(seq)
             )
-        fastq_iterator = None
+        sam_iterator = None
         if self._p.paired:
-            fastq_iterator = fastq.PairedFastqIterator(
-                self._p.files.picard_sam_output, self._ref_seqs
+            sam_iterator = sam.PairedSamIterator(
+                    self._p.files.picard_sam_output, self._ref_seqs
             )
-        for read in fastq_iterator:
+        else:
+            raise NotImplemented("single iterator not implemented")
+        for read in sam_iterator:
             if self._p.paired:
                 bit_vector = self.__get_bit_vector_paired(read[0], read[1])
             else:
@@ -414,16 +427,16 @@ class BitVectorGenerator(object):
     def __get_bit_vector_paired(self, read_1, read_2):
         if read_1.RNAME not in self._ref_seqs:
             log_error_and_exit(
-                "read {} aligned to {} which is not in the reference fasta".format(
-                    read_1.QNAME, read_1.RNAME
-                )
+                    "read {} aligned to {} which is not in the reference fasta".format(
+                            read_1.QNAME, read_1.RNAME
+                    )
             )
         ref_seq = self._ref_seqs[read_1.RNAME]
         bit_vector_1 = self.__convert_read_to_bit_vector(read_1, ref_seq)
         bit_vector_2 = self.__convert_read_to_bit_vector(read_2, ref_seq)
         bit_vector = self.__merge_paired_bit_vectors(bit_vector_1, bit_vector_2)
         self._bit_vector_writers[read_1.RNAME].write_bit_vector(
-            read_1.QNAME, bit_vector
+                read_1.QNAME, bit_vector
         )
         self._mut_histos[read_1.RNAME].record_bit_vector(bit_vector, self._p)
         return bit_vector
@@ -431,18 +444,18 @@ class BitVectorGenerator(object):
     def __run_picard_sam_convert(self):
         if os.path.isfile(self._p.files.picard_sam_output) and not self._p.overwrite:
             log.info(
-                "SKIPPING picard SAM convert, it has been run already! specify "
-                + "-overwrite to rerun"
+                    "SKIPPING picard SAM convert, it has been run already! specify "
+                    + "-overwrite to rerun"
             )
             return
 
         picard_path = self._p.dirs.resources + "/picard.jar"
         picard_cmd = (
-            "java -jar "
-            + picard_path
-            + " SamFormatConverter I={} O={}".format(
+                "java -jar "
+                + picard_path
+                + " SamFormatConverter I={} O={}".format(
                 self._p.files.picard_bam_output, self._p.files.picard_sam_output
-            )
+        )
         )
         self.__run_command("picard SAM convert", picard_cmd)
 
@@ -543,11 +556,15 @@ class BitVectorGenerator(object):
                 # both bits are mutations and different set to "?"
                 elif bit_vector_1[pos] in self.__bases and bit in self.__bases:
                     bit_vector[pos] = self.__ambig_info
+                # mutation on one side and insertion on the other side set to "?"
+                elif bit_vector_1[pos] == self.__del_bit and bit in self.__bases or \
+                     bit_vector_1[pos] in self.__bases and bit == self.__del_bit:
+                     bit_vector[pos] = self.__ambig_info
                 else:
-                    raise ValueError(
-                        "unable to merge bit_vectors with bits: {} {}".format(
-                            bit_vector_1[pos], bit
-                        )
+                    log.warn(
+                            "unable to merge bit_vectors with bits: {} {}".format(
+                                    bit_vector_1[pos], bit
+                            )
                     )
         return bit_vector
 
@@ -556,15 +573,15 @@ class BitVectorGenerator(object):
         orig_sur_start = orig_del_start - self.__num_of_surbases
         orig_sur_end = i + self.__num_of_surbases
         orig_sur_seq = (
-            ref_seq[orig_sur_start - 1 : orig_del_start - 1] + ref_seq[i:orig_sur_end]
+                ref_seq[orig_sur_start - 1: orig_del_start - 1] + ref_seq[i:orig_sur_end]
         )
         for new_del_end in range(i - length, i + length + 1):  # Alt del end points
             if new_del_end == i:  # Orig end point
                 continue
             new_del_start = new_del_end - length + 1
             sur_seq = (
-                ref_seq[orig_sur_start - 1 : new_del_start - 1]
-                + ref_seq[new_del_end:orig_sur_end]
+                    ref_seq[orig_sur_start - 1: new_del_start - 1]
+                    + ref_seq[new_del_end:orig_sur_end]
             )
             if sur_seq == orig_sur_seq:
                 return True

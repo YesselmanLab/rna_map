@@ -1,7 +1,7 @@
 from dreem import settings
 from dreem.logger import *
 
-log = init_logger("fastq.py")
+log = init_logger("sam.py")
 
 
 class AlignedRead:
@@ -24,7 +24,7 @@ class AlignedRead:
 
 
 # TODO add stats to print at the end
-class FastqIterator(object):
+class SamIterator(object):
     def __init__(self, samfile_path):
         self._f = open(samfile_path)
         self._good = True
@@ -36,7 +36,7 @@ class FastqIterator(object):
         return self._good
 
 
-class PairedFastqIterator(object):
+class PairedSamIterator(object):
     def __init__(self, samfile_path, ref_seqs):
         self._f = open(samfile_path)
         ignore_lines = len(ref_seqs.keys()) + 2

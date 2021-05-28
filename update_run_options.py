@@ -19,31 +19,36 @@ static = """
 @optgroup.option("-ow", "--overwrite", is_flag=True,
                 help="overwrites previous results, if not set will keep previous " 
                      "calculation checkpoints")
-@optgroup.option("-ll", "--log-level", help="set log level", default="INFO")
+@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)", default="INFO")
 """
 
-def get_map_parameters():
-    pf = parameters.ParametersFactory()
-    map_obj = pf._Map()
-    map_args = map_obj.__dict__
-    s = "@optgroup.group(\"map options\")\n"
-    for k, v in map_args.items():
+def get_parameters(obj, name, skip):
+    args = obj.__dict__
+    s = f"@optgroup.group(\"{name} options\")\n"
+    for k, v in args.items():
+        if k in skip:
+            continue
         if type(v) == bool:
-            s += f"@optgroup.option(\"--{k}\", is_flag=True, help=\"{map_obj.description[k]}\")\n"
+            s += f"@optgroup.option(\"--{k}\", is_flag=True,\nhelp=\"{obj.description[k]}\")\n"
+        else:
+            s += f"@optgroup.option(\"--{k}\", default=None,\nhelp=\"{obj.description[k]}\")\n"
     return s
 
 def main():
+    pf = parameters.ParametersFactory()
     run_py_file_path = settings.get_py_path() + "/run.py"
     f = open(run_py_file_path)
     lines = f.readlines()
     f.close()
     s = "".join(lines)
     spl = re.split('@click.command\(\)[\S\s]+def main\(\*\*args\)\:',s)
-    f = open("test.py", "w")
+    f = open(run_py_file_path, "w")
     f.write(spl[0])
     f.write("@click.command()\n")
     f.write(static)
-    f.write(get_map_parameters())
+    f.write(get_parameters(pf._Map(), "map", "description".split(",")))
+    f.write(get_parameters(pf._BitVector(), "bit vector",
+                           "description,miss_info,ambig_info,nomut_bit,del_bit".split(",")))
     f.write("def main(**args):")
     f.write(spl[1])
     f.close()
