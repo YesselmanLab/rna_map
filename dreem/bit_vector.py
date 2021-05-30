@@ -181,6 +181,7 @@ def plot_mutation_histogram(mh: MutationHistogram, p: Parameters):
 
 
 def plot_population_avg(mh: MutationHistogram, p: Parameters):
+
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
     file_base_name = (
             p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
