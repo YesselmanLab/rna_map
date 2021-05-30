@@ -5,7 +5,7 @@ from dreem.parameters import *
 from dreem.logger import *
 from dreem.util import *
 
-log = init_logger("mapper.py")
+log = init_logger("mapper.py", "dreem.log")
 
 
 class Mapper(object):
@@ -52,7 +52,6 @@ class Mapper(object):
                 )
         )
 
-    # TODO write log to file
     def __run_command(self, method_name, cmd):
         log.info("running {}".format(method_name))
         log.debug(cmd)
@@ -61,6 +60,9 @@ class Mapper(object):
             self.__log_error_msg_and_exit(log, method_name, error_msg)
         else:
             log.info("{} ran without errors".format(method_name))
+        f = open(f"{self._p.dirs.log}/{method_name}.log", "w")
+        f.write(output)
+        f.close()
         return output, error_msg
 
     def __log_error_msg_and_exit(self, log, pname, error_msg):
@@ -103,7 +105,7 @@ class Mapper(object):
             self.__skip_method_by_user("fastqc", "skip_fastqc")
             return
         fastqc_dir = self._p.dirs.mapping + self._p.ins.fastq1_name + "_fastqc"
-        if os.path.isdir(fastqc_dir) and not self._p.overwrite:
+        if os.path.isdir(fastqc_dir) and not self._p.map.overwrite:
             self.__skip_without_overwrite("fastqc")
             return
         if self._p.paired:
@@ -128,7 +130,7 @@ class Mapper(object):
                 shutil.copy(self._p.ins.fastq2, self._p.files.tg_fastq2)
             return
         # don't rerun unless asked with -overwrite
-        if os.path.isfile(self._p.files.tg_fastq1) and not self._p.overwrite:
+        if os.path.isfile(self._p.files.tg_fastq1) and not self._p.map.overwrite:
             self.__skip_without_overwrite("trim_galore")
             return
         if self._p.paired:

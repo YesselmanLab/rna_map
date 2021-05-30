@@ -3,7 +3,7 @@ import logging
 import colorlog
 
 
-def init_logger(dunder_name, log_outfile=None, testing_mode=False) -> logging.Logger:
+def init_logger(dunder_name, log_outfile=None, testing_mode=False, start=False) -> logging.Logger:
     log_format = (
         "[%(asctime)s " "%(name)s " "%(funcName)s] " "%(levelname)s " "%(message)s"
     )
@@ -29,8 +29,9 @@ def init_logger(dunder_name, log_outfile=None, testing_mode=False) -> logging.Lo
     logger.addHandler(handler)
 
     if log_outfile is not None:
-        if os.path.isfile(log_outfile):
-            os.remove(log_outfile)
+        if start:
+            if os.path.isfile(log_outfile):
+                os.remove(log_outfile)
         fileHandler = logging.FileHandler(log_outfile)
         fileHandler.setFormatter(logging.Formatter(log_format))
         logger.addHandler(fileHandler)
@@ -62,3 +63,5 @@ def str_to_log_level(s: str):
         return logging.CRITICAL
     else:
         raise ValueError("unknown log level: {}".format(s))
+
+log = init_logger("bit_vector.py", "dreem.log", start=True)

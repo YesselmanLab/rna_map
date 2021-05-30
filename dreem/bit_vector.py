@@ -11,14 +11,13 @@ from plotly.subplots import make_subplots
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas as pd
+from tabulate import tabulate
 
 from dreem import settings, sam
 from dreem.parameters import Parameters
 from dreem.logger import *
 from dreem.util import *
 from dreem.sam import *
-
-log = init_logger("bit_vector.py")
 
 
 class MutationHistogram(object):
@@ -29,7 +28,12 @@ class MutationHistogram(object):
         self.structure = None
         self.data_type = data_type
         self.num_reads = 0
-        self.num_of_mutations = [0]*len(sequence)
+        self.num_aligned = 0
+        self.skips = {
+            'low_mapq'  : 0,
+            'short_read': 0
+        }
+        self.num_of_mutations = [0] * len(sequence)
         self.mut_bases = np.zeros(len(sequence) + 1)
         self.info_bases = np.zeros(len(sequence) + 1)
         self.del_bases = np.zeros(len(sequence) + 1)
@@ -57,6 +61,7 @@ class MutationHistogram(object):
 
     def record_bit_vector(self, bit_vector, p):
         self.num_reads += 1
+        self.num_aligned += 1
         total_muts = 0
         for pos in range(self.start, self.end + 1):
             if pos not in bit_vector:
@@ -73,6 +78,25 @@ class MutationHistogram(object):
                 self.del_bases[pos] += 1
         self.num_of_mutations[total_muts] += 1
 
+    def record_skip(self, t):
+        self.num_reads += 1
+        self.skips[t] += 1
+
+    def get_percent_mutations(self):
+        data = np.array(self.num_of_mutations[0:4] + [sum(self.num_of_mutations[5:])])
+        data = [round(x, 2) for x in list((data / self.num_aligned) * 100)]
+        return data
+
+    def get_signal_to_noise(self):
+        A_frac = self.sequence.count("A") / len(self.sequence)
+        G_frac = self.sequence.count("G") / len(self.sequence)
+        T_frac = self.sequence.count("T") / len(self.sequence)
+        C_frac = self.sequence.count("C") / len(self.sequence)
+        sig = (A_frac * np.sum(self.mod_bases["A"])) + (C_frac * np.sum(self.mod_bases["C"]))
+        noise = (T_frac * np.sum(self.mod_bases["T"])) + (G_frac * np.sum(self.mod_bases["G"]))
+        denom = sig + noise
+        sig_noise = round(sig / denom, 2)
+        return sig_noise
 
 # plotting functions ###############################################################
 def plot_read_coverage(mh: MutationHistogram, p: Parameters):
@@ -133,12 +157,12 @@ def plot_modified_bases(mh: MutationHistogram, p: Parameters):
 def plot_mutation_histogram(mh: MutationHistogram, p: Parameters):
     min_x = 0
     max_x = 0
-    for i in range(len(mh.sequence)-1, 0, -1):
+    for i in range(len(mh.sequence) - 1, 0, -1):
         if mh.num_of_mutations[i] != 0:
             max_x = i
             break
 
-    xaxis_coordinates = [i for i in range(min_x, max_x+1)]
+    xaxis_coordinates = [i for i in range(min_x, max_x + 1)]
     file_base_name = (
             p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
@@ -247,14 +271,7 @@ def generate_quality_control_file(mh: MutationHistogram, p: Parameters):
         qc_file.write("GOOD.\n")
 
     # Signal-noise ratio
-    A_frac = mh.sequence.count("A") / len(mh.sequence)
-    G_frac = mh.sequence.count("G") / len(mh.sequence)
-    T_frac = mh.sequence.count("T") / len(mh.sequence)
-    C_frac = mh.sequence.count("C") / len(mh.sequence)
-    sig = (A_frac * np.sum(mh.mod_bases["A"])) + (C_frac * np.sum(mh.mod_bases["C"]))
-    noise = (T_frac * np.sum(mh.mod_bases["T"])) + (G_frac * np.sum(mh.mod_bases["G"]))
-    denom = sig + noise
-    sig_noise = round(sig / denom, 2)
+    sig_noise = mh.get_signal_to_noise()
     qc_file.write("The signal-to-noise ratio for the sample is: " + str(sig_noise))
     qc_file.write(". This is: ")
     if sig_noise < 0.75:
@@ -379,11 +396,24 @@ class BitVectorGenerator(object):
             plot_mutation_histogram(mh, p)
             plot_population_avg(mh, p)
             generate_quality_control_file(mh, p)
+        f = open(p.dirs.bitvector + "summary.csv", "w")
+        f.write("name,reads,aligned\n")
+        log.info("MUTATION SUMMARY")
+        headers = "name,reads,aligned,no_mut,1_mut,2_mut,3_mut,3plus_mut".split(",")
+        table = []
+        for mh in self._mut_histos.values():
+            data = [mh.name, mh.num_reads, mh.num_aligned]
+            s = f"{mh.name},{mh.num_reads},{mh.num_aligned},"
+            s += ",".join([str(x) for x in mh.percent_mutations()])
+            data += mh.percent_mutations()
+            table.append(data)
+        print(tabulate(table, headers, tablefmt="github"))
+        f.close()
 
     def __generate_all_bit_vectors(self):
         self._mut_histos = {}
         bit_vector_pickle_file = self._p.dirs.bitvector + "mutation_histos.p"
-        if os.path.isfile(bit_vector_pickle_file) and not self._p.overwrite:
+        if os.path.isfile(bit_vector_pickle_file) and not self._p.bit_vector.overwrite:
             log.info(
                     "SKIPPING bit vector generation, it has run already! specify -overwrite "
                     + "to rerun"
@@ -432,8 +462,15 @@ class BitVectorGenerator(object):
                     )
             )
         ref_seq = self._ref_seqs[read_1.RNAME]
+        if read_1.MAPQ < self.__map_score_cutoff or read_2.MAPQ < self.__map_score_cutoff:
+            self._mut_histos[read_1.RNAME].record_skip("low_mapq")
+            return None
         bit_vector_1 = self.__convert_read_to_bit_vector(read_1, ref_seq)
         bit_vector_2 = self.__convert_read_to_bit_vector(read_2, ref_seq)
+        p1 = len(bit_vector_1) / len(ref_seq)
+        p2 = len(bit_vector_2) / len(ref_seq)
+        if p1 < self._p.bit_vector.percent_length_cutoff or p2 < self._p.bit_vector.percent_length_cutoff:
+            self._mut_histos[read_1.RNAME].record_skip("short_read")
         bit_vector = self.__merge_paired_bit_vectors(bit_vector_1, bit_vector_2)
         self._bit_vector_writers[read_1.RNAME].write_bit_vector(
                 read_1.QNAME, bit_vector
@@ -442,7 +479,7 @@ class BitVectorGenerator(object):
         return bit_vector
 
     def __run_picard_sam_convert(self):
-        if os.path.isfile(self._p.files.picard_sam_output) and not self._p.overwrite:
+        if os.path.isfile(self._p.files.picard_sam_output) and not self._p.bit_vector.overwrite:
             log.info(
                     "SKIPPING picard SAM convert, it has been run already! specify "
                     + "-overwrite to rerun"
@@ -454,8 +491,7 @@ class BitVectorGenerator(object):
                 "java -jar "
                 + picard_path
                 + " SamFormatConverter I={} O={}".format(
-                self._p.files.picard_bam_output, self._p.files.picard_sam_output
-        )
+                self._p.files.picard_bam_output, self._p.files.picard_sam_output)
         )
         self.__run_command("picard SAM convert", picard_cmd)
 
@@ -558,8 +594,8 @@ class BitVectorGenerator(object):
                     bit_vector[pos] = self.__ambig_info
                 # mutation on one side and insertion on the other side set to "?"
                 elif bit_vector_1[pos] == self.__del_bit and bit in self.__bases or \
-                     bit_vector_1[pos] in self.__bases and bit == self.__del_bit:
-                     bit_vector[pos] = self.__ambig_info
+                        bit_vector_1[pos] in self.__bases and bit == self.__del_bit:
+                    bit_vector[pos] = self.__ambig_info
                 else:
                     log.warn(
                             "unable to merge bit_vectors with bits: {} {}".format(

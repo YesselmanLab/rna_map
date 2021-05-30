@@ -37,6 +37,8 @@ def main(fasta, fastq1, fastq2):
     cmd += " --name dreem_cont -t dreem dreem -fa test.fasta -fq1 test_mate1.fastq -fq2 test_mate2.fastq"
     subprocess.call(cmd, shell=True)
     subprocess.call("docker cp dreem_cont:/data/output output", shell=True)
+    subprocess.call("docker cp dreem_cont:/data/log log", shell=True)
+    subprocess.call("docker cp dreem_cont:/data/dreem.log dreem.log", shell=True)
     subprocess.call("docker rm dreem_cont", shell=True)
 
 

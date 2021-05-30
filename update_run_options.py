@@ -19,7 +19,10 @@ static = """
 @optgroup.option("-ow", "--overwrite", is_flag=True,
                 help="overwrites previous results, if not set will keep previous " 
                      "calculation checkpoints")
-@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)", default="INFO")
+@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)", 
+                default="INFO")
+@optgroup.option("-rob", "--restore_org_behavior", is_flag=True, default=False, 
+                help="retores the original behavior of dreem upon first release")
 """
 
 def get_parameters(obj, name, skip):
@@ -29,7 +32,10 @@ def get_parameters(obj, name, skip):
         if k in skip:
             continue
         if type(v) == bool:
-            s += f"@optgroup.option(\"--{k}\", is_flag=True,\nhelp=\"{obj.description[k]}\")\n"
+            if k == "overwrite":
+                s += f"@optgroup.option(\"--{name}-{k}\", is_flag=True,\nhelp=\"{obj.description[k]}\")\n"
+            else:
+                s += f"@optgroup.option(\"--{k}\", is_flag=True,\nhelp=\"{obj.description[k]}\")\n"
         else:
             s += f"@optgroup.option(\"--{k}\", default=None,\nhelp=\"{obj.description[k]}\")\n"
     return s
@@ -47,7 +53,7 @@ def main():
     f.write("@click.command()\n")
     f.write(static)
     f.write(get_parameters(pf._Map(), "map", "description".split(",")))
-    f.write(get_parameters(pf._BitVector(), "bit vector",
+    f.write(get_parameters(pf._BitVector(), "bv",
                            "description,miss_info,ambig_info,nomut_bit,del_bit".split(",")))
     f.write("def main(**args):")
     f.write(spl[1])

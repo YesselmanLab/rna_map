@@ -2,10 +2,9 @@ import os
 import logging
 import yaml
 from future import types
-from dreem import settings
-from dreem.logger import *
+from dreem import settings, logger
 
-log = init_logger("parameters.py", "dreem.log")
+log = logger.log
 
 # abbreviations
 # tg -> trim galore
@@ -68,7 +67,6 @@ class ParametersFactory(object):
             self.skip = False
             self.skip_fastqc = False
             self.skip_trim_galore = False
-            self.tg_q_cutoff = 20
             self.bt2_alignment_args = (
                 "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
             )
@@ -77,7 +75,6 @@ class ParametersFactory(object):
                 'skip' : 'do not perform sequence mapping, not recommended',
                 'skip_fastqc' : 'do not run fastqc for quality control of sequence data',
                 'skip_trim_galore' : 'do not run trim galore to remove adapter sequences at ends',
-                'tg_q_cutoff' : 'the quality score cutoff for reads that are removed by trim_galore',
                 'bt2_alignment_args' : ''
             }
 
@@ -137,10 +134,13 @@ class ParametersFactory(object):
             p.overwrite = True
             p.map.overwrite = True
             p.bit_vector.overwrite = True
+        if args['bv_overwrite']:
+            p.bit_vector.overwrite = True
         if args['param_file'] is not None:
             self.__parse_param_file(args['param_file'], p)
         if args['log_level'] is not None:
-            p.log_level = str_to_log_level(args['log_level'])
+            p.log_level = logger.str_to_log_level(args['log_level'])
+        p.restore_org_behavior = args['restore_org_behavior']
         return p
 
 
@@ -152,6 +152,7 @@ class Parameters(object):
             files: ParametersFactory._Files,
     ):
         # general global options
+        self.restore_org_behavior = False
         self.overwrite = False
         self.paired = False
         self.log_level = logging.INFO
@@ -189,9 +190,9 @@ class Parameters(object):
     def to_yaml_file(self, fname):
         output = {}
         output["dirs"] = self.__get_args(self.dirs, "resources".split(","))
-        output["map"] = self.__get_args(self.map, "".split(","))
+        output["map"] = self.__get_args(self.map, "description".split(","))
         output["bit_vector"] = self.__get_args(self.bit_vector,
-                                               "miss_info,ambig_info,nomut_bit,del_bit".split(","))
+                                               "description,miss_info,ambig_info,nomut_bit,del_bit".split(","))
         f = open(fname, "w")
         yaml.dump(output, f)
         f.close()
