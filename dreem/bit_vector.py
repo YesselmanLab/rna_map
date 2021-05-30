@@ -404,8 +404,8 @@ class BitVectorGenerator(object):
         for mh in self._mut_histos.values():
             data = [mh.name, mh.num_reads, mh.num_aligned]
             s = f"{mh.name},{mh.num_reads},{mh.num_aligned},"
-            s += ",".join([str(x) for x in mh.percent_mutations()])
-            data += mh.percent_mutations()
+            s += ",".join([str(x) for x in mh.get_percent_mutations()])
+            data += mh.get_percent_mutations()
             table.append(data)
         print(tabulate(table, headers, tablefmt="github"))
         f.close()
