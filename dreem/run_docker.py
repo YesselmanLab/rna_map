@@ -51,7 +51,7 @@ log = init_logger('RUN_DOCKER')
 
 def check_docker_image(name):
     try:
-        output = subprocess.check_output(f'docker image inspect {name} >& /dev/null', shell=True)
+        output = subprocess.check_output(f'docker image inspect {name}', shell=True)
     except subprocess.CalledProcessError:
         return False
     return True
