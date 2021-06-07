@@ -40,15 +40,15 @@ def get_parameters(obj, name, skip):
             s += f"@optgroup.option(\"--{k}\", default=None,\nhelp=\"{obj.description[k]}\")\n"
     return s
 
-def main():
+
+def update_options_for_script(script_path):
     pf = parameters.ParametersFactory()
-    run_py_file_path = settings.get_py_path() + "/run.py"
-    f = open(run_py_file_path)
+    f = open(script_path)
     lines = f.readlines()
     f.close()
     s = "".join(lines)
-    spl = re.split('@click.command\(\)[\S\s]+def main\(\*\*args\)\:',s)
-    f = open(run_py_file_path, "w")
+    spl = re.split('@click.command\(\)[\S\s]+def main\(\*\*args\)\:', s)
+    f = open(script_path, "w")
     f.write(spl[0])
     f.write("@click.command()\n")
     f.write(static)
@@ -59,6 +59,11 @@ def main():
     f.write(spl[1])
     f.close()
 
+def main():
+    run_py_file_path = settings.get_py_path() + "/run.py"
+    update_options_for_script(run_py_file_path)
+    run_py_docker_file_path = settings.get_py_path() + "/run_docker.py"
+    update_options_for_script(run_py_docker_file_path)
 
 
 if __name__ == "__main__":

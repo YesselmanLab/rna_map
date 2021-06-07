@@ -1,0 +1,114 @@
+import click
+import subprocess
+import os
+from click_option_group import optgroup
+
+from dreem import logger
+
+log = logger.init_logger('RUN_DOCKER')
+
+
+def check_docker_image(name):
+    try:
+        output = subprocess.check_output(f'docker image inspect {name} >& /dev/null', shell=True)
+    except subprocess.CalledProcessError:
+        return False
+    return True
+
+@click.command()
+@optgroup.group("main arguments")
+@optgroup.option("-fa", "--fasta", type=click.Path(exists=True), required=True,
+                 help="reference sequences in fasta format")
+@optgroup.option("-fq1", "--fastq1", type=click.Path(exists=True), required=True,
+                 help="fastq sequencing file of mate 1")
+@optgroup.option("-fq2", "--fastq2", type=click.Path(exists=True),
+                 help="fastq sequencing file of mate 2")
+@optgroup.group("common options")
+@optgroup.option("--db", type=click.Path(exists=True),
+                 help="A csv formatted file that contains dot bracket info for each sequence")
+@optgroup.option("-pf", "--param-file", type=click.Path(exists=True),
+                 help="A yml formatted file to specify parameters")
+@optgroup.option("-ow", "--overwrite", is_flag=True,
+                 help="overwrites previous results, if not set will keep previous "
+                      "calculation checkpoints")
+@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)",
+                 default="INFO")
+@optgroup.option("-rob", "--restore_org_behavior", is_flag=True, default=False,
+                 help="retores the original behavior of dreem upon first release")
+@optgroup.group("map options")
+@optgroup.option("--map-overwrite", is_flag=True,
+                 help="overwrite mapping calculation")
+@optgroup.option("--skip", is_flag=True,
+                 help="do not perform sequence mapping, not recommended")
+@optgroup.option("--skip_fastqc", is_flag=True,
+                 help="do not run fastqc for quality control of sequence data")
+@optgroup.option("--skip_trim_galore", is_flag=True,
+                 help="do not run trim galore to remove adapter sequences at ends")
+@optgroup.option("--bt2_alignment_args", default=None,
+                 help="")
+@optgroup.group("bv options")
+@optgroup.option("--bv-overwrite", is_flag=True,
+                 help="overwrite bit vector calculation")
+@optgroup.option("--skip", is_flag=True,
+                 help="skip bit vector generation step, not recommended")
+@optgroup.option("--qscore_cutoff", default=None,
+                 help="quality score of read nucleotide, sets to ambigious if under this val")
+@optgroup.option("--num_of_surbases", default=None,
+                 help="number of bases around a mutation")
+@optgroup.option("--map_score_cutoff", default=None,
+                 help="map alignment score cutoff for a read, read is discarded if under this value")
+@optgroup.option("--mutation_count_cutoff", default=None,
+                 help="maximum number of mutations in a read allowable")
+@optgroup.option("--percent_length_cutoff", default=None,
+                 help="read is discarded if less than this percent of a ref sequence is included")
+def main(**args):
+    # generate docker container and run code
+    docker_img = 'dreem'
+    if not check_docker_image(docker_img):
+        docker_img = 'jyesselm/dreem'
+        if not check_docker_image(docker_img):
+            log.error("cannot find docker image. Make sure you have it built or downloaded")
+            exit()
+    cmd = "docker run -v "
+    files = "fasta,fastq1,fastq2,db,param_file".split(",")
+    file_map =  {
+        'db' : 'test.csv',
+        'param_file' : 'test.param',
+        'fasta' : 'test.fasta',
+        'fastq1' : 'test_mate1.fastq',
+        'fastq2' : 'test_mate2.fastq'
+    }
+    abs_files = []
+    for f in files:
+        f_path = args[f]
+        if f_path is None:
+            continue
+        spl = f_path.split("/")
+        abs_files.append(os.path.abspath(f_path) + ":/data/" + file_map[f])
+    cmd += " -v ".join(abs_files)
+    cmd += f" --name dreem_cont -t {docker_img}  dreem -fa test.fasta -fq1 test_mate1.fastq -fq2 test_mate2.fastq "
+    del args['fasta']
+    del args['fastq1']
+    del args['fastq2']
+    for k,v in args.items():
+        if v is None or v == False:
+            continue
+        if k in file_map:
+            v = file_map[k]
+        k = k.replace("_", "-")
+        cmd += f"--{k} {v} "
+    log.info("DOCKER CMD:\n" + cmd)
+    subprocess.call(cmd, shell=True)
+    log.info("clean up and copy files from docker")
+    log.info("docker cp dreem_cont:/data/output output")
+    log.info("docker cp dreem_cont:/data/log log")
+    log.info("docker cp dreem_cont:/data/dreem.log dreem.log")
+    log.info("docker rm dreem_cont")
+    subprocess.call("docker cp dreem_cont:/data/output output", shell=True)
+    subprocess.call("docker cp dreem_cont:/data/log log", shell=True)
+    subprocess.call("docker cp dreem_cont:/data/dreem.log dreem.log", shell=True)
+    subprocess.call("docker rm dreem_cont", shell=True)
+
+
+if __name__ == "__main__":
+    main()
