@@ -87,6 +87,10 @@ def main(**args):
     profiles that relate to DMS modification rates written by Silvi Rouskin and the
     Rouskin lab (https://www.rouskinlab.com/)
     """
+    run(args)
+
+
+def run(args):
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
     log.setLevel(logger.str_to_log_level(args["log_level"]))
