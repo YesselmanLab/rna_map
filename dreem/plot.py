@@ -1,7 +1,9 @@
 import click
 import pandas as pd
+import numpy as np
 import os
 import pickle
+import glob
 
 import plotly
 import plotly.graph_objs as go
@@ -30,6 +32,12 @@ def get_trace(df):
             showlegend=False,
     )
     return trace
+
+
+def normalize_reactivity(df):
+    df_sub = df[(df['nuc'] == 'A') | (df['nuc'] == 'C') ]
+    avg = df_sub['mismatches'].mean()
+    df['mismatches'] = df['mismatches'] / avg
 
 
 @click.group()
@@ -71,6 +79,60 @@ def concat(**args):
             mut_fig, filename="test.html", auto_open=False
     )
 
+@cli.command()
+@click.option('--normalize', is_flag=True)
+@click.argument("base_dir")
+@click.argument("name")
+def scan(**args):
+    d = args['base_dir']
+    name = args['name']
+    traces = []
+    names = []
+    files = glob.glob(f"{d}/*/output/BitVector_Files/{name}_*.csv")
+    files.sort()
+    for file in files:
+        df = pd.read_csv(file)
+        normalize_reactivity(df)
+        names.append(file)
+        traces.append(get_trace(df))
+    mut_fig = make_subplots(
+            rows=len(traces), cols=1, subplot_titles=names)
+    for i, t in enumerate(traces):
+        mut_fig.append_trace(t, i + 1, 1)
+    mut_fig.update_layout(height=200 * len(traces))
+    plotly.offline.plot(
+            mut_fig, filename="test.html", auto_open=False
+    )
+
+@cli.command()
+@click.option('--normalize', is_flag=True)
+@click.argument("base_dir")
+@click.argument("name")
+@click.argument("res")
+def titration(**args):
+    d = args['base_dir']
+    name = args['name']
+    res = [int(x) for x in args['res'].split(",")]
+    files = glob.glob(f"{d}/*/output/BitVector_Files/{name}_*.csv")
+    files.sort()
+    data = []
+    for file in files:
+        df = pd.read_csv(file)
+        #max_v = df["mismatches"].mean()
+        normalize_reactivity(df)
+        max_v = df[17:20]["mismatches"].mean()
+        cur_data = []
+        for r in res:
+            cur_data.append((df.loc[r-1]["mismatches"]/max_v))
+        data.append(sum(cur_data)/len(res))
+    data = np.array(data)
+    min_d = np.min(data)
+    #data -= min_d
+    #max_d = np.max(data)
+    max_d = 1
+    data /= max_d
+    for d in data:
+        print(d)
 
 if __name__ == "__main__":
     cli()

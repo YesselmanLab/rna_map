@@ -1,6 +1,7 @@
 import os
 import re
 import numpy as np
+import pandas as pd
 import pickle
 import random
 import datetime
@@ -13,11 +14,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tabulate import tabulate
 
-from dreem import settings, sam
+from dreem import settings, sam, logger
 from dreem.parameters import Parameters
-from dreem.logger import *
 from dreem.util import *
 from dreem.sam import *
+
+log = logger.log
 
 
 class MutationHistogram(object):
@@ -30,20 +32,21 @@ class MutationHistogram(object):
         self.num_reads = 0
         self.num_aligned = 0
         self.skips = {
-            'low_mapq'  : 0,
-            'short_read': 0
+            'low_mapq'     : 0,
+            'short_read'   : 0,
+            'too_many_muts': 0
         }
-        self.num_of_mutations = [0] * len(sequence)
+        self.num_of_mutations = [0] * (len(sequence) + 1)
         self.mut_bases = np.zeros(len(sequence) + 1)
         self.info_bases = np.zeros(len(sequence) + 1)
         self.del_bases = np.zeros(len(sequence) + 1)
         self.ins_bases = np.zeros(len(sequence) + 1)
         self.cov_bases = np.zeros(len(sequence) + 1)
         self.mod_bases = {
-            "A": np.zeros(len(sequence)),
-            "C": np.zeros(len(sequence)),
-            "G": np.zeros(len(sequence)),
-            "T": np.zeros(len(sequence)),
+            "A": np.zeros(len(sequence) + 1),
+            "C": np.zeros(len(sequence) + 1),
+            "G": np.zeros(len(sequence) + 1),
+            "T": np.zeros(len(sequence) + 1),
         }
         self.start = start
         self.end = end
@@ -56,8 +59,25 @@ class MutationHistogram(object):
     def from_file(cls, file_name):
         pass
 
-    def to_file(self):
-        pass
+    def to_pop_avg_data_frame(self):
+        cols = "position,mismatches,mismatch_del,nuc"
+        if self.structure is not None:
+            cols += ",struc"
+        df = pd.DataFrame(columns=cols.split(","))
+        pos = 0
+        for i in range(self.start, self.end + 1):
+            try:
+                delmut_frac = (self.del_bases[pos] + self.mut_bases[pos]) / self.info_bases[pos]
+                mut_frac = self.mut_bases[pos] / self.info_bases[pos]
+            except:
+                delmut_frac = 0.0
+                mut_frac = 0.0
+            data = [pos, mut_frac, delmut_frac, self.sequence[pos - 1]]
+            if self.structure is not None:
+                data.append(self.structure[pos - 1])
+            df.loc[pos] = data
+            pos += 1
+        return df
 
     def record_bit_vector(self, bit_vector, p):
         self.num_reads += 1
@@ -69,13 +89,13 @@ class MutationHistogram(object):
             read_bit = bit_vector[pos]
             if read_bit != p.bit_vector.ambig_info:
                 self.cov_bases[pos] += 1
-                self.info_bases[pos] += 1
             if read_bit in self.__bases:
                 total_muts += 1
                 self.mod_bases[read_bit][pos] += 1
                 self.mut_bases[pos] += 1
             elif read_bit == p.bit_vector.del_bit:
                 self.del_bases[pos] += 1
+            self.info_bases[pos] += 1
         self.num_of_mutations[total_muts] += 1
 
     def record_skip(self, t):
@@ -88,25 +108,30 @@ class MutationHistogram(object):
         return data
 
     def get_signal_to_noise(self):
-        A_frac = self.sequence.count("A") / len(self.sequence)
-        G_frac = self.sequence.count("G") / len(self.sequence)
-        T_frac = self.sequence.count("T") / len(self.sequence)
-        C_frac = self.sequence.count("C") / len(self.sequence)
-        sig = (A_frac * np.sum(self.mod_bases["A"])) + (C_frac * np.sum(self.mod_bases["C"]))
-        noise = (T_frac * np.sum(self.mod_bases["T"])) + (G_frac * np.sum(self.mod_bases["G"]))
-        denom = sig + noise
-        sig_noise = round(sig / denom, 2)
-        return sig_noise
+        seq = self.sequence
+        AC = 0
+        GU = 0
+        AC_count = seq.count("A") + seq.count("C")
+        GU_count = seq.count("G") + seq.count("U") + seq.count("T")
+        for pos in range(self.start, self.end + 1):
+            if seq[pos - 1] == "A" or seq[pos - 1] == "C":
+                AC += self.mut_bases[pos]
+            else:
+                GU += self.mut_bases[pos]
+        AC /= float(AC_count)
+        GU /= float(GU_count)
+        return round(float(AC / GU), 2)
+
 
 # plotting functions ###############################################################
 def plot_read_coverage(mh: MutationHistogram, p: Parameters):
-    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    xaxis_coordinates = [i for i in range(mh.start, mh.end)]
     xaxis_coordinates = np.array(xaxis_coordinates)
     file_base_name = (
             p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
     read_cov = []
-    for pos in range(mh.start, mh.end + 1):
+    for pos in range(mh.start, mh.end):
         try:
             cov_frac = mh.cov_bases[pos] / mh.num_reads
         except ZeroDivisionError:
@@ -129,7 +154,7 @@ def plot_read_coverage(mh: MutationHistogram, p: Parameters):
 
 
 def plot_modified_bases(mh: MutationHistogram, p: Parameters):
-    xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
+    xaxis_coordinates = [i for i in range(mh.start, mh.end)]
     file_base_name = (
             p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
     )
@@ -180,8 +205,7 @@ def plot_mutation_histogram(mh: MutationHistogram, p: Parameters):
     )
 
 
-def plot_population_avg(mh: MutationHistogram, p: Parameters):
-
+def plot_population_avg_old(mh: MutationHistogram, p: Parameters):
     xaxis_coordinates = [i for i in range(mh.start, mh.end + 1)]
     file_base_name = (
             p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
@@ -236,6 +260,71 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
     mut_fig["layout"]["xaxis2"].update(title="Position")
     mut_fig["layout"]["yaxis1"].update(title="Fraction", range=[0, 0.1])
     mut_fig["layout"]["yaxis2"].update(title="Fraction", range=[0, 0.1])
+    seqs = list(mh.sequence)
+    if mh.structure is not None:
+        db = list(mh.structure)
+    else:
+        db = " " * len(seqs)
+    mut_fig.update_xaxes(
+            tickvals=xaxis_coordinates,
+            ticktext=["%s<br>%s" % (x, y) for (x, y) in zip(seqs, db)],
+            tickangle=0
+    )
+    plotly.offline.plot(
+            mut_fig, filename=file_base_name + "pop_avg.html", auto_open=False,
+    )
+
+
+def plot_population_avg(mh: MutationHistogram, p: Parameters):
+    xaxis_coordinates = [i for i in range(mh.start, mh.end)]
+    file_base_name = (
+            p.dirs.bitvector + mh.name + "_" + str(mh.start) + "_" + str(mh.end) + "_"
+    )
+    popavg_filename = file_base_name + "popavg_reacts.csv"
+    popavg_file = open(popavg_filename, "w")
+    popavg_file.write("position,mismatches,mismatch_del,nuc")
+    if mh.structure is not None:
+        popavg_file.write(",struc")
+    popavg_file.write("\n")
+    delmut_y, mut_y = [], []
+    for pos in range(mh.start, mh.end + 1):
+        try:
+            delmut_frac = (mh.del_bases[pos] + mh.mut_bases[pos]) / mh.info_bases[pos]
+            mut_frac = mh.mut_bases[pos] / mh.info_bases[pos]
+        except:
+            delmut_frac = 0.0
+            mut_frac = 0.0
+        delmut_y.append(delmut_frac)
+        mut_y.append(mut_frac)
+        mut_frac, delmut_frac = round(mut_frac, 5), round(delmut_frac, 5)
+        s = "{},{},{},{}".format(pos, mut_frac, delmut_frac, mh.sequence[pos - 1])
+        popavg_file.write(s)
+        if mh.structure is not None:
+            popavg_file.write("," + mh.structure[pos - 1])
+        popavg_file.write("\n")
+    popavg_file.close()
+
+    cmap = {"A": "red", "T": "green", "G": "orange", "C": "blue"}  # Color map
+    colors = []
+    ref_bases = []
+    for i in range(mh.start, mh.end):
+        if i >= len(mh.sequence):
+            continue
+        colors.append(cmap[mh.sequence[i - 1]])
+        ref_bases.append(mh.sequence[i - 1])
+    mut_trace = go.Bar(
+            x=xaxis_coordinates,
+            y=mut_y,
+            text=ref_bases,
+            marker=dict(color=colors),
+            showlegend=False,
+    )
+    mut_fig_layout = go.Layout(
+            title="Mismatches: " + mh.name,
+            xaxis=dict(title="Postion"),
+            yaxis=dict(title="Fraction", range=[0, 0.1]),
+    )
+    mut_fig = go.Figure(data=mut_trace, layout=mut_fig_layout)
     seqs = list(mh.sequence)
     if mh.structure is not None:
         db = list(mh.structure)
@@ -371,7 +460,6 @@ class BitVectorGenerator(object):
 
     # TODO not big on this ... streamline somehow?
     def __setup_params(self, p: Parameters):
-        self.__csv = p.ins.csv
         self.__qscore_cutoff = p.bit_vector.qscore_cutoff
         self.__num_of_surbases = p.bit_vector.num_of_surbases
         self.__miss_info = p.bit_vector.miss_info
@@ -392,23 +480,29 @@ class BitVectorGenerator(object):
         self.__run_picard_sam_convert()
         self.__generate_all_bit_vectors()
         for mh in self._mut_histos.values():
-            plot_read_coverage(mh, p)
-            plot_modified_bases(mh, p)
-            plot_mutation_histogram(mh, p)
             plot_population_avg(mh, p)
-            generate_quality_control_file(mh, p)
+            if p.restore_org_behavior:
+                plot_population_avg_old(mh, p)
+                plot_read_coverage(mh, p)
+                plot_modified_bases(mh, p)
+                plot_mutation_histogram(mh, p)
+                generate_quality_control_file(mh, p)
         f = open(p.dirs.bitvector + "summary.csv", "w")
-        f.write("name,reads,aligned\n")
-        log.info("MUTATION SUMMARY")
-        headers = "name,reads,aligned,no_mut,1_mut,2_mut,3_mut,3plus_mut".split(",")
+        s = "name,reads,aligned,no_mut,1_mut,2_mut,3_mut,3plus_mut,sn"
+        f.write(s + "\n")
+        headers = s.split(",")
         table = []
         for mh in self._mut_histos.values():
-            data = [mh.name, mh.num_reads, mh.num_aligned]
-            s = f"{mh.name},{mh.num_reads},{mh.num_aligned},"
-            s += ",".join([str(x) for x in mh.get_percent_mutations()])
+            try:
+                data = [mh.name, mh.num_reads, round(mh.num_aligned / mh.num_reads * 100, 2)]
+            except:
+                data = [mh.name, mh.num_reads, 0]
+
             data += mh.get_percent_mutations()
+            data.append(mh.get_signal_to_noise())
             table.append(data)
-        print(tabulate(table, headers, tablefmt="github"))
+            f.write(",".join([str(x) for x in data]) + "\n")
+        log.info("MUTATION SUMMARY:\n" + tabulate(table, headers, tablefmt="github"))
         f.close()
 
     def __generate_all_bit_vectors(self):
@@ -444,8 +538,8 @@ class BitVectorGenerator(object):
             else:
                 bit_vector = self.__get_bit_vector_single(read)
 
-        if self.__csv is not None:
-            df = pd.read_csv(self.__csv)
+        if self._p.ins.dot_bracket is not None:
+            df = pd.read_csv(self._p.ins.dot_bracket)
             for i, row in df.iterrows():
                 if row["name"] in self._mut_histos:
                     self._mut_histos[row["name"]].structure = row["structure"]
@@ -463,20 +557,32 @@ class BitVectorGenerator(object):
                     )
             )
         ref_seq = self._ref_seqs[read_1.RNAME]
+        mh = self._mut_histos[read_1.RNAME]
         if read_1.MAPQ < self.__map_score_cutoff or read_2.MAPQ < self.__map_score_cutoff:
-            self._mut_histos[read_1.RNAME].record_skip("low_mapq")
+            mh.record_skip("low_mapq")
             return None
         bit_vector_1 = self.__convert_read_to_bit_vector(read_1, ref_seq)
         bit_vector_2 = self.__convert_read_to_bit_vector(read_2, ref_seq)
         p1 = len(bit_vector_1) / len(ref_seq)
         p2 = len(bit_vector_2) / len(ref_seq)
         if p1 < self._p.bit_vector.percent_length_cutoff or p2 < self._p.bit_vector.percent_length_cutoff:
-            self._mut_histos[read_1.RNAME].record_skip("short_read")
+            mh.record_skip("short_read")
+            return None
         bit_vector = self.__merge_paired_bit_vectors(bit_vector_1, bit_vector_2)
+        muts = 0
+        for pos in range(mh.start, mh.end + 1):
+            if pos not in bit_vector:
+                continue
+            read_bit = bit_vector[pos]
+            if read_bit in self.__bases:
+                muts += 1
+        if muts > self._p.bit_vector.mutation_count_cutoff:
+            mh.record_skip("too_many_muts")
+            return None
         self._bit_vector_writers[read_1.RNAME].write_bit_vector(
                 read_1.QNAME, bit_vector
         )
-        self._mut_histos[read_1.RNAME].record_bit_vector(bit_vector, self._p)
+        mh.record_bit_vector(bit_vector, self._p)
         return bit_vector
 
     def __run_picard_sam_convert(self):

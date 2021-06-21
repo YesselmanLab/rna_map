@@ -6,6 +6,7 @@ from dreem import settings, logger
 
 log = logger.log
 
+
 # abbreviations
 # tg -> trim galore
 # bt2 -> bowtie 2
@@ -20,7 +21,7 @@ class ParametersFactory(object):
             self.ref_fasta = paths[0]  # fasta input file
             self.fastq1 = paths[1]  # fastq1 input file
             self.fastq2 = paths[2]  # fastq2 input file
-            self.csv = None
+            self.dot_bracket = None
 
         def __get_name(self, path):
             fname = path.split("/")[-1]
@@ -68,14 +69,14 @@ class ParametersFactory(object):
             self.skip_fastqc = False
             self.skip_trim_galore = False
             self.bt2_alignment_args = (
-                "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+                "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p 16"
             )
             self.description = {
-                'overwrite' : 'overwrite mapping calculation',
-                'skip' : 'do not perform sequence mapping, not recommended',
-                'skip_fastqc' : 'do not run fastqc for quality control of sequence data',
-                'skip_trim_galore' : 'do not run trim galore to remove adapter sequences at ends',
-                'bt2_alignment_args' : ''
+                'overwrite'         : 'overwrite mapping calculation',
+                'skip'              : 'do not perform sequence mapping, not recommended',
+                'skip_fastqc'       : 'do not run fastqc for quality control of sequence data',
+                'skip_trim_galore'  : 'do not run trim galore to remove adapter sequences at ends',
+                'bt2_alignment_args': ''
             }
 
     class _BitVector(object):
@@ -93,13 +94,13 @@ class ParametersFactory(object):
             self.del_bit = "1"
 
             self.description = {
-                'overwrite' : "overwrite bit vector calculation",
-                'skip' : "skip bit vector generation step, not recommended",
-                'qscore_cutoff' : "quality score of read nucleotide, sets to ambigious if under this val",
-                'num_of_surbases' : "number of bases around a mutation",
-                'map_score_cutoff' : "map alignment score cutoff for a read, read is discarded if under this value",
-                "mutation_count_cutoff" : "maximum number of mutations in a read allowable",
-                "percent_length_cutoff" : "read is discarded if less than this percent of a ref sequence is included",
+                'overwrite'            : "overwrite bit vector calculation",
+                'skip'                 : "skip bit vector generation step, not recommended",
+                'qscore_cutoff'        : "quality score of read nucleotide, sets to ambigious if under this val",
+                'num_of_surbases'      : "number of bases around a mutation",
+                'map_score_cutoff'     : "map alignment score cutoff for a read, read is discarded if under this value",
+                "mutation_count_cutoff": "maximum number of mutations in a read allowable",
+                "percent_length_cutoff": "read is discarded if less than this percent of a ref sequence is included",
             }
 
     class _EMCluster(object):
@@ -117,11 +118,28 @@ class ParametersFactory(object):
                 k, v = next(iter(param.items()))
                 p.update(group + "." + k, v)
 
+    def __parse_other_cli(self, args, p):
+        # mapping
+        if args['bt2_alignment_args'] is not None:
+            p.map.bt2_alignment_args = args['bt2_alignment_args']
+        p.map.skip_fastqc = args['skip_fastqc']
+        p.map.skip_trim_galore = args['skip_trim_galore']
+        # bit vector
+        if args['qscore_cutoff'] is not None:
+            p.bit_vector.qscore_cutoff = int(args['qscore_cutoff'])
+        if args['num_of_surbases'] is not None:
+            p.bit_vector.num_of_surbases = int(args['num_of_surbases'])
+        if args['map_score_cutoff'] is not None:
+            p.bit_vector.map_score_cutoff = int(args['map_score_cutoff'])
+        if args['percent_length_cutoff'] is not None:
+            p.bit_vector.percent_length_cutoff = float(args['percent_length_cutoff'])
+        if args['mutation_count_cutoff'] is not None:
+            p.bit_vector.mutation_count_cutoff = int(args['mutation_count_cutoff'])
+
     def get_parameters(self, args):
         input_files = validate_files(args)
         inputs = ParametersFactory._Inputs(input_files)
-        #if args["csv"] is not None:
-        #    inputs.csv = args["csv"]
+        inputs.dot_bracket = args["dot_bracket"]
         dirs = ParametersFactory._Dirs()
         files = ParametersFactory._Files(dirs, inputs)
         p = Parameters(inputs, dirs, files)
@@ -141,6 +159,7 @@ class ParametersFactory(object):
         if args['log_level'] is not None:
             p.log_level = logger.str_to_log_level(args['log_level'])
         p.restore_org_behavior = args['restore_org_behavior']
+        self.__parse_other_cli(args, p)
         return p
 
 

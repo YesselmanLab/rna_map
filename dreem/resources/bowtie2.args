@@ -42,3 +42,5 @@
 --dovetail,bool
 --no-contain,bool
 --no-overlap,bool
+-i,str
+--maxins,int

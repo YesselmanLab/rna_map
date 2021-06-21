@@ -12,7 +12,7 @@ static = """
 @optgroup.option("-fq2", "--fastq2", type=click.Path(exists=True),
                  help="fastq sequencing file of mate 2")
 @optgroup.group("common options")
-@optgroup.option("--db", type=click.Path(exists=True),
+@optgroup.option("--dot_bracket", type=click.Path(exists=True),
                 help="A csv formatted file that contains dot bracket info for each sequence")
 @optgroup.option("-pf", "--param-file", type=click.Path(exists=True),
                 help="A yml formatted file to specify parameters")
