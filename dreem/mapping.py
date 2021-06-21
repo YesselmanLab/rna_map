@@ -80,7 +80,7 @@ class Mapper(object):
         for l in lines:
             arg, arg_type = l.rstrip().split(",")
             valid_bt2_args[arg] = arg_type
-        supplied_args = self._p.map.bt2_alignment_args.split(",")
+        supplied_args = self._p.map.bt2_alignment_args.split(";")
         for full_arg in supplied_args:
             if full_arg in valid_bt2_args:
                 log.debug("{} is a valid bt2 argument".format(full_arg))
@@ -151,7 +151,7 @@ class Mapper(object):
             self.__skip_without_overwrite("bowtie-build")
             return
 
-        bowtie_build_cmd = "bowtie2-build {fa} input/{fa_name}".format(
+        bowtie_build_cmd = "bowtie2-build \"{fa}\" input/{fa_name}".format(
                 fa=self._p.ins.ref_fasta, fa_name=self._p.ins.ref_fasta_name
         )
         self.__run_command("bowtie2-build", bowtie_build_cmd)
@@ -162,7 +162,7 @@ class Mapper(object):
             return
         # check to make sure bt2 args are valid
         self.__validate_bt2_args(self._p.map.bt2_alignment_args)
-        bt2_args = " ".join(self._p.map.bt2_alignment_args.split(","))
+        bt2_args = " ".join(self._p.map.bt2_alignment_args.split(";"))
         if self._p.paired:
             bowtie2_cmd = (
                     "bowtie2 " + bt2_args + " -x {btindex} -1 {fq1} -2 {fq2} -S {samfile}"
