@@ -141,6 +141,7 @@ class Mapper(object):
             trim_galore_cmd = "trim_galore --fastqc {fq1} -o {out}".format(
                     out=self._p.dirs.mapping, fq1=self._p.ins.fastq1
             )
+        print(trim_galore_cmd) 
         self.__run_command("trim_galore", trim_galore_cmd)
 
     def __run_bowtie_build(self):
