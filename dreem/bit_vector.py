@@ -458,17 +458,11 @@ class BitVectorGenerator(object):
         )
         self.__bases = ["A", "C", "G", "T"]
 
-    # TODO not big on this ... streamline somehow?
+    # TODO not big on this ... streamline somehow? 
+    # this is a possible fix. A little bizarre but should work - CJ
     def __setup_params(self, p: Parameters):
-        self.__qscore_cutoff = p.bit_vector.qscore_cutoff
-        self.__num_of_surbases = p.bit_vector.num_of_surbases
-        self.__miss_info = p.bit_vector.miss_info
-        self.__ambig_info = p.bit_vector.ambig_info
-        self.__nomut_bit = p.bit_vector.nomut_bit
-        self.__del_bit = p.bit_vector.del_bit
-        self.__map_score_cutoff = p.bit_vector.map_score_cutoff
-        self.__mutation_count_cutoff = p.bit_vector.mutation_count_cutoff
-        self.__percent_length_cutoff = p.bit_vector.percent_length_cutoff
+        for var, value in p.bit_vector.__dict__.items():
+            self.__dict__[f"_{self.__class__.__name__}__{var}"] = value
 
     def run(self, p: Parameters):
         log.info("starting bitvector generation")
