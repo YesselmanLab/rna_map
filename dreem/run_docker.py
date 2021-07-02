@@ -67,9 +67,9 @@ def check_docker_image(name):
                  help="fastq sequencing file of mate 1")
 @optgroup.option("-fq2", "--fastq2", type=click.Path(exists=True),
                  help="fastq sequencing file of mate 2")
-@optgroup.group("common options")
-@optgroup.option("--dot_bracket", type=click.Path(exists=True),
+@optgroup.option("-db","--dot_bracket", type=click.Path(exists=True), required=True,
                 help="A csv formatted file that contains dot bracket info for each sequence")
+@optgroup.group("common options")
 @optgroup.option("-pf", "--param-file", type=click.Path(exists=True),
                 help="A yml formatted file to specify parameters")
 @optgroup.option("-ow", "--overwrite", is_flag=True,
@@ -114,9 +114,9 @@ def main(**args):
             log.error("cannot find docker image. Make sure you have it built or downloaded")
             exit()
     cmd = "docker run -v "
-    files = "fasta,fastq1,fastq2,db,param_file".split(",")
+    files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
     file_map = {
-        'db'        : 'test.csv',
+        'dot_bracket'        : 'test.csv',
         'param_file': 'test.param',
         'fasta'     : 'test.fasta',
         'fastq1'    : 'test_mate1.fastq',
@@ -139,7 +139,8 @@ def main(**args):
             continue
         if k in file_map:
             v = file_map[k]
-        k = k.replace("_", "-")
+        if k.find('dot') == -1: # added just for dot-bracket
+            k = k.replace("_", "-")
         cmd += f"--{k} {v} "
     log.info("DOCKER CMD:\n" + cmd)
     subprocess.call(cmd, shell=True)
