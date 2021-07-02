@@ -4,15 +4,32 @@ import os
 
 from dreem import parameters, settings
 
+TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
+BASE_DIR = os.path.dirname(TEST_DIR)
+
 
 def get_default_args():
-    p = {'fasta'     : settings.get_test_path() + '/resources/case_1/test.fasta',
-         'fastq1'    : settings.get_test_path() + '/resources/case_1/test_mate1.fastq',
-         'fastq2'    : settings.get_test_path() + '/resources/case_1/test_mate2.fastq',
+    # TODO joe I fixed these params so it would run but idk if these
+    # are correct -CJ
+    p = {
+         'fasta'     : TEST_DIR + '/resources/case_1/test.fasta',
+         'fastq1'    : TEST_DIR + '/resources/case_1/test_mate1.fastq',
+         'fastq2'    : TEST_DIR + '/resources/case_1/test_mate2.fastq',
          'overwrite' : False,
          'csv'       : None,
          'param_file': None,
-         'log_level' : 'INFO'}
+         'log_level' : 'INFO',
+         'bv_overwrite': False,
+         'restore_org_behavior': False,
+         'bt2_alignment_args': None,
+         'qscore_cutoff': None,
+         'num_of_surbases': None,
+         'map_score_cutoff': None,
+         'percent_length_cutoff': None,
+         'mutation_count_cutoff': None,
+         'skip_fastqc': False,
+         'skip_trim_galore': False
+         }
     return p
 
 
@@ -24,7 +41,7 @@ def test_generate_parameters():
 
 def test_parse_param_file():
     p = get_default_args()
-    p['param_file'] = settings.get_py_path() + "/resources/default.yml"
+    p['param_file'] = BASE_DIR + "/dreem/resources/default.yml"
     params = parameters.ParametersFactory().get_parameters(p)
     assert params.map.skip == False
     assert params.bit_vector.mutation_count_cutoff == 10
@@ -32,11 +49,10 @@ def test_parse_param_file():
 
 def test_parse_new_param_file():
     p = get_default_args()
-    p['param_file'] = settings.get_test_path() + "/resources/test.yml"
+    p['param_file'] = TEST_DIR + "/resources/test.yml"
     params = parameters.ParametersFactory().get_parameters(p)
     assert params.map.bt2_alignment_args == \
            "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 20,-p 16"
-
 
 def test_write_to_yaml():
     p = get_default_args()

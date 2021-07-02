@@ -5,7 +5,7 @@ from future import types
 from dreem import settings, logger
 
 log = logger.log
-
+log_error_and_exit = logger.log_error_and_exit
 
 # abbreviations
 # tg -> trim galore
@@ -68,6 +68,7 @@ class ParametersFactory(object):
             self.skip = False
             self.skip_fastqc = False
             self.skip_trim_galore = False
+            self.tg_q_cutoff = 0
             self.bt2_alignment_args = (
                 "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p 16"
             )
@@ -76,13 +77,14 @@ class ParametersFactory(object):
                 'skip'              : 'do not perform sequence mapping, not recommended',
                 'skip_fastqc'       : 'do not run fastqc for quality control of sequence data',
                 'skip_trim_galore'  : 'do not run trim galore to remove adapter sequences at ends',
-                'bt2_alignment_args': ''
+                'bt2_alignment_args': 'TODO',
+                'tg_q_cutoff'       : 'TODO',
             }
 
     class _BitVector(object):
         def __init__(self):
-            self.overwrite = False
             self.skip = False
+            self.overwrite = False
             self.qscore_cutoff = 25
             self.num_of_surbases = 10
             self.map_score_cutoff = 15
@@ -139,7 +141,8 @@ class ParametersFactory(object):
     def get_parameters(self, args):
         input_files = validate_files(args)
         inputs = ParametersFactory._Inputs(input_files)
-        inputs.dot_bracket = args["dot_bracket"]
+        if 'dot_bracket' in args:
+            inputs.dot_bracket = args["dot_bracket"]
         dirs = ParametersFactory._Dirs()
         files = ParametersFactory._Files(dirs, inputs)
         p = Parameters(inputs, dirs, files)
@@ -190,13 +193,13 @@ class Parameters(object):
             self.__update_parameter(spl[0], spl[1], val)
 
     def __update_parameter(self, sub, param, val):
-        valid = "map,files,dirs,bit_vector".split(",")
+        valid = set("map,files,dirs,bit_vector".split(","))
         if sub not in valid:
             log_error_and_exit(log, "unknown parameter group: {}".format(sub))
         sub_obj = self.__dict__[sub]
         if param not in sub_obj.__dict__:
             log_error_and_exit(
-                    log, "unknown parameter {} in group {}".format(sub, param)
+                    log, "unknown parameter {} in group {}".format(param, sub )
             )
         else:
             sub_obj.__dict__.update({param: val})
