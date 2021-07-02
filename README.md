@@ -25,7 +25,7 @@ docker build -t dreem -f docker/Dockerfile .
 
 If you want to run natively DREEM requires:
 
-```she
+```shell
 bowtie2=v2.2.9 (https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/)
 fastqc (https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 cutapt=v1.18 (https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip)

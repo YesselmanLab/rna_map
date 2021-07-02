@@ -1,70 +1,40 @@
-[2021-07-02 14:43:32,802 bit_vector.py validate_files] INFO fasta file: /home/cjurich/projects/dreem/test/resources/case_1/test.fasta exists
-[2021-07-02 14:43:32,802 bit_vector.py validate_files] INFO fastq file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate1.fastq exists
-[2021-07-02 14:43:32,802 bit_vector.py validate_files] INFO fastq2 file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate2.fastq exists
-[2021-07-02 14:43:32,802 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
-[2021-07-02 14:43:32,803 bit_vector.py validate_files] INFO fasta file: /home/cjurich/projects/dreem/test/resources/case_1/test.fasta exists
-[2021-07-02 14:43:32,803 bit_vector.py validate_files] INFO fastq file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate1.fastq exists
-[2021-07-02 14:43:32,803 bit_vector.py validate_files] INFO fastq2 file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate2.fastq exists
-[2021-07-02 14:43:32,803 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
-[2021-07-02 14:43:32,805 bit_vector.py __update_parameter] INFO setting parameter map.skip to False specified by parameter file
-[2021-07-02 14:43:32,805 bit_vector.py __update_parameter] INFO setting parameter map.skip_fastqc to False specified by parameter file
-[2021-07-02 14:43:32,805 bit_vector.py __update_parameter] INFO setting parameter map.skip_trim_galore to False specified by parameter file
-[2021-07-02 14:43:32,805 bit_vector.py __update_parameter] INFO setting parameter map.tg_q_cutoff to 20 specified by parameter file
-[2021-07-02 14:43:32,805 bit_vector.py __update_parameter] INFO setting parameter map.bt2_alignment_args to --local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16 specified by parameter file
-[2021-07-02 14:43:32,806 bit_vector.py __update_parameter] INFO setting parameter bit_vector.skip to False specified by parameter file
-[2021-07-02 14:43:32,806 bit_vector.py __update_parameter] INFO setting parameter bit_vector.qscore_cutoff to 25 specified by parameter file
-[2021-07-02 14:43:32,806 bit_vector.py __update_parameter] INFO setting parameter bit_vector.num_of_surbases to 10 specified by parameter file
-[2021-07-02 14:43:32,806 bit_vector.py __update_parameter] INFO setting parameter bit_vector.map_score_cutoff to 15 specified by parameter file
-[2021-07-02 14:43:32,806 bit_vector.py __update_parameter] INFO setting parameter bit_vector.mutation_count_cutoff to 10 specified by parameter file
-[2021-07-02 14:43:32,806 bit_vector.py __update_parameter] INFO setting parameter bit_vector.percent_length_cutoff to 0.01 specified by parameter file
-[2021-07-02 14:43:32,807 bit_vector.py validate_files] INFO fasta file: /home/cjurich/projects/dreem/test/resources/case_1/test.fasta exists
-[2021-07-02 14:43:32,807 bit_vector.py validate_files] INFO fastq file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate1.fastq exists
-[2021-07-02 14:43:32,807 bit_vector.py validate_files] INFO fastq2 file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate2.fastq exists
-[2021-07-02 14:43:32,807 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
-[2021-07-02 14:43:32,808 bit_vector.py __update_parameter] INFO setting parameter map.bt2_alignment_args to --local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 20,-p 16 specified by parameter file
-[2021-07-02 14:43:32,808 bit_vector.py __update_parameter] INFO setting parameter map.skip to False specified by parameter file
-[2021-07-02 14:43:32,808 bit_vector.py validate_files] INFO fasta file: /home/cjurich/projects/dreem/test/resources/case_1/test.fasta exists
-[2021-07-02 14:43:32,808 bit_vector.py validate_files] INFO fastq file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate1.fastq exists
-[2021-07-02 14:43:32,808 bit_vector.py validate_files] INFO fastq2 file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate2.fastq exists
-[2021-07-02 14:43:32,808 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
-[2021-07-02 14:43:32,819 bit_vector.py run] INFO ran at commandline as: 
-[2021-07-02 14:43:32,819 bit_vector.py run] INFO /home/cjurich/anaconda3/bin/pytest
-[2021-07-02 14:43:32,819 bit_vector.py validate_files] INFO fasta file: /home/cjurich/projects/dreem/test/resources/case_1/test.fasta exists
-[2021-07-02 14:43:32,819 bit_vector.py validate_files] INFO fastq file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate1.fastq exists
-[2021-07-02 14:43:32,820 bit_vector.py validate_files] INFO fastq2 file: /home/cjurich/projects/dreem/test/resources/case_1/test_mate2.fastq exists
-[2021-07-02 14:43:32,820 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
-[2021-07-02 14:43:32,820 bit_vector.py get_parameters] INFO -o/--overwrite supplied, will overwrite previous results with same name
-[2021-07-02 14:43:32,820 bit_vector.py build_directories] INFO building directory structure
-[2021-07-02 14:43:32,857 mapper.py __init__] INFO bowtie2 2.2.5 detected!
-[2021-07-02 14:43:33,015 mapper.py __init__] INFO fastqc v0.11.9 detected!
-[2021-07-02 14:43:33,042 mapper.py __init__] INFO trim_galore 0.6.4 detected!
-[2021-07-02 14:43:33,105 mapper.py __init__] INFO cutapt 1.18 detected!
-[2021-07-02 14:43:33,106 mapper.py __run_command] INFO running fastqc
-[2021-07-02 14:43:36,288 mapper.py __run_command] INFO fastqc ran without errors
-[2021-07-02 14:43:36,289 mapper.py __run_command] INFO running trim_galore
-[2021-07-02 14:43:40,987 mapper.py __run_command] INFO trim_galore ran without errors
-[2021-07-02 14:43:40,988 mapper.py __run_command] INFO running bowtie2-build
-[2021-07-02 14:43:41,119 mapper.py __run_command] INFO bowtie2-build ran without errors
-[2021-07-02 14:43:41,135 mapper.py __run_command] INFO running bowtie2 alignment
-[2021-07-02 14:43:41,618 mapper.py __run_command] INFO bowtie2 alignment ran without errors
-[2021-07-02 14:43:41,618 mapper.py __run_bowtie_alignment] INFO results for bowtie alignment: 
+[2021-07-02 20:26:12,235 bit_vector.py run] INFO ran at commandline as: 
+[2021-07-02 20:26:12,235 bit_vector.py run] INFO /opt/conda/envs/py3/bin/dreem -fa test.fasta -fq1 test_mate1.fastq -fq2 test_mate2.fastq --dot_bracket test.csv --log-level INFO
+[2021-07-02 20:26:12,235 bit_vector.py validate_files] INFO fasta file: test.fasta exists
+[2021-07-02 20:26:12,235 bit_vector.py validate_files] INFO fastq file: test_mate1.fastq exists
+[2021-07-02 20:26:12,235 bit_vector.py validate_files] INFO fastq2 file: test_mate2.fastq exists
+[2021-07-02 20:26:12,236 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
+[2021-07-02 20:26:12,236 bit_vector.py build_directories] INFO building directory structure
+[2021-07-02 20:26:12,269 mapper.py __init__] INFO bowtie2 2.2.9 detected!
+[2021-07-02 20:26:12,384 mapper.py __init__] INFO fastqc v0.11.4 detected!
+[2021-07-02 20:26:12,414 mapper.py __init__] INFO trim_galore 0.6.6 detected!
+[2021-07-02 20:26:12,496 mapper.py __init__] INFO cutapt 1.18 detected!
+[2021-07-02 20:26:12,496 mapper.py __run_command] INFO running fastqc
+[2021-07-02 20:26:13,640 mapper.py __run_command] INFO fastqc ran without errors
+[2021-07-02 20:26:13,641 mapper.py __run_command] INFO running trim_galore
+[2021-07-02 20:26:16,308 mapper.py __run_command] INFO trim_galore ran without errors
+[2021-07-02 20:26:16,308 mapper.py __run_command] INFO running bowtie2-build
+[2021-07-02 20:26:16,444 mapper.py __run_command] INFO bowtie2-build ran without errors
+[2021-07-02 20:26:16,444 mapper.py __run_command] INFO running bowtie2 alignment
+[2021-07-02 20:26:16,977 mapper.py __run_command] INFO bowtie2 alignment ran without errors
+[2021-07-02 20:26:16,978 mapper.py __run_bowtie_alignment] INFO results for bowtie alignment: 
 2500 reads; of these:
   2500 (100.00%) were paired; of these:
     38 (1.52%) aligned concordantly 0 times
     2333 (93.32%) aligned concordantly exactly 1 time
     129 (5.16%) aligned concordantly >1 times
 98.48% overall alignment rate
-[2021-07-02 14:43:41,618 mapper.py __run_picard_bam_convert] INFO Converting BAM file to SAM file format
-[2021-07-02 14:43:41,618 mapper.py __run_command] INFO running picard BAM conversion
-[2021-07-02 14:43:42,431 mapper.py __run_command] INFO picard BAM conversion ran without errors
-[2021-07-02 14:43:42,432 mapper.py __run_picard_sort] INFO sorting BAM file
-[2021-07-02 14:43:42,432 mapper.py __run_command] INFO running picard BAM sort
-[2021-07-02 14:43:43,174 mapper.py __run_command] INFO picard BAM sort ran without errors
-[2021-07-02 14:43:43,174 mapper.py run] INFO finished mapping!
-[2021-07-02 14:43:43,175 bit_vector.py run] INFO starting bitvector generation
-[2021-07-02 14:43:43,179 bit_vector.py __run_command] INFO running picard SAM convert
-[2021-07-02 14:43:43,947 bit_vector.py __run_command] INFO picard SAM convert ran without errors
-[2021-07-02 14:43:44,881 bit_vector.py run] INFO MUTATION SUMMARY:
+[2021-07-02 20:26:16,978 mapper.py __run_picard_bam_convert] INFO Converting BAM file to SAM file format
+[2021-07-02 20:26:16,978 mapper.py __run_command] INFO running picard BAM conversion
+[2021-07-02 20:26:17,625 mapper.py __run_command] INFO picard BAM conversion ran without errors
+[2021-07-02 20:26:17,626 mapper.py __run_picard_sort] INFO sorting BAM file
+[2021-07-02 20:26:17,626 mapper.py __run_command] INFO running picard BAM sort
+[2021-07-02 20:26:18,243 mapper.py __run_command] INFO picard BAM sort ran without errors
+[2021-07-02 20:26:18,243 mapper.py run] INFO finished mapping!
+[2021-07-02 20:26:18,244 bit_vector.py run] INFO starting bitvector generation
+[2021-07-02 20:26:18,248 bit_vector.py __run_command] INFO running picard SAM convert
+[2021-07-02 20:26:18,846 bit_vector.py __run_command] INFO picard SAM convert ran without errors
+[2021-07-02 20:26:19,774 bit_vector.py run] INFO MUTATION SUMMARY:
 | name          |   reads |   aligned |   no_mut |   1_mut |   2_mut |   3_mut |   3plus_mut |   sn |
 |---------------|---------|-----------|----------|---------|---------|---------|-------------|------|
 | mttr-6-alt-h3 |    2462 |     94.76 |    46.55 |   36.69 |    13.2 |    3.04 |        0.04 | 7.75 |
