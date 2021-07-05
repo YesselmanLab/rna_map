@@ -120,7 +120,8 @@ def titration(**args):
         df = pd.read_csv(file)
         #max_v = df["mismatches"].mean()
         normalize_reactivity(df)
-        max_v = df[17:20]["mismatches"].mean()
+        #max_v = df[17:20]["mismatches"].mean()
+        max_v = 1
         cur_data = []
         for r in res:
             cur_data.append((df.loc[r-1]["mismatches"]/max_v))
