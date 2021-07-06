@@ -17,8 +17,7 @@ readme = open('README.md').read()
 doclink = """
 Documentation
 -------------
-
-The full documentation is at http://seq_tools.rtfd.org."""
+"""
 history = ""
 
 with open('requirements.txt') as f:
@@ -26,8 +25,8 @@ with open('requirements.txt') as f:
 
 setup(
     name='dreem',
-    version='0.2.5',
-    description='simple functions for manipulating sequences and secondary structures in pandas dataframe format',
+    version='0.2.0',
+    description='',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Joe Yesselman',
     author_email='jyesselm@unl.edu',

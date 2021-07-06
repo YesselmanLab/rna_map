@@ -52,9 +52,9 @@ RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz -
     cp TrimGalore-0.6.6/trim_galore $DST && \
     rm -rf TrimGalore-0.6.6 trim_galore.tar.gz
 
-RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.5.zip      && \
-    unzip 0.2.5.zip                                                         && \
-    mv dreem-0.2.5 dreem                                                    && \
+RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
+    unzip 0.2.0.zip                                                         && \
+    mv dreem-0.2.0 dreem                                                    && \
    /bin/bash -c "cd dreem && python setup.py install"
 
 WORKDIR /data

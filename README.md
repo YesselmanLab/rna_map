@@ -12,11 +12,12 @@ If you are not familiar with docker https://docs.docker.com/get-docker/
 
 ```shell
 # get the code and install the python module
-wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.5.zip      && \
-    unzip 0.2.5.zip                                                     && \ 
-    mv dreem-0.2.5 dreem                                                && \
+wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
+    unzip 0.2.0.zip                                                     && \ 
+    mv dreem-0.2.0 dreem                                                && \
     cd dreem                                                            && \
-    sudo python3 setup.py install
+    sudo python3 setup.py install                                       && \
+    pip install . 
 
 # to setup the docker image you can either pull
 docker pull jyesselm/dreem:latest
