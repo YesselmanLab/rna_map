@@ -9,12 +9,13 @@ The easiest way to install is via docker!
 If you are not familiar with docker https://docs.docker.com/get-docker/
 
 ```shell
-# clone repo 
-git clone https://github.com/jyesselm/dreem
-# install python code, recommend you use conda to control your python env
-cd dreem 
-sudo python setup.py install 
-# can either pull the latest docker image from dockerhub 
+# get the code and install the python module
+wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.3.zip      && \
+    mv dreem-0.2.3 dreem                                                && \
+    cd dreem                                                            && \
+    sudo python3 setup.py install
+
+# to setup the docker image you can either pull
 docker pull jyesselm/dreem:latest
 # or build docker image from scratch 
 docker build -t dreem -f docker/Dockerfile .
