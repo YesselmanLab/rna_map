@@ -3,7 +3,7 @@ import yaml
 import os
 from click.testing import CliRunner
 from dreem import parameters, settings, run, run_docker
-
+import dreem
 TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
 BASE_DIR = os.path.dirname(TEST_DIR)
 
@@ -71,7 +71,7 @@ def test_get_sub_params():
 
 @pytest.mark.integration
 def test_help_strings():
-
+    open('loc','w').write(dreem.__file__)
     runner = CliRunner()
 
     args = [

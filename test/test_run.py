@@ -8,7 +8,7 @@ TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
 BASE_DIR = os.path.dirname(TEST_DIR)
 
 @pytest.mark.integration
-def _test_case_1():
+def test_case_1():
     util.safe_rmdir("output")
     util.safe_rmdir("input")
 
