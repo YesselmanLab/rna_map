@@ -10,8 +10,9 @@ If you are not familiar with docker https://docs.docker.com/get-docker/
 
 ```shell
 # get the code and install the python module
-wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.3.zip      && \
-    mv dreem-0.2.3 dreem                                                && \
+wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.4.zip      && \
+    unzip 0.2.4.zip                                                     && \ 
+    mv dreem-0.2.4 dreem                                                && \
     cd dreem                                                            && \
     sudo python3 setup.py install
 
