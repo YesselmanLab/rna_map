@@ -118,7 +118,7 @@ def main(**args):
         if not check_docker_image(docker_img):
             log.error("cannot find docker image. Make sure you have it built or downloaded")
             exit()
-    cmd = "docker run -v "
+    cmd = "docker run "
     files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
     file_map = {
         'dot_bracket'        : 'test.csv',
@@ -135,8 +135,13 @@ def main(**args):
             continue
         spl = f_path.split("/")
         abs_files.append(os.path.abspath(f_path) + ":/data/" + file_map[f])
-    cmd += " -v ".join(abs_files)
+    
+    for af in abs_files:
+        #cmd += f' -v "{af}" '
+        cmd += f' -v {af} '
+
     cmd += f" --name dreem_cont -t {docker_img}  dreem -fa test.fasta -fq1 test_mate1.fastq -fq2 test_mate2.fastq "
+    
     del args['fasta']
     del args['fastq1']
     del args['fastq2']
@@ -151,12 +156,14 @@ def main(**args):
             k = k.replace("_", "-")
         # basically need to check if its a flag or not 
         if not isinstance(v, bool): 
-            cmd += f"--{k} {v} "
+            cmd += f"--{k} '{v}' "
         else:
             cmd += f"--{k} "
 
     log.info("DOCKER CMD:\n" + cmd)
     subprocess.call(cmd, shell=True)
+    # this should probably be wrapped in some kind of a bigger try catch 
+    # loop that isolates when something doesn't work
     log.info("clean up and copy files from docker")
     log.info("docker cp dreem_cont:/data/output output")
     log.info("docker cp dreem_cont:/data/log log")
@@ -166,6 +173,5 @@ def main(**args):
     subprocess.call("docker cp dreem_cont:/data/log log", shell=True)
     subprocess.call("docker cp dreem_cont:/data/dreem.log dreem.log", shell=True)
     subprocess.call("docker rm dreem_cont", shell=True)
-
 if __name__ == "__main__":
     main()

@@ -4,6 +4,9 @@ click-option-group
 biopython
 plotly
 matplotlib
+numpy
 pandas
 tabulate
 pyyaml
+future
+pytest

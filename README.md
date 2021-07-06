@@ -18,7 +18,8 @@ wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
     mv dreem-0.2.0 dreem                                                && \
     cd dreem                                                            && \
     sudo python3 setup.py install                                       && \
-    pip install . 
+    pip install .                                                       && \
+    pip install -r requirements.txt
 
 # to setup the docker image you can either pull
 docker pull jyesselm/dreem:latest
