@@ -67,9 +67,9 @@ def check_docker_image(name):
                  help="fastq sequencing file of mate 1")
 @optgroup.option("-fq2", "--fastq2", type=click.Path(exists=True),
                  help="fastq sequencing file of mate 2")
-@optgroup.option("-db","--dot_bracket", type=click.Path(exists=True), required=True,
-                help="A csv formatted file that contains dot bracket info for each sequence")
 @optgroup.group("common options")
+@optgroup.option("--dot_bracket", type=click.Path(exists=True),
+                help="A csv formatted file that contains dot bracket info for each sequence")
 @optgroup.option("-pf", "--param-file", type=click.Path(exists=True),
                 help="A yml formatted file to specify parameters")
 @optgroup.option("-ow", "--overwrite", is_flag=True,
@@ -88,13 +88,15 @@ help="do not perform sequence mapping, not recommended")
 help="do not run fastqc for quality control of sequence data")
 @optgroup.option("--skip_trim_galore", is_flag=True,
 help="do not run trim galore to remove adapter sequences at ends")
+@optgroup.option("--tg_q_cutoff", default=None,
+help="TODO")
 @optgroup.option("--bt2_alignment_args", default=None,
-help="")
+help="TODO")
 @optgroup.group("bv options")
-@optgroup.option("--bv-overwrite", is_flag=True,
-help="overwrite bit vector calculation")
 @optgroup.option("--skip", is_flag=True,
 help="skip bit vector generation step, not recommended")
+@optgroup.option("--bv-overwrite", is_flag=True,
+help="overwrite bit vector calculation")
 @optgroup.option("--qscore_cutoff", default=None,
 help="quality score of read nucleotide, sets to ambigious if under this val")
 @optgroup.option("--num_of_surbases", default=None,
@@ -106,6 +108,12 @@ help="maximum number of mutations in a read allowable")
 @optgroup.option("--percent_length_cutoff", default=None,
 help="read is discarded if less than this percent of a ref sequence is included")
 def main(**args):
+    """
+    DREEM processes DMS next generation sequencing data to produce mutational
+    profiles that relate to DMS modification rates written by Silvi Rouskin and the
+    Rouskin lab (https://www.rouskinlab.com/)
+    """
+
     # generate docker container and run code
     docker_img = 'dreem'
     if not check_docker_image(docker_img):

@@ -1,8 +1,8 @@
 import pytest
 import yaml
 import os
-
-from dreem import parameters, settings
+from click.testing import CliRunner
+from dreem import parameters, settings, run, run_docker
 
 TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
 BASE_DIR = os.path.dirname(TEST_DIR)
@@ -68,3 +68,19 @@ def test_get_sub_params():
     pf = parameters.ParametersFactory()
     map = pf._Map()
     assert map.skip == False
+
+@pytest.mark.integration
+def test_help_strings():
+
+    runner = CliRunner()
+
+    args = [
+        "--help"
+    ]
+    result1 = runner.invoke(run, args, prog_name='dreem-test')
+    result2 = runner.invoke(run_docker, args, prog_name='dreem-test')
+    open('o1', 'w').write(result1.output)   
+    open('o2', 'w').write(result2.output)   
+    assert result1.output == result2.output 
+
+
