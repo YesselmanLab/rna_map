@@ -5,7 +5,11 @@ services:
 
 before_install:
   - docker build -t dreem -f docker/Dockerfile .
-  - python setup.py install
+
+install:
+  - pip install -r requirements.txt
+  - pip install --user . 
+
  
 
 script:
