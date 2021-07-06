@@ -1,0 +1,34 @@
+[2021-07-06 18:34:10,024 bit_vector.py main] INFO ran at commandline as: 
+[2021-07-06 18:34:10,024 bit_vector.py main] INFO /opt/conda/envs/py3/bin/dreem -fa test.fasta -fq1 test_mate1.fastq -fq2 test_mate2.fastq --overwrite --log-level INFO
+[2021-07-06 18:34:10,024 bit_vector.py validate_files] INFO fasta file: test.fasta exists
+[2021-07-06 18:34:10,024 bit_vector.py validate_files] INFO fastq file: test_mate1.fastq exists
+[2021-07-06 18:34:10,024 bit_vector.py validate_files] INFO fastq2 file: test_mate2.fastq exists
+[2021-07-06 18:34:10,024 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
+[2021-07-06 18:34:10,024 bit_vector.py get_parameters] INFO -o/--overwrite supplied, will overwrite previous results with same name
+[2021-07-06 18:34:10,024 bit_vector.py build_directories] INFO building directory structure
+[2021-07-06 18:34:10,055 mapper.py __init__] INFO bowtie2 2.2.9 detected!
+[2021-07-06 18:34:10,190 mapper.py __init__] INFO fastqc v0.11.4 detected!
+[2021-07-06 18:34:10,224 mapper.py __init__] INFO trim_galore 0.6.6 detected!
+[2021-07-06 18:34:10,304 mapper.py __init__] INFO cutapt 1.18 detected!
+[2021-07-06 18:34:10,305 mapper.py __run_command] INFO running fastqc
+[2021-07-06 18:34:12,449 mapper.py __run_command] INFO fastqc ran without errors
+[2021-07-06 18:34:12,450 mapper.py __run_command] INFO running trim_galore
+[2021-07-06 18:34:15,170 mapper.py __run_command] INFO trim_galore ran without errors
+[2021-07-06 18:34:15,170 mapper.py __run_command] INFO running bowtie2-build
+[2021-07-06 18:34:15,312 mapper.py __run_command] INFO bowtie2-build ran without errors
+[2021-07-06 18:34:15,313 mapper.py __run_command] INFO running bowtie2 alignment
+[2021-07-06 18:34:15,872 mapper.py __run_command] INFO bowtie2 alignment ran without errors
+[2021-07-06 18:34:15,873 mapper.py __run_bowtie_alignment] INFO results for bowtie alignment: 
+2500 reads; of these:
+  2500 (100.00%) were paired; of these:
+    38 (1.52%) aligned concordantly 0 times
+    2333 (93.32%) aligned concordantly exactly 1 time
+    129 (5.16%) aligned concordantly >1 times
+98.48% overall alignment rate
+[2021-07-06 18:34:15,873 mapper.py __run_picard_bam_convert] INFO Converting BAM file to SAM file format
+[2021-07-06 18:34:15,873 mapper.py __run_command] INFO running picard BAM conversion
+[2021-07-06 18:34:16,510 mapper.py __run_command] INFO picard BAM conversion ran without errors
+[2021-07-06 18:34:16,511 mapper.py __run_picard_sort] INFO sorting BAM file
+[2021-07-06 18:34:16,511 mapper.py __run_command] INFO running picard BAM sort
+[2021-07-06 18:34:17,121 mapper.py __run_command] INFO picard BAM sort ran without errors
+[2021-07-06 18:34:17,122 mapper.py run] INFO finished mapping!

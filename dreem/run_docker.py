@@ -129,7 +129,7 @@ def main(**args):
         'fasta'     : 'test.fasta',
         'fastq1'    : 'test_mate1.fastq',
         'fastq2'    : 'test_mate2.fastq'
-    }
+        } 
     
     abs_files = []
     for f in files:
@@ -143,6 +143,7 @@ def main(**args):
     del args['fasta']
     del args['fastq1']
     del args['fastq2']
+    
     for k, v in args.items():
         if v is None or v == False:
             continue
@@ -150,8 +151,12 @@ def main(**args):
             v = file_map[k]
         if k.find('dot') == -1: # added just for dot-bracket
             k = k.replace("_", "-")
-        cmd += f"--{k} {v} "
-    
+        # basically need to check if its a flag or not 
+        if not isinstance(v, bool): 
+            cmd += f"--{k} {v} "
+        else:
+            cmd += f"--{k} "
+
     log.info("DOCKER CMD:\n" + cmd)
     subprocess.call(cmd, shell=True)
     log.info("clean up and copy files from docker")
