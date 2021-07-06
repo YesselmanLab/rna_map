@@ -107,7 +107,6 @@ help="map alignment score cutoff for a read, read is discarded if under this val
 help="maximum number of mutations in a read allowable")
 @optgroup.option("--percent_length_cutoff", default=None,
 help="read is discarded if less than this percent of a ref sequence is included")
-
 def main(**args):
     """
     DREEM processes DMS next generation sequencing data to produce mutational

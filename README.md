@@ -53,61 +53,50 @@ pyyaml
 main excutable is `dreem` after installing locally it should be available in $PATH 
 
 ```shell
-Usage: dreem [OPTIONS]
+Usage: run.py [OPTIONS]
 
   DREEM processes DMS next generation sequencing data to produce mutational
-  profiles that relate to DMS modification rates written by Silvi Rouskin
-  and the Rouskin lab (https://www.rouskinlab.com/)
+  profiles that relate to DMS modification rates written by Silvi Rouskin and
+  the Rouskin lab (https://www.rouskinlab.com/)
 
 Options:
-  main arguments:
+  main arguments: 
     -fa, --fasta PATH             reference sequences in fasta format
                                   [required]
-
     -fq1, --fastq1 PATH           fastq sequencing file of mate 1  [required]
     -fq2, --fastq2 PATH           fastq sequencing file of mate 2
-  common options:
-    --db PATH                     A csv formatted file that contains dot
+  common options: 
+    --dot_bracket PATH            A csv formatted file that contains dot
                                   bracket info for each sequence
-
     -pf, --param-file PATH        A yml formatted file to specify parameters
     -ow, --overwrite              overwrites previous results, if not set will
                                   keep previous calculation checkpoints
-
     -ll, --log-level TEXT         set log level (INFO|WARN|DEBUG|ERROR|FATAL)
     -rob, --restore_org_behavior  retores the original behavior of dreem upon
                                   first release
-
-  map options:
+  map options: 
     --map-overwrite               overwrite mapping calculation
     --skip                        do not perform sequence mapping, not
                                   recommended
-
     --skip_fastqc                 do not run fastqc for quality control of
                                   sequence data
-
     --skip_trim_galore            do not run trim galore to remove adapter
                                   sequences at ends
-
-    --bt2_alignment_args TEXT
-  bv options:
-    --bv-overwrite                overwrite bit vector calculation
+    --tg_q_cutoff TEXT            TODO
+    --bt2_alignment_args TEXT     TODO
+  bv options: 
     --skip                        skip bit vector generation step, not
                                   recommended
-
+    --bv-overwrite                overwrite bit vector calculation
     --qscore_cutoff TEXT          quality score of read nucleotide, sets to
                                   ambigious if under this val
-
     --num_of_surbases TEXT        number of bases around a mutation
     --map_score_cutoff TEXT       map alignment score cutoff for a read, read
                                   is discarded if under this value
-
     --mutation_count_cutoff TEXT  maximum number of mutations in a read
                                   allowable
-
     --percent_length_cutoff TEXT  read is discarded if less than this percent
                                   of a ref sequence is included
-
   --help                          Show this message and exit.
 ```
 
@@ -230,6 +219,7 @@ docker run -v /Users/josephyesselman/projects/dreem/test/resources/case_1/test.f
 dreem_cont
 
 ```
+
 
 
 
