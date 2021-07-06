@@ -107,7 +107,7 @@ class MutationHistogram(object):
         data = [round(x, 2) for x in list((data / self.num_aligned) * 100)]
         return data
 
-    def gt_signal_to_noise(self):
+    def get_signal_to_noise(self):
         seq = self.sequence
         AC = 0
         GU = 0
