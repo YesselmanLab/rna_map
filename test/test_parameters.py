@@ -69,7 +69,6 @@ def test_help_strings():
     ]
     result1 = runner.invoke(run, args, prog_name='dreem-test')
     result2 = runner.invoke(run_docker, args, prog_name='dreem-test')
-    open('o1', 'w').write(result1.output)   
-    open('o2', 'w').write(result2.output)   
+    assert len( result1.output ) > 0
     assert result1.output == result2.output 
 
