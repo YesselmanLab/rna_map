@@ -53,7 +53,7 @@ RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz -
     rm -rf TrimGalore-0.6.6 trim_galore.tar.gz
 
 RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip  && \
-    unzip 0.2.0 -d dreem                                                && \
+    unzip 0.2.1 -d dreem                                                && \
    /bin/bash -c "cd dreem && python setup.py install"
 
 WORKDIR /data
