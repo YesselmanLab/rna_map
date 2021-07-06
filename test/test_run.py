@@ -26,3 +26,9 @@ def test_case_1():
     assert os.path.isfile("output/BitVector_Files/mttr-6-alt-h3_1_134_pop_avg.html")
     util.safe_rmdir("output")
     util.safe_rmdir("input")
+
+
+def test_entrypoints_work():
+
+    assert not os.system('dreem --help')
+    assert not os.system('dreem-docker --help')

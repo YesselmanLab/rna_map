@@ -26,7 +26,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='dreem',
-    version='0.1.0',
+    version='0.2.5',
     description='simple functions for manipulating sequences and secondary structures in pandas dataframe format',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Joe Yesselman',
@@ -58,8 +58,8 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
-            'dreem = dreem.run:main',
-            'dreem-docker = dreem.run_docker:main'
+            'dreem = dreem.run : main',
+            'dreem-docker = dreem.run_docker:main',
             'dreem-multi = dreeem.run_multi:main'
         ]
     }
