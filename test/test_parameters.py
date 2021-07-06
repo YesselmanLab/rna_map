@@ -1,8 +1,11 @@
-import pytest
-import yaml
 import os
+import yaml
+import pytest
+from click.testing import CliRunner
 
-from dreem import parameters, settings
+from dreem import parameters, settings, run, run_docker
+import dreem
+open('ooo','w').write((dreem.__file__))
 
 TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
 BASE_DIR = os.path.dirname(TEST_DIR)
@@ -68,3 +71,23 @@ def test_get_sub_params():
     pf = parameters.ParametersFactory()
     map = pf._Map()
     assert map.skip == False
+
+
+
+@pytest.mark.integration
+def test_help_strings_identical():
+    #util.safe_rmdir("output")
+    #util.safe_rmdir("input")
+    
+    path = BASE_DIR + "/test/resources/case_1/"
+    runner = CliRunner()
+    args = [ '--help' ]
+    result1 = runner.invoke(run, args, prog_name='dreem-test')
+    result2 = runner.invoke(run_docker, args, prog_name='dreem-test')
+    open('input1', 'w').write( result1.output )
+    open('input2', 'w').write( result2.output )
+    assert result1.output == result2.output
+    #
+    #assert os.path.isfile("output/BitVector_Files/mttr-6-alt-h3_1_134_pop_avg.html")
+    #util.safe_rmdir("output")
+    #util.safe_rmdir("input")
