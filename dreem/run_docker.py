@@ -88,6 +88,7 @@ help="do not perform sequence mapping, not recommended")
 help="do not run fastqc for quality control of sequence data")
 @optgroup.option("--skip_trim_galore", is_flag=True,
 help="do not run trim galore to remove adapter sequences at ends")
+<<<<<<< HEAD
 @optgroup.option("--tg_q_cutoff", default=None,
 help="TODO")
 @optgroup.option("--bt2_alignment_args", default=None,
@@ -97,6 +98,15 @@ help="TODO")
 help="skip bit vector generation step, not recommended")
 @optgroup.option("--bv-overwrite", is_flag=True,
 help="overwrite bit vector calculation")
+=======
+@optgroup.option("--bt2_alignment_args", default=None,
+help="")
+@optgroup.group("bv options")
+@optgroup.option("--bv-overwrite", is_flag=True,
+help="overwrite bit vector calculation")
+@optgroup.option("--skip", is_flag=True,
+help="skip bit vector generation step, not recommended")
+>>>>>>> ff7bcca25ca73e0a9f42d85ea7b2e0c39089aedb
 @optgroup.option("--qscore_cutoff", default=None,
 help="quality score of read nucleotide, sets to ambigious if under this val")
 @optgroup.option("--num_of_surbases", default=None,
@@ -107,7 +117,10 @@ help="map alignment score cutoff for a read, read is discarded if under this val
 help="maximum number of mutations in a read allowable")
 @optgroup.option("--percent_length_cutoff", default=None,
 help="read is discarded if less than this percent of a ref sequence is included")
+<<<<<<< HEAD
 
+=======
+>>>>>>> ff7bcca25ca73e0a9f42d85ea7b2e0c39089aedb
 def main(**args):
     """
     DREEM processes DMS next generation sequencing data to produce mutational
@@ -122,13 +135,13 @@ def main(**args):
             log.error("cannot find docker image. Make sure you have it built or downloaded")
             exit()
     cmd = "docker run -v "
-    files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
+    files = "fasta,fastq1,fastq2,db,param_file".split(",")
     file_map = {
-        'dot_bracket': 'test.csv',
-        'param_file' : 'test.param',
-        'fasta'      : 'test.fasta',
-        'fastq1'     : 'test_mate1.fastq',
-        'fastq2'     : 'test_mate2.fastq'
+        'db'        : 'test.csv',
+        'param_file': 'test.param',
+        'fasta'     : 'test.fasta',
+        'fastq1'    : 'test_mate1.fastq',
+        'fastq2'    : 'test_mate2.fastq'
     }
     
     abs_files = []
@@ -149,6 +162,7 @@ def main(**args):
             continue
         if k in file_map:
             v = file_map[k]
+<<<<<<< HEAD
         if k.find('dot') == -1:  # added just for dot-bracket
             k = k.replace("_", "-")
         # basically need to check if its a flag or not 
@@ -157,6 +171,10 @@ def main(**args):
         else:
             cmd += f"--{k} "
 
+=======
+        k = k.replace("_", "-")
+        cmd += f"--{k} {v} "
+>>>>>>> ff7bcca25ca73e0a9f42d85ea7b2e0c39089aedb
     log.info("DOCKER CMD:\n" + cmd)
     subprocess.call(cmd, shell=True)
     log.info("clean up and copy files from docker")

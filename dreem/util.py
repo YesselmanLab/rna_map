@@ -6,8 +6,8 @@ from Bio import SeqIO
 
 
 def safe_rmdir(dir_name):
-    if os.path.isdir(dir_name):
-        shutil.rmtree(dir_name)
+    if os.path.exists(dir_name):
+        os.rmdir(dir_name)
 
 
 def safe_mkdir(dir_name):
