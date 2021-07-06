@@ -4,26 +4,19 @@ from click.testing import CliRunner
 
 from dreem import run, settings, util
 
-TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
-BASE_DIR = os.path.dirname(TEST_DIR)
-
 @pytest.mark.integration
 def test_case_1():
-    util.safe_rmdir("output")
-    util.safe_rmdir("input")
-
-    path = BASE_DIR + "/test/resources/case_1/"
+    path = settings.get_lib_path() + "/test/resources/case_1/"
     runner = CliRunner()
-
     args = [
         "--fasta", path + "test.fasta",
         "--fastq1", path + "test_mate1.fastq",
         "--fastq2", path + "test_mate2.fastq",
-        "--overwrite",
+        "--overwrite"
     ]
-    result = runner.invoke(run, args, prog_name='dreem-test')
-    
+    result = runner.invoke(run.run_dream, args)
     assert os.path.isfile("output/BitVector_Files/mttr-6-alt-h3_1_134_pop_avg.html")
-    util.safe_rmdir("output")
-    util.safe_rmdir("input")
+
+    # util.safe_rmdir(path + "output")
+    # util.safe_rmdir(path + "input")
 

@@ -1,5 +1,3 @@
-[![Build Status](https://app.travis-ci.com/jyesselm/dreem.svg?branch=main)](https://app.travis-ci.com/jyesselm/dreem)
-
 # DREEM 
 
 DREEM processes DMS next-generation sequencing data to produce mutational profiles that relate to DMS modification rates written by Silvi Rouskin and the Rouskin lab (https://www.rouskinlab.com/)
@@ -25,7 +23,7 @@ docker build -t dreem -f docker/Dockerfile .
 
 If you want to run natively DREEM requires:
 
-```shell
+```she
 bowtie2=v2.2.9 (https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/)
 fastqc (https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 cutapt=v1.18 (https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip)

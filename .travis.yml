@@ -7,4 +7,4 @@ before_install:
   - docker build -t dreem -f docker/Dockerfile .
 
 script:
-  - python dreem/run_docker.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq -fq2 test/resources/case_1/test_mate2.fastq -db test/resources/case_1/test.csv
+  - python dreem/run_docker.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq -fq2 test/resources/case_1/test_mate2.fastq

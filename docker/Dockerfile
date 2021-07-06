@@ -2,7 +2,6 @@
 
 FROM biocontainers/biocontainers:latest
 
-
 ################## METADATA ######################
 LABEL base.image="biocontainers:latest"
 LABEL version="1"
