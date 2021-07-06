@@ -119,9 +119,9 @@ def main(**args):
             log.error("cannot find docker image. Make sure you have it built or downloaded")
             exit()
     cmd = "docker run -v "
-    files = "fasta,fastq1,fastq2,db,param_file".split(",")
+    files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
     file_map = {
-        'db'        : 'test.csv',
+        'dot_bracket'        : 'test.csv',
         'param_file': 'test.param',
         'fasta'     : 'test.fasta',
         'fastq1'    : 'test_mate1.fastq',
