@@ -1,0 +1,12 @@
+[2021-12-04 20:34:32,764 bit_vector.py run] INFO ran at commandline as: 
+[2021-12-04 20:34:32,764 bit_vector.py run] INFO dreem/run.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq -fq2 test/resources/case_1/test_mate2.fastq
+[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO fasta file: test/resources/case_1/test.fasta exists
+[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO fastq file: test/resources/case_1/test_mate1.fastq exists
+[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO fastq2 file: test/resources/case_1/test_mate2.fastq exists
+[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
+[2021-12-04 20:34:32,765 bit_vector.py build_directories] INFO building directory structure
+[2021-12-04 20:34:32,978 mapper.py __init__] INFO bowtie2 2.4.1 detected!
+[2021-12-04 20:34:33,527 mapper.py __init__] INFO fastqc v0.11.9 detected!
+[2021-12-04 20:34:33,584 mapper.py __init__] INFO trim_galore 0.6.6 detected!
+[2021-12-04 20:34:33,745 mapper.py __init__] INFO cutapt 1.18 detected!
+[2021-12-04 20:34:33,746 mapper.py __run_command] INFO running fastqc

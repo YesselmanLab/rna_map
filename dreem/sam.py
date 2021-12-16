@@ -36,6 +36,25 @@ class SamIterator(object):
         return self._good
 
 
+class SingleSamIterator(object):
+    def __init__(self, samfile_path, ref_seqs):
+        self._f = open(samfile_path)
+        ignore_lines = len(ref_seqs.keys()) + 2
+        for line_index in range(ignore_lines):  # Ignore header lines
+            self._f.readline()
+        self._read_1_line = ""
+        self._read_1 = None
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self._read_1_line = self._f.readline().strip()
+        if len(self._read_1_line) == 0:
+            raise StopIteration
+        self._read_1 = AlignedRead(self._read_1_line)
+        return [self._read_1]
+
 class PairedSamIterator(object):
     def __init__(self, samfile_path, ref_seqs):
         self._f = open(samfile_path)

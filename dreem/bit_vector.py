@@ -531,12 +531,14 @@ class BitVectorGenerator(object):
                     self._p.files.picard_sam_output, self._ref_seqs
             )
         else:
-            raise NotImplemented("single iterator not implemented")
+            sam_iterator = sam.SingleSamIterator(
+                    self._p.files.picard_sam_output, self._ref_seqs
+            )
         for read in sam_iterator:
             if self._p.paired:
                 bit_vector = self.__get_bit_vector_paired(read[0], read[1])
             else:
-                bit_vector = self.__get_bit_vector_single(read)
+                bit_vector = self.__get_bit_vector_single(read[0])
 
         if self._p.ins.dot_bracket is not None:
             df = pd.read_csv(self._p.ins.dot_bracket)
@@ -547,7 +549,37 @@ class BitVectorGenerator(object):
         pickle.dump(self._mut_histos, f)
 
     def __get_bit_vector_single(self, read):
-        raise NotImplemented()
+        if read.RNAME not in self._ref_seqs:
+            log_error_and_exit(
+                    "read {} aligned to {} which is not in the reference fasta".format(
+                            read.QNAME, read.RNAME
+                    )
+            )
+        ref_seq = self._ref_seqs[read.RNAME]
+        mh = self._mut_histos[read.RNAME]
+        if read.MAPQ < self.__map_score_cutoff or read.MAPQ < self.__map_score_cutoff:
+            mh.record_skip("low_mapq")
+            return None
+        bit_vector = self.__convert_read_to_bit_vector(read, ref_seq)
+        p1 = len(bit_vector) / len(ref_seq)
+        if p1 < self._p.bit_vector.percent_length_cutoff:
+            mh.record_skip("short_read")
+            return None
+        muts = 0
+        for pos in range(mh.start, mh.end + 1):
+            if pos not in bit_vector:
+                continue
+            read_bit = bit_vector[pos]
+            if read_bit in self.__bases:
+                muts += 1
+        if muts > self._p.bit_vector.mutation_count_cutoff:
+            mh.record_skip("too_many_muts")
+            return None
+        self._bit_vector_writers[read.RNAME].write_bit_vector(
+                read.QNAME, bit_vector
+        )
+        mh.record_bit_vector(bit_vector, self._p)
+        return bit_vector
 
     def __get_bit_vector_paired(self, read_1, read_2):
         if read_1.RNAME not in self._ref_seqs:

@@ -20,7 +20,10 @@ class ParametersFactory(object):
         def __init__(self, paths):
             self.ref_fasta = paths[0]  # fasta input file
             self.fastq1 = paths[1]  # fastq1 input file
-            self.fastq2 = paths[2]  # fastq2 input file
+            if len(paths) == 3:
+                self.fastq2 = paths[2]  # fastq2 input file
+            else:
+                self.fastq2 = None
             self.dot_bracket = None
 
         def __get_name(self, path):
@@ -53,8 +56,12 @@ class ParametersFactory(object):
     class _Files(object):
         def __init__(self, dirs, inputs):
             self.qhred_ascii = dirs.resources + "/phred_ascii.txt"
-            self.tg_fastq1 = dirs.mapping + inputs.fastq1_name + "_val_1.fq"
-            self.tg_fastq2 = dirs.mapping + inputs.fastq2_name + "_val_2.fq"
+            if inputs.fastq2 is not None:
+                self.tg_fastq1 = dirs.mapping + inputs.fastq1_name + "_val_1.fq"
+                self.tg_fastq2 = dirs.mapping + inputs.fastq2_name + "_val_2.fq"
+            else:
+                self.tg_fastq1 = dirs.mapping + inputs.fastq1_name + "_trimmed.fq"
+                self.tg_fastq2 = None
             self.bt2_index = dirs.input + inputs.ref_fasta_name
             self.bt2_alignment_output = dirs.mapping + "aligned.sam"
             self.picard_bam_output = dirs.mapping + "aligned.bam"

@@ -7,6 +7,8 @@ from dreem.util import *
 
 log = init_logger("mapper.py", "dreem.log")
 
+class DreemMappingError(Exception):
+    pass
 
 class Mapper(object):
     def __init__(self):
@@ -69,7 +71,7 @@ class Mapper(object):
         log.error("{} returned error:".format(pname))
         log.error(error_msg)
         log.error("EXITING")
-        exit()
+        raise DreemMappingError("{} returned error:".format(pname))
 
     # TODO check if correct arg val?
     def __validate_bt2_args(self, args):

@@ -41,7 +41,7 @@ def build_directories(p: Parameters):
 @optgroup.option("-fq1", "--fastq1", type=click.Path(exists=True), required=True,
                  help="fastq sequencing file of mate 1")
 @optgroup.option("-fq2", "--fastq2", type=click.Path(exists=True),
-                 help="fastq sequencing file of mate 2")
+                 help="fastq sequencing file of mate 2", default=None)
 @optgroup.group("common options")
 @optgroup.option("--dot_bracket", type=click.Path(exists=True),
                 help="A csv formatted file that contains dot bracket info for each sequence")
@@ -86,6 +86,7 @@ def main(**args):
     profiles that relate to DMS modification rates written by Silvi Rouskin and the
     Rouskin lab (https://www.rouskinlab.com/)
     """
+    print(args)
     run(args)
 
 

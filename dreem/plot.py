@@ -9,6 +9,13 @@ import plotly
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_style("white")
+sns.set_context("talk")
+
+
 from dreem import logger
 
 # universal logger
@@ -36,8 +43,13 @@ def get_trace(df):
 
 def normalize_reactivity(df):
     df_sub = df[(df['nuc'] == 'A') | (df['nuc'] == 'C') ]
-    avg = df_sub['mismatches'].mean()
+    avg = df['mismatches'].mean()
     df['mismatches'] = df['mismatches'] / avg
+
+def calc_avg(df):
+    df = df[20:-20]
+    df_sub = df[(df['nuc'] == 'A') | (df['nuc'] == 'C')]
+    return df['mismatches'].mean()
 
 
 @click.group()
@@ -134,5 +146,49 @@ def titration(**args):
     for d in data:
         print(d)
 
+@cli.command()
+@click.argument("base_dir")
+@click.argument('name')
+def temptitration(**args):
+    d = args['base_dir']
+    name = args['name']
+    files = glob.glob(f"{d}/*/output/BitVector_Files/{name}_*.csv")
+    files.sort()
+    temps = []
+    for f in files:
+        spl = f.split("/")
+        spl2 = spl[-4].split("_")
+        temp = spl2[-1][:-1]
+        temps.append(float(temp))
+    all_data = []
+    seq = None
+    avgs = []
+    for file in files:
+        df = pd.read_csv(file)
+        if seq is None:
+            seq = "".join(list(df['nuc'])[20:-20])
+        # max_v = df["mismatches"].mean()
+        #normalize_reactivity(df)
+        max_v = df[20:-20]["mismatches"].mean()
+        data = list(df[20:-20]['mismatches'] / 1)
+        #print(file, np.mean(data))
+        avgs.append(calc_avg(df))
+        all_data.append(data)
+
+    min_a, max_a = min(avgs), max(avgs)
+    scale = [x / min_a for x in avgs ]
+
+    if not os.path.isdir('plots'):
+        os.mkdir('plots')
+    for i in range(0, len(seq)):
+        titration = []
+        for j, data in enumerate(all_data):
+            titration.append(data[i]/scale[j])
+        plt.plot(temps, titration)
+        plt.savefig(f'plots/{i+21}{seq[i]}.png')
+        plt.clf()
+
+
 if __name__ == "__main__":
     cli()
+
