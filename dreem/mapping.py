@@ -68,10 +68,9 @@ class Mapper(object):
         return output, error_msg
 
     def __log_error_msg_and_exit(self, log, pname, error_msg):
-        log.error("{} returned error:".format(pname))
-        log.error(error_msg)
-        log.error("EXITING")
-        raise DreemMappingError("{} returned error:".format(pname))
+        s = "{} returned error:".format(pname)
+        s = s + "\n" + error_msg + "\n" + "EXITING"
+        logger.log_error_and_exit(log, s)
 
     # TODO check if correct arg val?
     def __validate_bt2_args(self, args):

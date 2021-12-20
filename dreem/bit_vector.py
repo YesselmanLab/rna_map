@@ -661,9 +661,9 @@ class BitVectorGenerator(object):
         return output, error_msg
 
     def __log_error_msg_and_exit(self, log, pname, error_msg):
-        log.error("{} returned error:".format(pname))
-        log.error(error_msg)
-        logger.log_error_and_exit("EXITING")
+        s = "{} returned error:".format(pname)
+        s = s + "\n" +error_msg + "\n" + "EXITING"
+        logger.log_error_and_exit(log, s)
 
     def __parse_phred_qscore_file(self, qscore_filename):
         phred_qscore = {}
