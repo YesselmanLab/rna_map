@@ -2,6 +2,8 @@ import os
 import logging
 import colorlog
 
+class DreemError(Exception):
+    pass
 
 def init_logger(dunder_name, log_outfile=None, testing_mode=False, start=False) -> logging.Logger:
     log_format = (
@@ -46,7 +48,7 @@ def init_logger(dunder_name, log_outfile=None, testing_mode=False, start=False) 
 
 def log_error_and_exit(log, msg):
     log.error(msg)
-    exit()
+    raise DreemError(msg)
 
 
 def str_to_log_level(s: str):

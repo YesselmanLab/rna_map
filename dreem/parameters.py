@@ -7,6 +7,7 @@ from dreem import settings, logger
 log = logger.log
 log_error_and_exit = logger.log_error_and_exit
 
+
 # abbreviations
 # tg -> trim galore
 # bt2 -> bowtie 2
@@ -97,6 +98,7 @@ class ParametersFactory(object):
             self.map_score_cutoff = 15
             self.mutation_count_cutoff = 10
             self.percent_length_cutoff = 0.01
+            self.plot_sequence = False
             self.miss_info = "."
             self.ambig_info = "?"
             self.nomut_bit = "0"
@@ -118,8 +120,7 @@ class ParametersFactory(object):
 
     def __parse_param_file(self, pf_path, p):
         if not os.path.isfile(pf_path):
-            log.error("parameter file {} supplied does not exist!".format(pf_path))
-            exit()
+            log_error_and_exit("parameter file {} supplied does not exist!".format(pf_path))
         f = open(pf_path)
         params = yaml.load(f, Loader=yaml.FullLoader)
         for group, vals in params.items():
@@ -206,7 +207,7 @@ class Parameters(object):
         sub_obj = self.__dict__[sub]
         if param not in sub_obj.__dict__:
             log_error_and_exit(
-                    log, "unknown parameter {} in group {}".format(param, sub )
+                    log, "unknown parameter {} in group {}".format(param, sub)
             )
         else:
             sub_obj.__dict__.update({param: val})

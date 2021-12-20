@@ -320,9 +320,11 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
             showlegend=False,
     )
     mut_fig_layout = go.Layout(
-            title="Mismatches: " + mh.name,
+            title=mh.name,
             xaxis=dict(title="Postion"),
             yaxis=dict(title="Fraction", range=[0, 0.1]),
+            plot_bgcolor="white"
+
     )
     mut_fig = go.Figure(data=mut_trace, layout=mut_fig_layout)
     seqs = list(mh.sequence)
@@ -330,11 +332,24 @@ def plot_population_avg(mh: MutationHistogram, p: Parameters):
         db = list(mh.structure)
     else:
         db = " " * len(seqs)
-    mut_fig.update_xaxes(
-            tickvals=xaxis_coordinates,
-            ticktext=["%s<br>%s" % (x, y) for (x, y) in zip(seqs, db)],
-            tickangle=0
+    mut_fig.update_yaxes(
+            gridcolor='lightgray',
+            linewidth=1,
+            linecolor='black',
+            mirror=True
     )
+    mut_fig.update_xaxes(
+            linewidth=1,
+            linecolor='black',
+            mirror=True
+    )
+    if p.bit_vector.plot_sequence:
+        mut_fig.update_xaxes(
+                tickvals=xaxis_coordinates,
+                ticktext=["%s<br>%s" % (x, y) for (x, y) in zip(seqs, db)],
+                tickangle=0
+        )
+
     plotly.offline.plot(
             mut_fig, filename=file_base_name + "pop_avg.html", auto_open=False,
     )
@@ -648,8 +663,7 @@ class BitVectorGenerator(object):
     def __log_error_msg_and_exit(self, log, pname, error_msg):
         log.error("{} returned error:".format(pname))
         log.error(error_msg)
-        log.error("EXITING")
-        exit()
+        logger.log_error_and_exit("EXITING")
 
     def __parse_phred_qscore_file(self, qscore_filename):
         phred_qscore = {}
