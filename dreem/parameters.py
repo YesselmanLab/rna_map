@@ -98,6 +98,7 @@ class ParametersFactory(object):
             self.map_score_cutoff = 15
             self.mutation_count_cutoff = 10
             self.percent_length_cutoff = 0.01
+            self.summary_output_only = False
             self.plot_sequence = False
             self.miss_info = "."
             self.ambig_info = "?"
@@ -112,6 +113,8 @@ class ParametersFactory(object):
                 'map_score_cutoff'     : "map alignment score cutoff for a read, read is discarded if under this value",
                 "mutation_count_cutoff": "maximum number of mutations in a read allowable",
                 "percent_length_cutoff": "read is discarded if less than this percent of a ref sequence is included",
+                "plot_sequence"        : "",
+                "summary_output_only"  : ""
             }
 
     class _EMCluster(object):
@@ -145,6 +148,10 @@ class ParametersFactory(object):
             p.bit_vector.percent_length_cutoff = float(args['percent_length_cutoff'])
         if args['mutation_count_cutoff'] is not None:
             p.bit_vector.mutation_count_cutoff = int(args['mutation_count_cutoff'])
+        if args['plot_sequence']:
+            p.bit_vector.plot_sequence = True
+        if args['summary_output_only']:
+            p.bit_vector.summary_output_only = True
 
     def get_parameters(self, args):
         input_files = validate_files(args)

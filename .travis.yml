@@ -15,4 +15,6 @@ install:
 script:
   - pytest
   - python dreem/run_docker.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq -fq2 test/resources/case_1/test_mate2.fastq --dot_bracket test/resources/case_1/test.csv
+  # make sure single reads work too
+  - python dreem/run_docker.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq
 

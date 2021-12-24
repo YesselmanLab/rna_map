@@ -495,7 +495,8 @@ class BitVectorGenerator(object):
         self.__run_picard_sam_convert()
         self.__generate_all_bit_vectors()
         for mh in self._mut_histos.values():
-            plot_population_avg(mh, p)
+            if not p.bit_vector.summary_output_only:
+                plot_population_avg(mh, p)
             if p.restore_org_behavior:
                 plot_population_avg_old(mh, p)
                 plot_read_coverage(mh, p)
@@ -537,9 +538,10 @@ class BitVectorGenerator(object):
             self._mut_histos[ref_name] = MutationHistogram(
                     ref_name, seq, "DMS", 1, len(seq)
             )
-            self._bit_vector_writers[ref_name] = BitVectorFileWriter(
-                    self._p.dirs.bitvector, ref_name, seq, "DMS", 1, len(seq)
-            )
+            if not self._p.bit_vector.summary_output_only:
+                self._bit_vector_writers[ref_name] = BitVectorFileWriter(
+                        self._p.dirs.bitvector, ref_name, seq, "DMS", 1, len(seq)
+                )
         sam_iterator = None
         if self._p.paired:
             sam_iterator = sam.PairedSamIterator(
@@ -590,9 +592,10 @@ class BitVectorGenerator(object):
         if muts > self._p.bit_vector.mutation_count_cutoff:
             mh.record_skip("too_many_muts")
             return None
-        self._bit_vector_writers[read.RNAME].write_bit_vector(
-                read.QNAME, bit_vector
-        )
+        if not self._p.bit_vector.summary_output_only:
+            self._bit_vector_writers[read.RNAME].write_bit_vector(
+                    read.QNAME, bit_vector
+            )
         mh.record_bit_vector(bit_vector, self._p)
         return bit_vector
 
@@ -626,9 +629,10 @@ class BitVectorGenerator(object):
         if muts > self._p.bit_vector.mutation_count_cutoff:
             mh.record_skip("too_many_muts")
             return None
-        self._bit_vector_writers[read_1.RNAME].write_bit_vector(
-                read_1.QNAME, bit_vector
-        )
+        if not self._p.bit_vector.summary_output_only:
+            self._bit_vector_writers[read_1.RNAME].write_bit_vector(
+                    read_1.QNAME, bit_vector
+            )
         mh.record_bit_vector(bit_vector, self._p)
         return bit_vector
 

@@ -20,3 +20,5 @@ bit_vector:
   - map_score_cutoff : 15
   - mutation_count_cutoff : 10
   - percent_length_cutoff : 0.01
+  - plot_sequence : False
+  - summary_output_only : False

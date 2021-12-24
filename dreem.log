@@ -1,12 +1,40 @@
-[2021-12-04 20:34:32,764 bit_vector.py run] INFO ran at commandline as: 
-[2021-12-04 20:34:32,764 bit_vector.py run] INFO dreem/run.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq -fq2 test/resources/case_1/test_mate2.fastq
-[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO fasta file: test/resources/case_1/test.fasta exists
-[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO fastq file: test/resources/case_1/test_mate1.fastq exists
-[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO fastq2 file: test/resources/case_1/test_mate2.fastq exists
-[2021-12-04 20:34:32,765 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
-[2021-12-04 20:34:32,765 bit_vector.py build_directories] INFO building directory structure
-[2021-12-04 20:34:32,978 mapper.py __init__] INFO bowtie2 2.4.1 detected!
-[2021-12-04 20:34:33,527 mapper.py __init__] INFO fastqc v0.11.9 detected!
-[2021-12-04 20:34:33,584 mapper.py __init__] INFO trim_galore 0.6.6 detected!
-[2021-12-04 20:34:33,745 mapper.py __init__] INFO cutapt 1.18 detected!
-[2021-12-04 20:34:33,746 mapper.py __run_command] INFO running fastqc
+[2021-12-23 18:44:55,558 bit_vector.py run] INFO ran at commandline as: 
+[2021-12-23 18:44:55,559 bit_vector.py run] INFO dreem/run.py -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq --summary_output_only -fq2 test/resources/case_1/test_mate2.fastq
+[2021-12-23 18:44:55,559 bit_vector.py validate_files] INFO fasta file: test/resources/case_1/test.fasta exists
+[2021-12-23 18:44:55,559 bit_vector.py validate_files] INFO fastq file: test/resources/case_1/test_mate1.fastq exists
+[2021-12-23 18:44:55,559 bit_vector.py validate_files] INFO fastq2 file: test/resources/case_1/test_mate2.fastq exists
+[2021-12-23 18:44:55,559 bit_vector.py validate_files] INFO two fastq files supplied, thus assuming paired reads
+[2021-12-23 18:44:55,559 bit_vector.py build_directories] INFO building directory structure
+[2021-12-23 18:44:55,620 mapper.py __init__] INFO bowtie2 2.4.1 detected!
+[2021-12-23 18:44:55,838 mapper.py __init__] INFO fastqc v0.11.9 detected!
+[2021-12-23 18:44:55,884 mapper.py __init__] INFO trim_galore 0.6.6 detected!
+[2021-12-23 18:44:56,008 mapper.py __init__] INFO cutapt 1.18 detected!
+[2021-12-23 18:44:56,009 mapper.py __run_command] INFO running fastqc
+[2021-12-23 18:44:59,634 mapper.py __run_command] INFO fastqc ran without errors
+[2021-12-23 18:44:59,636 mapper.py __run_command] INFO running trim_galore
+[2021-12-23 18:45:06,520 mapper.py __run_command] INFO trim_galore ran without errors
+[2021-12-23 18:45:06,521 mapper.py __run_command] INFO running bowtie2-build
+[2021-12-23 18:45:06,678 mapper.py __run_command] INFO bowtie2-build ran without errors
+[2021-12-23 18:45:06,680 mapper.py __run_command] INFO running bowtie2 alignment
+[2021-12-23 18:45:06,998 mapper.py __run_command] INFO bowtie2 alignment ran without errors
+[2021-12-23 18:45:06,999 mapper.py __run_bowtie_alignment] INFO results for bowtie alignment: 
+2500 reads; of these:
+  2500 (100.00%) were paired; of these:
+    168 (6.72%) aligned concordantly 0 times
+    2331 (93.24%) aligned concordantly exactly 1 time
+    1 (0.04%) aligned concordantly >1 times
+93.28% overall alignment rate
+[2021-12-23 18:45:06,999 mapper.py __run_picard_bam_convert] INFO Converting BAM file to SAM file format
+[2021-12-23 18:45:06,999 mapper.py __run_command] INFO running picard BAM conversion
+[2021-12-23 18:45:07,897 mapper.py __run_command] INFO picard BAM conversion ran without errors
+[2021-12-23 18:45:07,898 mapper.py __run_picard_sort] INFO sorting BAM file
+[2021-12-23 18:45:07,899 mapper.py __run_command] INFO running picard BAM sort
+[2021-12-23 18:45:08,754 mapper.py __run_command] INFO picard BAM sort ran without errors
+[2021-12-23 18:45:08,755 mapper.py run] INFO finished mapping!
+[2021-12-23 18:45:08,756 bit_vector.py run] INFO starting bitvector generation
+[2021-12-23 18:45:08,765 bit_vector.py __run_command] INFO running picard SAM convert
+[2021-12-23 18:45:09,584 bit_vector.py __run_command] INFO picard SAM convert ran without errors
+[2021-12-23 18:45:10,265 bit_vector.py run] INFO MUTATION SUMMARY:
+| name          |   reads |   aligned |   no_mut |   1_mut |   2_mut |   3_mut |   3plus_mut |   sn |
+|---------------|---------|-----------|----------|---------|---------|---------|-------------|------|
+| mttr-6-alt-h3 |    2332 |     99.96 |    46.42 |   36.81 |   13.21 |    3.05 |        0.04 | 7.76 |
