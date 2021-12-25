@@ -5,6 +5,7 @@ import pandas as pd
 import pickle
 import random
 import datetime
+from typing import Dict, List
 
 import plotly
 import plotly.graph_objs as go
@@ -121,6 +122,35 @@ class MutationHistogram(object):
         AC /= float(AC_count)
         GU /= float(GU_count)
         return round(float(AC / GU), 2)
+
+    def merge(self, other):
+        """Merges values from another histogram and ensures the merge is done correctly"""
+        # a whole bunch of checks to make sure all is well
+        assert self.end == other.end
+        assert self.name == other.name
+        assert self.start == other.start
+        assert self.sequence == other.sequence
+        assert self.structure == other.structure
+        assert self.skips.keys() == other.skips.keys()
+        assert self.mod_bases.keys() == other.mod_bases.keys()
+        assert len(self.num_of_mutations) == len(other.num_of_mutations)
+        # time to start updating the values
+        self.num_reads += other.num_reads
+        self.num_aligned += other.num_aligned
+        for key in self.skips.keys():
+            self.skips[key] += other.skips[key]
+        # not sure if this is right but its the only one that isn't
+        # an np.array
+        for ii in range(len(other.num_of_mutations)):
+            self.num_of_mutations[ii] += other.num_of_mutations[ii]
+
+        self.mut_bases += other.mut_bases
+        self.ins_bases += other.ins_bases
+        self.cov_bases += other.cov_bases
+        self.info_bases += other.info_bases
+
+        for key in self.mod_bases.keys():
+            self.mod_bases[key] += other.mod_bases[key]
 
 
 # plotting functions ###############################################################
@@ -666,7 +696,7 @@ class BitVectorGenerator(object):
 
     def __log_error_msg_and_exit(self, log, pname, error_msg):
         s = "{} returned error:".format(pname)
-        s = s + "\n" +error_msg + "\n" + "EXITING"
+        s = s + "\n" + error_msg + "\n" + "EXITING"
         logger.log_error_and_exit(log, s)
 
     def __parse_phred_qscore_file(self, qscore_filename):
@@ -779,3 +809,20 @@ class BitVectorGenerator(object):
             if sur_seq == orig_sur_seq:
                 return True
         return False
+
+
+def merge_mutational_histogram_dicts(
+        left: Dict[str, MutationHistogram],
+        right: Dict[str, MutationHistogram]) -> None:
+    """Merges two mutational histogram dictionaries. The "left" is updated with the "right"
+    """
+    for key in left.keys():
+        left[key].merge(right[key])
+
+
+def merge_all_mutational_histogram_dicts(
+        mut_histos: List[Dict[str, MutationHistogram]]) -> Dict[str, MutationHistogram]:
+    merged = mut_histos.pop(0)
+    for mh in mut_histos:
+        merge_mutational_histogram_dicts(merged, mh)
+    return merged
