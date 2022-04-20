@@ -23,7 +23,7 @@ def write_log_file(fname, output):
 
 
 # universal logger
-log = logger.log
+log = logger.get_logger('MAIN')
 
 
 def build_directories(p: Parameters):

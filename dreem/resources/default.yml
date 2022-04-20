@@ -5,7 +5,7 @@
 ## map ################################################################################
 # arguments related to mapping step
 map:
-  - skip : False
+  - skip: False
   - skip_fastqc : False
   - skip_trim_galore : False
   - tg_q_cutoff : 20 # trim galore quality cutoff

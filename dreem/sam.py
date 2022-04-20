@@ -1,7 +1,6 @@
-from dreem import settings
-from dreem.logger import *
+from dreem import settings, logger
 
-log = init_logger("sam.py")
+log = logger.get_logger('SAM')
 
 
 class AlignedRead:

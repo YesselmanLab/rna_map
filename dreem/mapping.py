@@ -1,11 +1,11 @@
 import os
 import shutil
 
+from dreem import logger
 from dreem.parameters import *
-from dreem.logger import *
 from dreem.util import *
 
-log = init_logger("mapper.py", "dreem.log")
+log = logger.get_logger('MAPPING')
 
 class DreemMappingError(Exception):
     pass

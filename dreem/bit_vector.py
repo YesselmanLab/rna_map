@@ -20,7 +20,7 @@ from dreem.parameters import Parameters
 from dreem.util import *
 from dreem.sam import *
 
-log = logger.log
+log = logger.get_logger('BIT_VECTOR')
 
 
 class MutationHistogram(object):
