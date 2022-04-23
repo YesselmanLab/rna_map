@@ -609,9 +609,9 @@ class BitVectorGenerator(object):
             return None
         bit_vector = self.__convert_read_to_bit_vector(read, ref_seq)
         p1 = len(bit_vector) / len(ref_seq)
-        if p1 < self._p.bit_vector.percent_length_cutoff:
-            mh.record_skip("short_read")
-            return None
+        #if p1 < self._p.bit_vector.percent_length_cutoff:
+        #    mh.record_skip("short_read")
+        #    return None
         muts = 0
         for pos in range(mh.start, mh.end + 1):
             if pos not in bit_vector:
@@ -645,9 +645,9 @@ class BitVectorGenerator(object):
         bit_vector_2 = self.__convert_read_to_bit_vector(read_2, ref_seq)
         p1 = len(bit_vector_1) / len(ref_seq)
         p2 = len(bit_vector_2) / len(ref_seq)
-        if p1 < self._p.bit_vector.percent_length_cutoff or p2 < self._p.bit_vector.percent_length_cutoff:
-            mh.record_skip("short_read")
-            return None
+        #if p1 < self._p.bit_vector.percent_length_cutoff or p2 < self._p.bit_vector.percent_length_cutoff:
+        #    mh.record_skip("short_read")
+        #    return None
         bit_vector = self.__merge_paired_bit_vectors(bit_vector_1, bit_vector_2)
         muts = 0
         for pos in range(mh.start, mh.end + 1):
