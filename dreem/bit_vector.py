@@ -203,7 +203,6 @@ def plot_modified_bases(mh: MutationHistogram, p: Parameters):
             barmode="stack",
     )
     modbases_fig = go.Figure(data=modbases_data, layout=modbases_layout)
-    modbases_fig
     plotly.offline.plot(
             modbases_fig, filename=file_base_name + "mutations.html", auto_open=False,
     )
