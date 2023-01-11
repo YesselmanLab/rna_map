@@ -24,3 +24,6 @@ bit_vector:
   - percent_length_cutoff: 0.01
   - plot_sequence: False
   - summary_output_only: False
+dirs:
+  log: log
+  input: input
