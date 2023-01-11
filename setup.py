@@ -37,6 +37,7 @@ setup(
     package_dir={'dreem': 'dreem'},
     py_modules=[
         'dreem/bit_vector',
+        'dreem/exception',
         'dreem/fastq',
         'dreem/logger',
         'dreem/mapping',

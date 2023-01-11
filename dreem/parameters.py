@@ -1,41 +1,54 @@
 import os
-import logging
 import yaml
 import re
-from future import types
+from dreem import settings, logger
+from dreem.exception import DREEMInputException
+
 from pathlib import Path
-from dreem import settings, logger, exception
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 
 log = logger.get_logger("PARAMETERS")
 
 
 @dataclass(frozen=True, order=True)
 class Inputs:
+    """
+    Input parameters
+    """
+
     fasta: str
     fastq1: str
-    fastq2: ""
-    csv: ""
+    fastq2: str = ""
+    csv: str = ""
+    param_file: str = ""
 
     def is_paired(self):
+        """
+        Check if the input is paired i.e. has both R1 and R2
+        """
         if self.fastq2 != "":
             return True
-        else:
-            return False
+        return False
 
     def supplied_csv(self):
+        """
+        Check if the user supplied a csv file
+        """
         if self.csv != "":
             return True
-        else:
-            return False
+        return False
 
+    def fastq1_name(self):
+        """
+        Get the name of the fastq1 file
+        """
+        return Path(self.fastq1).stem
 
-@dataclass(frozen=True, order=True)
-class Dirs:
-    resources: str = settings.get_py_path() + "/resources/"
-    input: str = "input/"
-    output: str = "output/"
-    log: str = "log/"
+    def fastq2_name(self):
+        """
+        Get the name of the fastq2 file
+        """
+        return Path(self.fastq2).stem
 
 
 @dataclass(frozen=True, order=True)
@@ -222,14 +235,6 @@ class __ParametersFactory(object):
         return p
 
 
-class Parameters(object):
-    def __init__(self):
-        pass
-
-    def update_from_cli(self, args):
-        pass
-
-
 """
 class __Parameters(object):
     def __init__(
@@ -292,12 +297,12 @@ class __Parameters(object):
             args.append({k: v})
         return args
 """
-parameters: Parameters = None
+#parameters: Parameters = None
 
 
-def get_parameters() -> Parameters:
-    global parameters
-    return parameters
+#def get_parameters() -> Parameters:
+#    global parameters
+#    return parameters
 
 
 def validate_fasta_file(fa):
@@ -308,30 +313,30 @@ def validate_fasta_file(fa):
     for i, l in enumerate(lines):
         l = l.rstrip()
         if len(l) == 0:
-            raise exception.DREEMInputException(
+            raise DREEMInputException(
                 f"blank line found on ln: {i}. These are not allowed in fastas."
             )
         # should be a reference sequence declartion
         if i % 2 == 0:
             num += 1
             if not l.startswith(">"):
-                raise exception.DREEMInputException(
+                raise DREEMInputException(
                     f"reference sequence names are on line zero and even numbers."
                     f" line {i} has value which is not correct format in the fasta"
                 )
             if l.startswith("> "):
-                raise exception.DREEMInputException(
+                raise DREEMInputException(
                     f"there should be no spaces between > and reference name."
                     f"this occured on ln: {i} in the fasta file"
                 )
         elif i % 2 == 1:
             if l.startswith(">"):
-                raise exception.DREEMInputException(
+                raise DREEMInputException(
                     f"sequences should be on are on odd line numbers."
                     f" line {i} has value which is not correct format in fasta file"
                 )
             if re.search(r"[^AGCT]", l):
-                raise exception.DREEMInputException(
+                raise DREEMInputException(
                     f"reference sequences must contain only AGCT characters."
                     f" line {i} is not consisetnt with this in fasta"
                 )
@@ -340,27 +345,23 @@ def validate_fasta_file(fa):
 
 def validate_inputs(fa, fq1, fq2="", csv=""):
     if not os.path.isfile(fa):
-        raise exception.DREEMInputException(f"fasta file: does not exist {fa}!")
+        raise DREEMInputException(f"fasta file: does not exist {fa}!")
     else:
         log.info(f"fasta file: {fa} exists")
         validate_fasta_file(fa)
     if not os.path.isfile(fq1):
-        raise exception.DREEMInputException(
-            f"fastq1 file: does not exist {fq1}!"
-        )
+        raise DREEMInputException(f"fastq1 file: does not exist {fq1}!")
     else:
         log.info(f"fastq1 file: {fq1} exists")
     if fq2 != "":
         if not os.path.isfile(fq2):
-            raise exception.DREEMInputException(
-                f"fastq2 file: does not exist {fq2}!"
-            )
+            raise DREEMInputException(f"fastq2 file: does not exist {fq2}!")
         else:
             log.info("fastq2 file: {} exists".format(fq2))
             log.info("two fastq files supplied, thus assuming paired reads")
     if csv != "":
         if not os.path.isfile(fq2):
-            raise exception.DREEMInputException(
+            raise DREEMInputException(
                 "csv file: does not exist {}!".format(fq2)
             )
         else:
@@ -368,9 +369,10 @@ def validate_inputs(fa, fq1, fq2="", csv=""):
     return Inputs(fa, fq1, fq2, csv)
 
 
-def setup_parameters(args):
+"""def setup_parameters(args):
     pf = ParametersFactory()
     global parameters
     parameters = pf.get_parameters(args)
 
     # p.update("map.fastqc", False)
+"""

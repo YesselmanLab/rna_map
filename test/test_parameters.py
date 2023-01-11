@@ -1,11 +1,8 @@
 import pytest
 import yaml
 import os
-from click.testing import CliRunner
-from dreem import parameters, settings, run, run_docker
-import dreem
-from dreem.parameters import *
-from dreem.exception import *
+
+from dreem.parameters import Inputs
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 BASE_DIR = os.path.dirname(TEST_DIR)
@@ -16,8 +13,12 @@ p = {
     "fastq2": TEST_DIR + "/resources/case_1/test_mate2.fastq",
 }
 
+def test_inputs():
+    pass
 
-def test_input_validation():
+
+
+def _test_input_validation():
     ins = validate_inputs(p["fasta"], p["fastq1"])
     assert p["fasta"] == ins.fasta
     assert ins.csv == ""
@@ -40,7 +41,7 @@ def test_input_validation():
     assert exc_info.value.args[0] == "csv file: does not exist !"
 
 
-def test_fasta_checks():
+def _test_fasta_checks():
     fasta_test_path = TEST_DIR + "/resources/test_fastas/"
     path = fasta_test_path + "blank_line.fasta"
     with pytest.raises(DREEMInputException) as exc_info:

@@ -1,3 +1,4 @@
+param,vtype
 --very-fast,bool
 --fast,bool
 --sensitive,bool
@@ -33,7 +34,7 @@
 --no-unal,bool
 --no-head,bool
 --no-sg,bool
--p,int 
+-p,int
 --threads,int
 --reorder,bool
 --non-deterministic,int

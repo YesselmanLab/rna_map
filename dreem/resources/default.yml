@@ -5,20 +5,22 @@
 ## map ################################################################################
 # arguments related to mapping step
 map:
+  - dir: output/Mapping_Files
   - skip: False
-  - skip_fastqc : False
-  - skip_trim_galore : False
-  - tg_q_cutoff : 20 # trim galore quality cutoff
-  # default args for bowtie alignment
-  - bt2_alignment_args : "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+  - skip_fastqc: False
+  - skip_trim_galore: False
+  - tg_q_cutoff: 20 # trim galore quality cutoff
+  # default args for bowtie alignment seperated by ","
+  - bt2_alignment_args: "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
 
 ## bit_vector #########################################################################
 bit_vector:
-  - skip : False
-  - qscore_cutoff : 25
-  - num_of_surbases : 10
-  - map_score_cutoff : 15
-  - mutation_count_cutoff : 10
-  - percent_length_cutoff : 0.01
-  - plot_sequence : False
-  - summary_output_only : False
+  - dir: output/BitVector_Files
+  - skip: False
+  - qscore_cutoff: 25
+  - num_of_surbases: 10
+  - map_score_cutoff: 15
+  - mutation_count_cutoff: 10
+  - percent_length_cutoff: 0.01
+  - plot_sequence: False
+  - summary_output_only: False
