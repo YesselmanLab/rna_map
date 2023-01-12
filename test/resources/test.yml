@@ -1,3 +1,6 @@
-map:
-  - bt2_alignment_args: "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 20,-p 16"
-  - skip : False
+# abbreviations
+# tg -> trim galore
+# bt2 -> bowtie 2
+
+## map ################################################################################
+# arguments related to mapping step
