@@ -8,7 +8,12 @@ from dreem.settings import get_py_path
 
 from dreem.exception import DREEMInputException
 from dreem.logger import setup_applevel_logger, get_logger
-from dreem.parameters import Inputs, parse_parameters_from_file
+from dreem.parameters import (
+    Inputs,
+    parse_parameters_from_file,
+    get_default_params,
+    validate_parameters,
+)
 from dreem.util import *
 
 log = get_logger("RUN")
@@ -83,13 +88,13 @@ def validate_inputs(fa, fq1, fq2, csv):
     return Inputs(fa, fq1, fq2, csv)
 
 
-def build_directories():
+def build_directories(params):
     log.info("building directory structure")
-    os.makedirs("input")
-    os.makedirs("log")
-    os.makedirs("output")
-    os.makedirs(os.path.join("output", "Mapping_Files"))
-    os.makedirs(os.path.join("output", "BitVector_Files"))
+    os.makedirs(params["dirs"]["log"])
+    os.makedirs(params["dirs"]["input"])
+    os.makedirs(params["dirs"]["output"])
+    os.makedirs(os.path.join(params["dirs"]["output"], "Mapping_Files"))
+    os.makedirs(os.path.join(params["dirs"]["output"], "BitVector_Files"))
 
 
 @click.command()
@@ -134,32 +139,41 @@ def main(**args):
     Rouskin lab (https://www.rouskinlab.com/)
     """
     setup_applevel_logger()
+    log.info("ran at commandline as: ")
+    log.info(" ".join(sys.argv))
+    # log.setLevel(logger.str_to_log_level(kwargs["log_level"]))
+    # having fastq2 be a "" is a bit of a hack, but it works
+    if args["fastq2"] is None:
+        args["fastq2"] = ""
+    if args["dot_bracket"] is None:
+        args["dot_bracket"] = ""
+    if args["param_file"] is None:
+        params = get_default_params()
+    else:
+        params = parse_parameters_from_file(args["param_file"])
+    # TODO add cmd line arguments into params
     run(
         args.pop("fasta"),
         args.pop("fastq1"),
         args.pop("fastq2"),
         args.pop("dot_bracket"),
-        args.pop("param_file"),
-        **args,
+        params
     )
 
 
-def run(fasta, fastq1, fastq2, dot_bracket, parameter_file, **kwargs):
-    log.info("ran at commandline as: ")
-    log.info(" ".join(sys.argv))
+def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     ins = Inputs(fasta, fastq1, fastq2, dot_bracket)
-    # params =
-    # log.setLevel(logger.str_to_log_level(kwargs["log_level"]))
+    if params is None:
+        params = get_default_params()
     # setup parameters
     # setup_parameters(args)
     # p = get_parameters()
-    build_directories()
+    build_directories(params)
     # p.to_yaml_file(p.dirs.log + "/parameters.yml")
     # perform read mapping to reference sequences
     m = mapping.Mapper()
     m.check_program_versions()
-    m.run(ins)
-    # m.run(p)
+    m.run(ins, params)
     # convert aligned reads to bit vectors
     # bt = bit_vector.BitVectorGenerator()
     # bt.run(p)

@@ -2,6 +2,7 @@ import os
 import subprocess
 import shutil
 
+# TODO remove too much requirements
 from Bio import SeqIO
 
 

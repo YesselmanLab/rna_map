@@ -16,7 +16,6 @@ import pandas as pd
 from tabulate import tabulate
 
 from dreem import settings, sam, logger
-from dreem.parameters import Parameters
 from dreem.util import *
 from dreem.sam import *
 
@@ -495,6 +494,10 @@ class BitVectorFileReader(object):
         pass
 
 
+class BitVectorIterator(object):
+    def __init__(self, sam, paired):
+        pass
+
 class BitVectorGenerator(object):
     def __init__(self):
         self.__cigar_pattern = re.compile(r"(\d+)([A-Z]{1})")
@@ -521,7 +524,6 @@ class BitVectorGenerator(object):
         # setup parameters about generating bit vectors
         self.__setup_params(p)
         self._ref_seqs = fasta_to_dict(self._p.ins.ref_fasta)
-        log.setLevel(p.log_level)
         self.__run_picard_sam_convert()
         self.__generate_all_bit_vectors()
         for mh in self._mut_histos.values():
@@ -596,15 +598,15 @@ class BitVectorGenerator(object):
         pickle.dump(self._mut_histos, f)
 
     def __get_bit_vector_single(self, read):
-        if read.RNAME not in self._ref_seqs:
+        if read.rname not in self._ref_seqs:
             log_error_and_exit(
                     "read {} aligned to {} which is not in the reference fasta".format(
-                            read.QNAME, read.RNAME
+                            read.qname, read.rname
                     )
             )
-        ref_seq = self._ref_seqs[read.RNAME]
-        mh = self._mut_histos[read.RNAME]
-        if read.MAPQ < self.__map_score_cutoff or read.MAPQ < self.__map_score_cutoff:
+        ref_seq = self._ref_seqs[read.rname]
+        mh = self._mut_histos[read.rname]
+        if read.mapq < self.__map_score_cutoff or read.mapq < self.__map_score_cutoff:
             mh.record_skip("low_mapq")
             return None
         bit_vector = self.__convert_read_to_bit_vector(read, ref_seq)
@@ -623,22 +625,22 @@ class BitVectorGenerator(object):
             mh.record_skip("too_many_muts")
             return None
         if not self._p.bit_vector.summary_output_only:
-            self._bit_vector_writers[read.RNAME].write_bit_vector(
-                    read.QNAME, bit_vector
+            self._bit_vector_writers[read.rname].write_bit_vector(
+                    read.qname, bit_vector
             )
         mh.record_bit_vector(bit_vector, self._p)
         return bit_vector
 
     def __get_bit_vector_paired(self, read_1, read_2):
-        if read_1.RNAME not in self._ref_seqs:
+        if read_1.rname not in self._ref_seqs:
             log_error_and_exit(
                     "read {} aligned to {} which is not in the reference fasta".format(
-                            read_1.QNAME, read_1.RNAME
+                            read_1.qname, read_1.rname
                     )
             )
-        ref_seq = self._ref_seqs[read_1.RNAME]
-        mh = self._mut_histos[read_1.RNAME]
-        if read_1.MAPQ < self.__map_score_cutoff or read_2.MAPQ < self.__map_score_cutoff:
+        ref_seq = self._ref_seqs[read_1.rname]
+        mh = self._mut_histos[read_1.rname]
+        if read_1.mapq < self.__map_score_cutoff or read_2.mapq < self.__map_score_cutoff:
             mh.record_skip("low_mapq")
             return None
         bit_vector_1 = self.__convert_read_to_bit_vector(read_1, ref_seq)
@@ -660,8 +662,8 @@ class BitVectorGenerator(object):
             mh.record_skip("too_many_muts")
             return None
         if not self._p.bit_vector.summary_output_only:
-            self._bit_vector_writers[read_1.RNAME].write_bit_vector(
-                    read_1.QNAME, bit_vector
+            self._bit_vector_writers[read_1.rname].write_bit_vector(
+                    read_1.qname, bit_vector
             )
         mh.record_bit_vector(bit_vector, self._p)
         return bit_vector
@@ -715,11 +717,11 @@ class BitVectorGenerator(object):
 
     def __convert_read_to_bit_vector(self, read: AlignedRead, ref_seq: str):
         bitvector = {}
-        read_seq = read.SEQ
-        q_scores = read.QUAL
-        i = read.POS  # Pos in the ref sequence
+        read_seq = read.seq
+        q_scores = read.qual
+        i = read.pos  # Pos in the ref sequence
         j = 0  # Pos in the read sequence
-        cigar_ops = self._parse_cigar(read.CIGAR)
+        cigar_ops = self._parse_cigar(read.cigar)
         op_index = 0
         while op_index < len(cigar_ops):
             op = cigar_ops[op_index]

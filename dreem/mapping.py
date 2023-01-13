@@ -1,5 +1,8 @@
+"""
+module to run commands to map sequencing reads to reference sequences
+"""
+
 import os
-import shutil
 
 from pathlib import Path
 import pandas as pd
@@ -28,8 +31,8 @@ def skip_without_overwrite(method_name):
     Skip a method if the output directory already exists and overwrite is False
     """
     log.info(
-            f"SKIPPING {method_name}, it has been run already! specify -overwrite "
-            f"to rerun"
+        f"SKIPPING {method_name}, it has been run already! specify -overwrite "
+        f"to rerun"
     )
 
 
@@ -38,8 +41,8 @@ def skip_method_by_user(method_name, method_param):
     Skip a method if the user requests it
     """
     log.info(
-            f"SKIPPING {method_name}, was requested by user using param "
-            f"{method_param}"
+        f"SKIPPING {method_name}, was requested by user using param "
+        f"{method_param}"
     )
 
 
@@ -126,8 +129,8 @@ def validate_bowtie2_args(args: str):
         spl = full_arg.split()
         if len(spl) == 1:
             raise DREEMInputException(
-                    f"{full_arg} is not a valid bowtie2 argument. "
-                    f"Please check the documentation for valid arguments"
+                f"{full_arg} is not a valid bowtie2 argument. "
+                f"Please check the documentation for valid arguments"
             )
         arg, arg_val = spl[0], spl[1]
         if arg in valid_bt2_args:
@@ -136,7 +139,7 @@ def validate_bowtie2_args(args: str):
             raise DREEMInputException(f"{full_arg} is an invalid bt2 argument")
         if check_type(arg_val) != valid_bt2_args[arg]:
             raise DREEMInputException(
-                    f"{arg} must be of type {valid_bt2_args[arg]}"
+                f"{arg} must be of type {valid_bt2_args[arg]}"
             )
     log.debug("all bt2 arguments are valid")
 
@@ -201,12 +204,13 @@ class Mapper(object):
         log.info(f"trim_galore {get_trim_galore_version()} detected!")
         log.info(f"cutapt {get_cutadapt_version()} detected!")
 
-    def run(self, ins: Inputs, in_dir, out_dir, overwrite=False):
+    def run(self, ins: Inputs, params):
+        pass
         # don't rerun unless asked with -overwrite
         # if os.path.isfile(self._p.files.tg_fastq1) and not self._p.map.overwrite:
         #    self.__skip_without_overwrite("trim_galore")
         #    return
-        run_fastqc(ins.fastq1, ins.fastq2, out_dir + "/Mapping_Files/")
+        #run_fastqc(ins.fastq1, ins.fastq2, out_dir + "/Mapping_Files/")
 
         # skip by user request, make sure to copy the files for next step
         # skip trim galore
@@ -233,9 +237,9 @@ class Mapper(object):
 
     def __skip_method_by_user(self, method_name, method_param):
         log.info(
-                "SKIPPING {}, was requested by user using param {}".format(
-                        method_name, method_param
-                )
+            "SKIPPING {}, was requested by user using param {}".format(
+                method_name, method_param
+            )
         )
 
     def __log_output(self):
@@ -243,4 +247,5 @@ class Mapper(object):
         # f.write(output)
         # f.close()
         pass
+
     # run programs #############################################################
