@@ -4,36 +4,48 @@ run and check external commannds
 import os
 import shutil
 import subprocess
+from typing import Optional
 from pathlib import Path
+from dataclasses import dataclass
 import pandas as pd
 
 from dreem.settings import get_py_path
 from dreem.logger import get_logger
-from dreem.exception import DREEMInputException
+from dreem.exception import DREEMInputException, DREEMExternalProgramException
 
 log = get_logger("EXTERNAL_CMD")
 
-def run_command(cmd):
-    output, error_msg = None, None
-    try:
-        output = subprocess.check_output(
-            cmd, shell=True, stderr=subprocess.STDOUT
-        ).decode("utf8")
-    except subprocess.CalledProcessError as exc:
-        error_msg = exc.output.decode("utf8")
-    return output, error_msg
+
+@dataclass(frozen=True, order=True)
+class ProgOutput:
+    """
+    Class to store the output of an external program
+    """
+
+    output: Optional[str]
+    error: Optional[str]
 
 
-def does_program_exist(prog_name):
+def does_program_exist(prog_name: str) -> bool:
+    """
+    Check if a program exists
+    :prog_name: name of the program
+    """
     if shutil.which(prog_name) is None:
         return False
     else:
         return True
 
 
-def get_bowtie2_version():
+def get_bowtie2_version() -> str:
+    """
+    Get the version of bowtie2
+    :return: version of bowtie2
+    """
     if not does_program_exist("bowtie2"):
-        raise ValueError("cannot get bowtie2 version, cannot find the exe")
+        raise DREEMExternalProgramException(
+            "cannot get bowtie2 version, cannot find the exe"
+        )
     output = subprocess.check_output("bowtie2 --version", shell=True).decode(
         "utf8"
     )
@@ -42,14 +54,22 @@ def get_bowtie2_version():
     return l_spl[-1]
 
 
-def get_fastqc_version():
+def get_fastqc_version() -> str:
+    """
+    Get the version of fastqc
+    :return: version of fastqc
+    """
     if not does_program_exist("fastqc"):
-        raise ValueError("cannot get fastqc version, cannot find the exe")
-    (output, _) = run_command("fastqc --version")
-    lines = output.split("\n")
+        raise DREEMExternalProgramException(
+            "cannot get fastqc version, cannot find the exe"
+        )
+    out = run_command("fastqc --version")
+    lines = out.output.split("\n")
     if len(lines) < 1:
         raise ValueError(
-            "cannot get fastqc version, output is not valid: {}".format(output)
+            "cannot get fastqc version, output is not valid: {}".format(
+                out.output
+            )
         )
     l_spl = lines[0].split()
     return l_spl[1]
@@ -57,7 +77,9 @@ def get_fastqc_version():
 
 def get_trim_galore_version():
     if not does_program_exist("trim_galore"):
-        raise ValueError("cannot get trim_galore version, cannot find the exe")
+        raise DREEMExternalProgramException(
+            "cannot get trim_galore version, cannot find the exe"
+        )
     output = subprocess.check_output(
         "trim_galore --version", shell=True
     ).decode("utf8")
@@ -66,64 +88,98 @@ def get_trim_galore_version():
         raise ValueError(
             "cannot get fastqc version, output is not valid: {}".format(output)
         )
-    l_spl = lines[3].split()
-    return l_spl[1]
+    for l in lines:
+        if l.find("version") != -1:
+            l_spl = l.split()
+            return l_spl[-1]
+    return ""
 
 
 def get_cutadapt_version():
     if not does_program_exist("cutadapt"):
-        raise ValueError("cannot get cutadapt version, cannot find the exe")
+        raise DREEMExternalProgramException(
+            "cannot get cutadapt version, cannot find the exe"
+        )
     output = subprocess.check_output("cutadapt --version", shell=True).decode(
         "utf8"
     )
     return output.rstrip().lstrip()
 
 
+def run_command(cmd: str) -> ProgOutput:
+    """
+    Run a command and return the output
+    :cmd: command to run
+    """
+    output, error_msg = None, None
+    try:
+        output = subprocess.check_output(
+            cmd, shell=True, stderr=subprocess.STDOUT
+        ).decode("utf8")
+    except subprocess.CalledProcessError as exc:
+        error_msg = exc.output.decode("utf8")
+    return ProgOutput(output, error_msg)
 
-def run_mapping_command(method_name, cmd):
+
+def run_named_command(method_name: str, cmd: str) -> ProgOutput:
     """
     Run a mapping command and log the output
+    :method_name: name of the method
+    :cmd: command to run
+    :return: output of the command
     """
     log.info(f"running {method_name}")
     log.debug(cmd)
-    output, error_msg = run_command(cmd)
-    if error_msg is not None:
+    out = run_command(cmd)
+    if out.error is not None:
         log.error(f"error running command: {method_name}")
-        raise DREEMExternalProgramException(error_msg)
+        raise DREEMExternalProgramException(out.error)
     log.info(f"{method_name} ran without errors")
-    return output, error_msg
+    return out
 
 
-def run_fastqc(fastq1, fastq2, out_dir):
+def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> None:
     """
     run fastqc appliction on fastq files
+    :fastq1: path to fastq1 file
+    :fastq2: path to fastq2 file
+    :out_dir: path to output directory
     """
     fastqc_dir = os.path.join(out_dir, "fastqc")
     os.makedirs(fastqc_dir, exist_ok=True)
     fastqc_cmd = f"fastqc {fastq1} {fastq2} -o {fastqc_dir}"
-    run_mapping_command("fastqc", fastqc_cmd)
+    run_named_command("fastqc", fastqc_cmd)
 
 
-def run_trim_glore(fastq1, fastq2, out_dir):
+def run_trim_glore(fastq1: str, fastq2: str, out_dir: str) -> None:
     """
     Run trim glore on fastq files
+    :fastq1: path to fastq1 file
+    :fastq2: path to fastq2 file
+    :out_dir: path to output directory
     """
     if fastq2 == "":
         cmd = f"trim_galore --fastqc --paired {fastq1} {fastq2} -o {out_dir}"
     else:
         cmd = f"trim_galore --fastqc {fastq1} -o {out_dir}"
-    run_mapping_command("trim_galore", cmd)
+    run_named_command("trim_galore", cmd)
 
 
-def run_bowtie_build(fasta, input_dir):
+def run_bowtie_build(fasta: str, input_dir: str) -> None:
+    """
+    Run bowtie2-build on a fasta file
+    :fasta: path to fasta file
+    :input_dir: path to input directory
+    """
     fasta_name = Path(fasta).stem
-    cmd = f'bowtie2-build "{fasta}" input/{fasta_name}'
-    run_mapping_command("bowtie2-build", cmd)
+    cmd = f'bowtie2-build "{fasta}" {input_dir}/{fasta_name}'
+    run_named_command("bowtie2-build", cmd)
 
 
-def validate_bowtie2_args(args: str):
+def validate_bowtie2_args(args: str) -> bool:
     """
     Validate the bowtie2 arguments
+    :args: arguments to validate, seperated by ","
     """
 
     def check_type(arg):
@@ -171,9 +227,15 @@ def validate_bowtie2_args(args: str):
     log.debug("all bt2 arguments are valid")
 
 
-def run_bowtie_alignment(fasta, fastq1, fastq2, in_dir, out_dir, args):
+def run_bowtie_alignment(
+    fasta: str, fastq1: str, fastq2: str, in_dir: str, out_dir: str, args: str
+) -> None:
     """
     Run bowtie2 alignment
+    :fasta: path to fasta file
+    :fastq1: path to fastq1 file
+    :fastq2: path to fastq2 file
+    :in_dir: path to bowtie2 index directory
     """
     # check to make sure bt2 args are valid
     validate_bowtie2_args(args)
@@ -185,8 +247,8 @@ def run_bowtie_alignment(fasta, fastq1, fastq2, in_dir, out_dir, args):
         cmd += f"-1 {fastq1} -2 {fastq2}"
     else:
         cmd += f"-U {fastq1}"
-    output, _ = run_mapping_command("bowtie2 alignment", cmd)
-    output_lines = output.split("\n")
+    out = run_named_command("bowtie2 alignment", cmd)
+    output_lines = out.output.split("\n")
     keep = []
     for l in output_lines:
         if len(l) == 0:
@@ -197,19 +259,31 @@ def run_bowtie_alignment(fasta, fastq1, fastq2, in_dir, out_dir, args):
 
 
 def run_picard_bam_convert(sam_file, bam_file):
-    log.info("Converting BAM file to SAM file format")
+    """
+    Convert a sam file to a bam file
+    :sam_file: input path to sam file
+    :bam_file: output path to bam file
+    """
     picard_path = get_py_path() + "/resources/picard.jar"
     cmd = (
         f"java -jar {picard_path} SamFormatConverter I={sam_file} O={bam_file}"
     )
-    run_mapping_command("picard BAM conversion", cmd)
+    run_named_command("picard BAM conversion", cmd)
 
 
 def run_picard_sort(bam_file, sorted_bam_file):
-    log.info("sorting BAM file")
     picard_path = get_py_path() + "/resources/picard.jar"
     cmd = (
         f"java -jar {picard_path} SORT_ORDER=coordinate I={bam_file} "
         f"O={sorted_bam_file}"
     )
-    run_mapping_command("picard BAM sort", cmd)
+    run_named_command("picard BAM sort", cmd)
+
+
+def run_picard_sam_convert(sam_file, bam_file):
+    picard_path = get_py_path() + "/picard.jar"
+    cmd = (
+        f"java -jar {picard_path} SamFormatConverter I={bam_file} "
+        f"O={sam_file}"
+    )
+    run_named_command("picard SAM convert", cmd)

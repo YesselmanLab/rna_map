@@ -14,7 +14,7 @@ from dreem.exception import (
     DREEMMissingRequirementsException,
     DREEMExternalProgramException,
 )
-from dreem.util import (
+from dreem.external_cmd import (
     does_program_exist,
     run_command,
     get_fastqc_version,

@@ -1,9 +1,5 @@
 import os
-import subprocess
 import shutil
-
-# TODO remove too much requirements
-from Bio import SeqIO
 
 
 def safe_rmdir(dir_name):
@@ -19,16 +15,19 @@ def safe_mkdir(dir_name):
 def fasta_to_dict(fasta_file):
     """
     Parse a FASTA file
-    Args:
-        fasta_file (string): Path to FASTA file
-    Returns:
-        refs_seq (dict): Sequences of the ref genomes in the file
+    :param fasta_file: (string): Path to FASTA file
+    :return: refs_seq (dict): Sequences of the ref genomes in the file
     """
 
     refs_seq = {}
     with open(fasta_file, "r") as handle:
-        for record in SeqIO.parse(handle, "fasta"):
-            refs_seq[record.id] = str(record.seq)
+        for i, line in enumerate(handle.readlines()):
+            if line[0] == ">":
+                ref_name = line[1:].strip()
+                refs_seq[ref_name] = ""
+            else:
+                refs_seq[ref_name] += line.strip()
+
     return refs_seq
 
 

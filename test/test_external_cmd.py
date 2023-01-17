@@ -3,13 +3,14 @@ test running external commands
 """
 import os
 import pytest
+import shutil
 
-from dreem.testing import (
-    setup_directories,
-    remove_directories,
-    get_test_inputs_paired,
-)
 from dreem.external_cmd import (
+    does_program_exist,
+    get_bowtie2_version,
+    get_fastqc_version,
+    get_trim_galore_version,
+    get_cutadapt_version,
     run_command,
     run_fastqc,
     run_trim_glore,
@@ -20,16 +21,99 @@ from dreem.external_cmd import (
 )
 from dreem.exception import DREEMInputException
 from dreem.logger import setup_applevel_logger
+from dreem.parameters import Inputs
+
+TEST_DIR = os.path.dirname(os.path.realpath(__file__))
+
+def setup_directories(cur_dir):
+    """
+    Set up the directory for testing
+    """
+    os.makedirs(os.path.join(cur_dir, "input"))
+    os.makedirs(os.path.join(cur_dir, "log"))
+    os.makedirs(os.path.join(cur_dir, "output"))
+    os.makedirs(os.path.join(cur_dir, "output", "Mapping_Files"))
+    os.makedirs(os.path.join(cur_dir, "output", "BitVector_Files"))
+
+
+def remove_directories(cur_dir):
+    """
+    Remove the directory for testing
+    """
+    shutil.rmtree(os.path.join(cur_dir, "input"))
+    shutil.rmtree(os.path.join(cur_dir, "log"))
+    shutil.rmtree(os.path.join(cur_dir, "output"))
+
+
+def get_test_inputs_paired():
+    """
+    Get the test inputs
+    """
+    test_data_dir = os.path.join(TEST_DIR, "resources", "case_1")
+    return Inputs(
+        test_data_dir + "/test.fasta",
+        test_data_dir + "/test_mate1.fastq",
+        test_data_dir + "/test_mate2.fastq",
+    )
+
+# tests #######################################################################
+
+
+def test_does_program_exist():
+    """
+    test does_program_exist
+    """
+    assert does_program_exist("ls")
+    assert not does_program_exist("fake")
+
+
+def test_get_bowtie2_version():
+    """
+    test get_bowtie2_version
+    """
+    version = get_bowtie2_version()
+    #assert version == "2.4.5"
+
+
+def test_get_fastqc_version():
+    """
+    test get_fastqc_version
+    """
+    version = get_fastqc_version()
+    assert version == "v0.11.9"
+
+
+def test_get_trim_glore_version():
+    """
+    test get_trim_glore_version
+    """
+    version = get_trim_galore_version()
+    assert version == "0.6.6"
+
+
+def test_get_cutadapt_version():
+    """
+    test get_cutadapt_version
+    """
+    version = get_cutadapt_version()
+    assert version == "1.18"
+
 
 def test_run_command():
     """
     test run_command
     """
     cmd = "ls -l"
-    output, error_msg = run_command(cmd)
-    print(output, error_msg)
+    out = run_command(cmd)
+    assert out.output is not None
+    assert out.error is None
+    cmd = "fake"
+    out = run_command(cmd)
+    assert out.output is None
+    assert out.error is not None
 
-def _test_run_fastqc():
+
+def test_run_fastqc():
     """
     test run_fastqc
     """
@@ -39,19 +123,17 @@ def _test_run_fastqc():
     remove_directories(os.getcwd())
 
 
-def _test_run_trim_glore():
+def test_run_trim_glore():
     """
     test run_trim_glore
     """
-    log = setup_applevel_logger()
-    log.setLevel("DEBUG")
     setup_directories(os.getcwd())
     ins = get_test_inputs_paired()
     run_trim_glore(ins.fastq1, ins.fastq2, "output/Mapping_Files/")
     remove_directories(os.getcwd())
 
 
-def _test_run_bowtie_build():
+def test_run_bowtie_build():
     """
     test run_trim_glore
     """
@@ -95,12 +177,10 @@ def test_validate_bt2_args_exceptions():
         validate_bowtie2_args(args)
 
 
-def _test_bowtie_alignment():
+def test_bowtie_alignment():
     """
     test bowtie alignment
     """
-    log = setup_applevel_logger()
-    log.setLevel("DEBUG")
     setup_directories(os.getcwd())
     ins = get_test_inputs_paired()
     run_bowtie_build(ins.fasta, "input")
