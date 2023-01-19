@@ -85,6 +85,10 @@
       },
       "default": {},
       "additionalProperties": false
+    },
+    "overwrite" : {
+      "type" : "boolean",
+      "default" : false
     }
   },
   "default": {},

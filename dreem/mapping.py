@@ -3,7 +3,8 @@ module to run commands to map sequencing reads to reference sequences
 """
 
 import os
-
+import shutil
+from typing import Dict
 from pathlib import Path
 import pandas as pd
 from dreem import logger
@@ -16,38 +17,48 @@ from dreem.exception import (
 )
 from dreem.external_cmd import (
     does_program_exist,
-    run_command,
     get_fastqc_version,
     get_bowtie2_version,
     get_cutadapt_version,
     get_trim_galore_version,
+    run_picard_bam_convert,
+    run_picard_sort,
+    run_bowtie_alignment,
+    run_bowtie_build,
+    run_fastqc,
+    run_trim_glore,
 )
 
 log = logger.get_logger("MAPPING")
 
 
-def skip_without_overwrite(method_name):
-    """
-    Skip a method if the output directory already exists and overwrite is False
-    """
-    log.info(
-        f"SKIPPING {method_name}, it has been run already! specify -overwrite "
-        f"to rerun"
-    )
-
-
-def skip_method_by_user(method_name, method_param):
-    """
-    Skip a method if the user requests it
-    """
-    log.info(
-        f"SKIPPING {method_name}, was requested by user using param "
-        f"{method_param}"
-    )
-
-
-
 class Mapper(object):
+    def __init__(self):
+        self.__setup = False
+
+    def setup(self, ins: Inputs, params: Dict):
+        self.__ins = ins
+        self.__params = params
+        self.__setup = True
+        # params
+        self.__in_dir = self.__params["dirs"]["input"]
+        self.__out_dir = os.path.join(
+            self.__params["dirs"]["output"], "Mapping_Files"
+        )
+        self.__overwrite = self.__params["overwrite"]
+        self.check_program_versions()
+        self.build_directories(self.__params)
+
+    def build_directories(self, params):
+        log.info("building directory structure")
+        os.makedirs(params["dirs"]["log"], exist_ok=True)
+        os.makedirs(params["dirs"]["input"], exist_ok=True)
+        os.makedirs(params["dirs"]["output"], exist_ok=True)
+        os.makedirs(
+            os.path.join(params["dirs"]["output"], "Mapping_Files"),
+            exist_ok=True,
+        )
+
     def check_program_versions(self):
         """
         check to make sure all required programs exist and have the
@@ -63,31 +74,13 @@ class Mapper(object):
         log.info(f"trim_galore {get_trim_galore_version()} detected!")
         log.info(f"cutapt {get_cutadapt_version()} detected!")
 
-    def run(self, ins: Inputs, params):
-        pass
-        # don't rerun unless asked with -overwrite
-        # if os.path.isfile(self._p.files.tg_fastq1) and not self._p.map.overwrite:
-        #    self.__skip_without_overwrite("trim_galore")
-        #    return
-        #run_fastqc(ins.fastq1, ins.fastq2, out_dir + "/Mapping_Files/")
-
-        # skip by user request, make sure to copy the files for next step
-        # skip trim galore
-        """
-        if skip:
-            skip_method_by_user("trim_glore", "skip_trim_galore")
-            log.info("copying input fastq files directly")
-            shutil.copy(self._p.ins.fastq1, self._p.files.tg_fastq1)
-            if self._p.paired:
-                shutil.copy(self._p.ins.fastq2, self._p.files.tg_fastq2)
-            return
-        """
-        # self.__run_trim_glore()  # run trim galore
-        # self.__run_bowtie_build()  # run bowtie build
-        # self.__run_bowtie_alignment()  # row bowtie
-        # self.__run_picard_bam_convert()  # convert sam to bam
-        # self.__run_picard_sort()
-        # self.__run_picard_metrics()
+    def run(self):
+        self.__run_fastqc()
+        self.__run_trim_glore()
+        self.__run_bowtie_build()  # run bowtie build
+        self.__run_bowtie_alignment()  # row bowtie
+        self.__run_picard_bam_convert()  # convert sam to bam
+        self.__run_picard_sort()  # sort bam file
         log.info("finished mapping!")
 
     def __program_not_found(self, p_name):
@@ -107,4 +100,111 @@ class Mapper(object):
         # f.close()
         pass
 
+    def skip_without_overwrite(self, method_name):
+        """
+        Skip a method if the output directory already exists and overwrite is False
+        """
+        log.info(
+            f"SKIPPING {method_name}, it has been run already! specify -overwrite "
+            f"to rerun"
+        )
+
+    def skip_method_by_user(self, method_name, method_param):
+        """
+        Skip a method if the user requests it
+        """
+        log.info(
+            f"SKIPPING {method_name}, was requested by user using param "
+            f"{method_param}"
+        )
+
     # run programs #############################################################
+    def __run_fastqc(self):
+        """
+        run fastqc on the fastq files
+        """
+        if self.__params["map"]["skip_fastqc"]:
+            self.skip_method_by_user("fastqc", "skip_fastqc")
+            return
+        # don't rerun unless asked with -overwrite
+        if (
+            os.path.isdir(os.path.join(self.__out_dir, "fastqc"))
+            and not self.__overwrite
+        ):
+            self.skip_without_overwrite("fastqc")
+            return
+        run_fastqc(self.__ins.fastq1, self.__ins.fastq2, self.__out_dir)
+
+    def __run_trim_glore(self):
+        """
+        run trim galore on the fastq files
+        """
+        # TODO move fastq files to output dir and rename them to trim_galore
+        # version
+        fq1_path = f"{self.__out_dir}/{Path(self.__ins.fastq1).stem}_val_1.fq"
+        if self.__params["map"]["skip_trim_galore"]:
+            self.skip_method_by_user("trim_glore", "skip_trim_galore")
+            shutil.copy(self.__ins.fastq1, fq1_path)
+            fq2_path = (
+                f"{self.__out_dir}/{Path(self.__ins.fastq2).stem}_val_2.fq"
+            )
+            shutil.copy(self.__ins.fastq2, fq2_path)
+            return
+        # don't rerun unless asked with -overwrite
+        if os.path.isfile(fq1_path) and not self.__overwrite:
+            self.skip_without_overwrite("trim_glore")
+            return
+        return run_trim_glore(
+            self.__ins.fastq1, self.__ins.fastq2, self.__out_dir
+        )
+
+    def __run_bowtie_build(self):
+        """
+        run bowtie build on the reference sequence
+        """
+        bt2_index = os.path.join(
+            self.__in_dir, f"{Path(self.__ins.fasta).stem}.bt2"
+        )
+        if os.path.isfile(bt2_index) and not self.__overwrite:
+            self.skip_without_overwrite("bowtie_build")
+            return
+        return run_bowtie_build(self.__ins.fasta, self.__in_dir)
+
+    def __run_bowtie_alignment(self):
+        """
+        run bowtie alignment on the fastq files
+        """
+        sam_path = os.path.join(self.__out_dir, "aligned.sam")
+        if os.path.isfile(sam_path) and not self.__overwrite:
+            self.skip_without_overwrite("bowtie_alignment")
+            return
+        return run_bowtie_alignment(
+            self.__ins.fasta,
+            self.__ins.fastq1,
+            self.__ins.fastq2,
+            self.__in_dir,
+            self.__out_dir,
+            self.__params["map"]["bt2_alignment_args"],
+        )
+
+    def __run_picard_bam_convert(self):
+        """
+        convert sam to bam
+        """
+        sam_path = os.path.join(self.__out_dir, "aligned.sam")
+        bam_path = os.path.join(self.__out_dir, "aligned.bam")
+        if os.path.isfile(bam_path) and not self.__overwrite:
+            self.skip_without_overwrite("picard_bam_convert")
+            return
+        return run_picard_bam_convert(sam_path, bam_path)
+
+    def __run_picard_sort(self):
+        """
+        sort bam file
+        """
+        bam_path = os.path.join(self.__out_dir, "aligned.bam")
+        sorted_bam_path = os.path.join(self.__out_dir, "aligned_sorted.bam")
+        if os.path.isfile(sorted_bam_path) and not self.__overwrite:
+            self.skip_without_overwrite("picard_sort")
+            return
+        return run_picard_sort(bam_path, sorted_bam_path)

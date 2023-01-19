@@ -4,6 +4,7 @@
 
 ## map ################################################################################
 # arguments related to mapping step
+overwrite: False
 map:
   skip: False
   skip_fastqc: False

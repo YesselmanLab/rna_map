@@ -14,7 +14,8 @@ from dreem.mutation_histogram import (
     plot_mutation_histogram,
     plot_population_avg_old,
     plot_population_avg,
-    merge_mut_histo_dicts
+    merge_mut_histo_dicts,
+    merge_all_merge_mut_histo_dicts,
 )
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -53,6 +54,38 @@ def test_merge():
         assert mh.num_of_mutations[i] == mh2.num_of_mutations[i] * 2
         assert mh.mod_bases["A"][i] == mh2.mod_bases["A"][i] * 2
     assert mh.skips["low_mapq"] == mh2.skips["low_mapq"] * 2
+
+
+def test_merge_mut_histo_dicts():
+    """
+    test merge_mut_histo_dicts
+    """
+    mh = get_example_mut_histo()
+    mh2 = get_example_mut_histo()
+    mh3 = get_example_mut_histo()
+    mh3.name = "test"
+    d = {mh.name: mh}
+    d1 = {mh2.name: mh2, mh3.name: mh3}
+    merge_mut_histo_dicts(d, d1)
+    assert len(d) == 2
+    assert d[mh.name].num_reads == mh2.num_reads * 2
+
+
+def test_merge_all_merge_mut_histo_dicts():
+    """
+    test merge_all_merge_mut_histo_dicts
+    """
+    mh = get_example_mut_histo()
+    mh2 = get_example_mut_histo()
+    mh3 = get_example_mut_histo()
+    mh3.name = "test"
+    mh4 = get_example_mut_histo()
+    d = {mh.name: mh}
+    d1 = {mh2.name: mh2, mh3.name: mh3}
+    d2 = {mh4.name: mh4}
+    d = merge_all_merge_mut_histo_dicts([d, d1, d2])
+    assert len(d) == 2
+    assert d[mh.name].num_reads == mh2.num_reads * 3
 
 
 def test_read_mutation_histogram():
@@ -136,7 +169,7 @@ def test_plot_population_avg_old():
     os.remove("mttr-6-alt-h3_1_134_pop_avg.html")
 
 
-def _test_plot_population_avg():
+def test_plot_population_avg():
     """
     test plot_population_avg
     """

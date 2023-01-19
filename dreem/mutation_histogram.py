@@ -241,6 +241,67 @@ def get_mut_histos_from_json_file(fname: str) -> Dict[str, MutationHistogram]:
     return {k: MutationHistogram.from_dict(v) for k, v in data.items()}
 
 
+def get_dataframe(
+    mut_histos: Dict[str, MutationHistogram], data_cols
+) -> pd.DataFrame:
+    """
+    Returns a dataframe of the mutation histograms
+    :param mut_histos: a dictionary of mutation histograms
+    """
+    data = []
+    for _, mut_histo in mut_histos.items():
+        data_row = []
+        for dc in data_cols:
+            if dc == "name":
+                data_row.append(mut_histo.name)
+            elif dc == "sequence":
+                data_row.append(mut_histo.sequence)
+            elif dc == "structure":
+                data_row.append(mut_histo.structure)
+            elif dc == "num_reads" or dc == "reads":
+                data_row.append(mut_histo.num_reads)
+            elif dc == "num_aligned" or dc == "aligned":
+                data_row.append(mut_histo.num_aligned)
+            elif dc == "num_of_mutations":
+                data_row.append(mut_histo.num_of_mutations)
+            elif dc == "no_mut":
+                data_row.append(mut_histo.num_of_mutations[0])
+            elif dc == "1_mut":
+                data_row.append(mut_histo.num_of_mutations[1])
+            elif dc == "2_mut":
+                data_row.append(mut_histo.num_of_mutations[2])
+            elif dc == "3_mut":
+                data_row.append(mut_histo.num_of_mutations[3])
+            elif dc == "3plus_mut":
+                data_row.append(mut_histo.num_of_mutations[4])
+            elif dc == "percent_mutations":
+                data_row.append(mut_histo.get_percent_mutations())
+            elif dc == "signal_to_noise":
+                data_row.append(mut_histo.get_signal_to_noise())
+            elif dc == "read_coverage":
+                data_row.append(mut_histo.get_read_coverage())
+            elif dc == "pop_avg":
+                data_row.append(mut_histo.get_pop_avg())
+            elif dc == "pop_avg_del":
+                data_row.append(mut_histo.get_pop_avg(inc_del=True))
+            elif dc == "skips":
+                data_row.append(mut_histo.skips)
+            elif dc == "mod_bases":
+                data_row.append(mut_histo.mod_bases)
+            elif dc == "mut_bases":
+                data_row.append(mut_histo.mut_bases)
+            elif dc == "del_bases":
+                data_row.append(mut_histo.del_bases)
+            elif dc == "cov_bases":
+                data_row.append(mut_histo.cov_bases)
+            elif dc == "info_bases":
+                data_row.append(mut_histo.info_bases)
+            else:
+                raise ValueError("Invalid data column: {}".format(dc))
+        data.append(data_row)
+    return pd.DataFrame(data, columns=data_cols)
+
+
 # plotting functions ###########################################################
 
 
@@ -491,9 +552,11 @@ def merge_mut_histo_dicts(
     the "right"
     """
     # get common keys between the two dictionaries
-    common_keys = set(left.keys()).intersection(set(right.keys()))
-    for key in common_keys:
-        left[key].merge(right[key])
+    for key in right.keys():
+        if key in left.keys():
+            left[key].merge(right[key])
+        else:
+            left[key] = right[key]
 
 
 def merge_all_merge_mut_histo_dicts(

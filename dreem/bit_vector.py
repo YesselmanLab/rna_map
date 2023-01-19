@@ -86,7 +86,7 @@ class BitVectorIterator(object):
         self.count += 1
         reads = next(self.__sam_iterator)
         for read in reads:
-            if read not in self.__ref_seqs:
+            if read.rname not in self.__ref_seqs:
                 raise ValueError(
                     f"read {read.qname} aligned to {read.rname} which is not in "
                     f"the reference fasta"

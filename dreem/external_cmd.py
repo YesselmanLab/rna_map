@@ -138,7 +138,7 @@ def run_named_command(method_name: str, cmd: str) -> ProgOutput:
     return out
 
 
-def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> None:
+def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
     """
     run fastqc appliction on fastq files
     :fastq1: path to fastq1 file
@@ -148,24 +148,24 @@ def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> None:
     fastqc_dir = os.path.join(out_dir, "fastqc")
     os.makedirs(fastqc_dir, exist_ok=True)
     fastqc_cmd = f"fastqc {fastq1} {fastq2} -o {fastqc_dir}"
-    run_named_command("fastqc", fastqc_cmd)
+    return run_named_command("fastqc", fastqc_cmd)
 
 
-def run_trim_glore(fastq1: str, fastq2: str, out_dir: str) -> None:
+def run_trim_glore(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
     """
     Run trim glore on fastq files
     :fastq1: path to fastq1 file
     :fastq2: path to fastq2 file
     :out_dir: path to output directory
     """
-    if fastq2 == "":
+    if fastq2 != "":
         cmd = f"trim_galore --fastqc --paired {fastq1} {fastq2} -o {out_dir}"
     else:
         cmd = f"trim_galore --fastqc {fastq1} -o {out_dir}"
-    run_named_command("trim_galore", cmd)
+    return run_named_command("trim_galore", cmd)
 
 
-def run_bowtie_build(fasta: str, input_dir: str) -> None:
+def run_bowtie_build(fasta: str, input_dir: str) -> ProgOutput:
     """
     Run bowtie2-build on a fasta file
     :fasta: path to fasta file
@@ -173,7 +173,7 @@ def run_bowtie_build(fasta: str, input_dir: str) -> None:
     """
     fasta_name = Path(fasta).stem
     cmd = f'bowtie2-build "{fasta}" {input_dir}/{fasta_name}'
-    run_named_command("bowtie2-build", cmd)
+    return run_named_command("bowtie2-build", cmd)
 
 
 def validate_bowtie2_args(args: str) -> bool:
@@ -229,7 +229,7 @@ def validate_bowtie2_args(args: str) -> bool:
 
 def run_bowtie_alignment(
     fasta: str, fastq1: str, fastq2: str, in_dir: str, out_dir: str, args: str
-) -> None:
+) -> ProgOutput:
     """
     Run bowtie2 alignment
     :fasta: path to fasta file
@@ -256,9 +256,10 @@ def run_bowtie_alignment(
         if l[0] != "U":
             keep.append(l)
     log.info("results for bowtie alignment: \n" + "\n".join(keep))
+    return out
 
 
-def run_picard_bam_convert(sam_file, bam_file):
+def run_picard_bam_convert(sam_file: str, bam_file: str) -> ProgOutput:
     """
     Convert a sam file to a bam file
     :sam_file: input path to sam file
@@ -268,22 +269,27 @@ def run_picard_bam_convert(sam_file, bam_file):
     cmd = (
         f"java -jar {picard_path} SamFormatConverter I={sam_file} O={bam_file}"
     )
-    run_named_command("picard BAM conversion", cmd)
+    return run_named_command("picard BAM conversion", cmd)
 
 
-def run_picard_sort(bam_file, sorted_bam_file):
+def run_picard_sort(bam_file: str, sorted_bam_file: str) -> ProgOutput:
     picard_path = get_py_path() + "/resources/picard.jar"
     cmd = (
-        f"java -jar {picard_path} SORT_ORDER=coordinate I={bam_file} "
-        f"O={sorted_bam_file}"
+        f"java -jar {picard_path} SortSam I={bam_file} O={sorted_bam_file} "
+        f"SORT_ORDER=coordinate"
     )
-    run_named_command("picard BAM sort", cmd)
+    return run_named_command("picard BAM sort", cmd)
 
 
-def run_picard_sam_convert(sam_file, bam_file):
+def run_picard_sam_convert(sam_file: str, bam_file: str) -> ProgOutput:
+    """
+    Convert a sam file to a bam file
+    :sam_file: input path to sam file
+    :bam_file: output path to bam file
+    """
     picard_path = get_py_path() + "/picard.jar"
     cmd = (
         f"java -jar {picard_path} SamFormatConverter I={bam_file} "
         f"O={sam_file}"
     )
-    run_named_command("picard SAM convert", cmd)
+    return run_named_command("picard SAM convert", cmd)

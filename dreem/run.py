@@ -19,15 +19,17 @@ from dreem.util import *
 log = get_logger("RUN")
 
 
-# TODO make sure to validate right format of fasta file "> " vs ">"
 
 # logging/settings/args ###############################################################
 
 
-def validate_fasta_file(fa):
-    f = open(fa)
-    lines = f.readlines()
-    f.close()
+def validate_fasta_file(fa: str) -> None:
+    """
+    ensure that the fasta file is in the correct format
+    :param fa: path to the fasta file
+    """
+    with open(fa, "r", encoding="utf8") as f:
+        lines = f.readlines()
     num = 0
     for i, l in enumerate(lines):
         l = l.rstrip()
@@ -88,15 +90,6 @@ def validate_inputs(fa, fq1, fq2, csv):
     return Inputs(fa, fq1, fq2, csv)
 
 
-def build_directories(params):
-    log.info("building directory structure")
-    os.makedirs(params["dirs"]["log"])
-    os.makedirs(params["dirs"]["input"])
-    os.makedirs(params["dirs"]["output"])
-    os.makedirs(os.path.join(params["dirs"]["output"], "Mapping_Files"))
-    os.makedirs(os.path.join(params["dirs"]["output"], "BitVector_Files"))
-
-
 @click.command()
 @optgroup.group("main arguments")
 @optgroup.option(
@@ -132,6 +125,7 @@ def build_directories(params):
     type=click.Path(exists=True),
     help="A yml formatted file to specify parameters",
 )
+# TODO add options from command line into params
 def main(**args):
     """
     DREEM processes DMS next generation sequencing data to produce mutational
@@ -157,7 +151,7 @@ def main(**args):
         args.pop("fastq1"),
         args.pop("fastq2"),
         args.pop("dot_bracket"),
-        params
+        params,
     )
 
 
@@ -165,10 +159,10 @@ def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     ins = Inputs(fasta, fastq1, fastq2, dot_bracket)
     if params is None:
         params = get_default_params()
-    # setup parameters
-    # setup_parameters(args)
-    # p = get_parameters()
-    build_directories(params)
+    else:
+        validate_parameters(params)
+    params["overwrite"] = False
+    #build_directories(params)
     # p.to_yaml_file(p.dirs.log + "/parameters.yml")
     # perform read mapping to reference sequences
     m = mapping.Mapper()
