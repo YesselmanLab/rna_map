@@ -18,9 +18,7 @@ bit_vector:
   skip: False
   qscore_cutoff: 15 # changed
   num_of_surbases: 5 # changed
-  map_score_cutoff: 15
-  mutation_count_cutoff: 10
-  percent_length_cutoff: 0.01
+  map_score_cutoff: 25
   plot_sequence: False
   summary_output_only: False
 dirs:

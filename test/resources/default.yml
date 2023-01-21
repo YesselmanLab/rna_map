@@ -5,6 +5,8 @@
 ## map ################################################################################
 # arguments related to mapping step
 overwrite: False
+restore_org_behavior: False
+experimental_features: False
 map:
   skip: False
   skip_fastqc: False
@@ -19,10 +21,12 @@ bit_vector:
   qscore_cutoff: 25
   num_of_surbases: 10
   map_score_cutoff: 15
-  mutation_count_cutoff: 10
-  percent_length_cutoff: 0.01
   plot_sequence: False
   summary_output_only: False
+  experimental: # new cutoffs for bit vectors use at your own risk
+      min_mut_distance: 5 # minimum distance between mutations
+      percent_length_cutoff: 0.01 #
+      mutation_count_cutoff: 10
 dirs:
   log: log
   input: input

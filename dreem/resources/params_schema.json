@@ -47,14 +47,6 @@
           "type": "integer",
           "default": 15
         },
-        "mutation_count_cutoff": {
-          "type": "integer",
-          "default": 10
-        },
-        "percent_length_cutoff": {
-          "type": "number",
-          "default": 0.01
-        },
         "plot_sequence": {
           "type": "boolean",
           "default": false
@@ -62,6 +54,24 @@
         "summary_output_only": {
           "type": "boolean",
           "default": false
+        },
+        "experimental": {
+          "type": "object",
+          "properties": {
+            "min_mut_distance": {
+              "type": "integer",
+              "default": 5
+            },
+            "mutation_count_cutoff": {
+              "type": "integer",
+              "default": 10
+            },
+            "percent_length_cutoff": {
+              "type": "number",
+              "default": 0.01
+            }
+          },
+          "default": {}
         }
       },
       "default": {},
@@ -91,6 +101,10 @@
       "default": false
     },
     "restore_org_behavior": {
+      "type": "boolean",
+      "default": false
+    },
+    "experimental_features": {
       "type": "boolean",
       "default": false
     }

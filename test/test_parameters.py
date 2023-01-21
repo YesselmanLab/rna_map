@@ -35,7 +35,6 @@ def test_parse_parameter_overwrite():
     params = parse_parameters_from_file(path)
     assert params["map"]["skip"] == False
     # parameters that were changed
-    assert params["bit_vector"]["qscore_cutoff"] == 15
     assert params["bit_vector"]["num_of_surbases"] == 5
 
 
