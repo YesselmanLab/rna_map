@@ -256,15 +256,15 @@ def get_dataframe(
             elif dc == "num_of_mutations":
                 data_row.append(mut_histo.num_of_mutations)
             elif dc == "no_mut":
-                data_row.append(mut_histo.num_of_mutations[0])
+                data_row.append(mut_histo.get_percent_mutations()[0])
             elif dc == "1_mut":
-                data_row.append(mut_histo.num_of_mutations[1])
+                data_row.append(mut_histo.get_percent_mutations()[1])
             elif dc == "2_mut":
-                data_row.append(mut_histo.num_of_mutations[2])
+                data_row.append(mut_histo.get_percent_mutations()[2])
             elif dc == "3_mut":
-                data_row.append(mut_histo.num_of_mutations[3])
+                data_row.append(mut_histo.get_percent_mutations()[3])
             elif dc == "3plus_mut":
-                data_row.append(mut_histo.num_of_mutations[4])
+                data_row.append(mut_histo.get_percent_mutations()[4])
             elif dc == "percent_mutations":
                 data_row.append(mut_histo.get_percent_mutations())
             elif dc == "signal_to_noise" or dc == "sn":

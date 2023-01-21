@@ -216,7 +216,7 @@ class Mapper(object):
         """
         convert bam to sam
         """
-        bam_path = os.path.join(self.__out_dir, "aligned_sorted.bam")
+        bam_path = os.path.join(self.__out_dir, "aligned.bam")
         sam_path = os.path.join(self.__out_dir, "converted.sam")
         if os.path.isfile(sam_path) and not self.__overwrite:
             self.skip_without_overwrite("picard_sam_convert")
