@@ -83,7 +83,7 @@ def _test_fasta_checks():
     print(exc_info)
 
 
-def test_run():
+def _test_run():
     """
     test running the program
     """

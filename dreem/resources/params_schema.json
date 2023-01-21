@@ -86,9 +86,13 @@
       "default": {},
       "additionalProperties": false
     },
-    "overwrite" : {
-      "type" : "boolean",
-      "default" : false
+    "overwrite": {
+      "type": "boolean",
+      "default": false
+    },
+    "restore_org_behavior": {
+      "type": "boolean",
+      "default": false
     }
   },
   "default": {},

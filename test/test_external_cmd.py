@@ -82,7 +82,6 @@ def test_get_fastqc_version():
     version = get_fastqc_version()
     assert version == "v0.11.9"
 
-
 def test_get_trim_glore_version():
     """
     test get_trim_glore_version

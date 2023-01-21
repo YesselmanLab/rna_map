@@ -3,7 +3,7 @@ import subprocess
 import os
 import logging
 import colorlog
-from click_option_group import optgroup
+#from click_option_group import optgroup
 
 
 def init_logger(dunder_name, log_outfile=None, testing_mode=False, start=False) -> logging.Logger:
@@ -75,9 +75,9 @@ def check_docker_image(name):
 @optgroup.option("-ow", "--overwrite", is_flag=True,
                 help="overwrites previous results, if not set will keep previous " 
                      "calculation checkpoints")
-@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)", 
+@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)",
                 default="INFO")
-@optgroup.option("-rob", "--restore_org_behavior", is_flag=True, default=False, 
+@optgroup.option("-rob", "--restore_org_behavior", is_flag=True, default=False,
                 help="retores the original behavior of dreem upon first release")
 @optgroup.group("map options")
 @optgroup.option("--map-overwrite", is_flag=True,
@@ -133,7 +133,7 @@ def main(**args):
         'fastq1'    : 'test_mate1.fastq',
         'fastq2'    : 'test_mate2.fastq'
     }
-    
+
     abs_files = []
     for f in files:
         f_path = args[f]
@@ -141,34 +141,34 @@ def main(**args):
             continue
         spl = f_path.split("/")
         abs_files.append(os.path.abspath(f_path) + ":/data/" + file_map[f])
-    
+
     for af in abs_files:
         #cmd += f' -v "{af}" '
         cmd += f' -v {af} '
 
     cmd += f" --name dreem_cont -t {docker_img}  dreem -fa test.fasta -fq1 test_mate1.fastq -fq2 test_mate2.fastq "
-    
+
     del args['fasta']
     del args['fastq1']
     del args['fastq2']
-    
+
     for k, v in args.items():
         if v is None or v == False:
             continue
         if k in file_map:
             v = file_map[k]
-        
+
         if k.find('dot') == -1:  # added just for dot-bracket
             k = k.replace("_", "-")
-        # basically need to check if its a flag or not 
-        if not isinstance(v, bool): 
+        # basically need to check if its a flag or not
+        if not isinstance(v, bool):
             cmd += f"--{k} '{v}' "
         else:
             cmd += f"--{k} "
 
     log.info("DOCKER CMD:\n" + cmd)
     subprocess.call(cmd, shell=True)
-    # this should probably be wrapped in some kind of a bigger try catch 
+    # this should probably be wrapped in some kind of a bigger try catch
     # loop that isolates when something doesn't work
     log.info("clean up and copy files from docker")
     log.info("docker cp dreem_cont:/data/output output")

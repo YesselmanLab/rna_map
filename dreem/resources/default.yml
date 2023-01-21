@@ -5,6 +5,7 @@
 ## map ################################################################################
 # arguments related to mapping step
 overwrite: False
+restore_org_behavior: False
 map:
   skip: False
   skip_fastqc: False

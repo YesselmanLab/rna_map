@@ -9,7 +9,15 @@ import pandas as pd
 from tabulate import tabulate
 
 from dreem import settings
-from dreem.mutation_histogram import MutationHistogram
+from dreem.mutation_histogram import (
+    MutationHistogram,
+    get_dataframe,
+    plot_modified_bases,
+    plot_mutation_histogram,
+    plot_population_avg,
+    plot_population_avg_old,
+    plot_read_coverage,
+)
 from dreem.logger import get_logger
 from dreem.sam import AlignedRead, SingleSamIterator, PairedSamIterator
 from dreem.util import parse_phred_qscore_file, fasta_to_dict
@@ -21,6 +29,14 @@ log = get_logger("BIT_VECTOR")
 class BitVector:
     reads: List[AlignedRead]
     data: Dict
+
+
+@dataclass(frozen=True, order=True)
+class BitVectorSymbols:
+    miss_info: str = "*"
+    ambig_info: str = "?"
+    nomut_bit: str = "0"
+    del_bit: str = "1"
 
 
 class BitVectorFileWriter(object):
@@ -74,10 +90,7 @@ class BitVectorIterator(object):
         self.__bases = ["A", "C", "G", "T"]
         self.__qscore_cutoff = qscore_cutoff
         self.__num_of_surbases = num_of_surbases
-        self.__miss_info = "*"
-        self.__ambig_info = "?"
-        self.__nomut_bit = "0"
-        self.__del_bit = "1"
+        self.__bts = BitVectorSymbols()
 
     def __iter__(self):
         return self
@@ -119,20 +132,20 @@ class BitVectorIterator(object):
                         if read_seq[j] != ref_seq[i - 1]:
                             bitvector[i] = read_seq[j]
                         else:
-                            bitvector[i] = self.__nomut_bit
+                            bitvector[i] = self.__bts.nomut_bit
                     else:
-                        bitvector[i] = self.__ambig_info
+                        bitvector[i] = self.__bts.ambig_info
                     i += 1
                     j += 1
             elif desc == "D":  # Deletion
                 for k in range(length - 1):
-                    bitvector[i] = self.__ambig_info
+                    bitvector[i] = self.__bts.ambig_info
                     i += 1
                 is_ambig = self.__calc_ambig_reads(ref_seq, i, length)
                 if is_ambig:
-                    bitvector[i] = self.__ambig_info
+                    bitvector[i] = self.__bts.ambig_info
                 else:
-                    bitvector[i] = self.__del_bit
+                    bitvector[i] = self.__bts.del_bit
                 i += 1
             elif desc == "I":  # Insertion
                 j += length  # Update read index
@@ -140,7 +153,7 @@ class BitVectorIterator(object):
                 j += length  # Update read index
                 if op_index == len(cigar_ops) - 1:  # Soft clipped at the end
                     for k in range(length):
-                        bitvector[i] = self.__miss_info
+                        bitvector[i] = self.__bts.miss_info
                         i += 1
             else:
                 log.warn("unknown cigar op encounters: {}".format(desc))
@@ -188,28 +201,28 @@ class BitVectorIterator(object):
             elif bit != bit_vector[pos]:  # keys in both and bits not the same
                 bits = set([bit_vector_1[pos], bit])
                 if (
-                    self.__nomut_bit in bits
+                    self.__bts.nomut_bit in bits
                 ):  # one of the bits is not mutated take that
-                    bit_vector[pos] = self.__nomut_bit
+                    bit_vector[pos] = self.__bts.nomut_bit
                 # one of the bits is ambig take the other
-                elif self.__ambig_info in bits:
-                    other_bit = list(bits - set(self.__ambig_info))[0]
+                elif self.__bts.ambig_info in bits:
+                    other_bit = list(bits - set(self.__bts.ambig_info))[0]
                     bit_vector[pos] = other_bit
                 # one of the bits is missing take the other
-                elif self.__miss_info in bits:
-                    other_bit = list(bits - set(self.__miss_info))[0]
+                elif self.__bts.miss_info in bits:
+                    other_bit = list(bits - set(self.__bts.miss_info))[0]
                     bit_vector[pos] = other_bit
                 # both bits are mutations and different set to "?"
                 elif bit_vector_1[pos] in self.__bases and bit in self.__bases:
-                    bit_vector[pos] = self.__ambig_info
+                    bit_vector[pos] = self.__bts.ambig_info
                 # mutation on one side and insertion on the other side set to "?"
                 elif (
-                    bit_vector_1[pos] == self.__del_bit
+                    bit_vector_1[pos] == self.__bts.del_bit
                     and bit in self.__bases
                     or bit_vector_1[pos] in self.__bases
-                    and bit == self.__del_bit
+                    and bit == self.__bts.del_bit
                 ):
-                    bit_vector[pos] = self.__ambig_info
+                    bit_vector[pos] = self.__bts.ambig_info
                 else:
                     log.warn(
                         "unable to merge bit_vectors with bits: {} {}".format(
@@ -222,62 +235,75 @@ class BitVectorIterator(object):
 class BitVectorGenerator(object):
     def __init__(self):
         self.__bases = ["A", "C", "G", "T"]
+        self.__bts = BitVectorSymbols()
 
-    def run(self, sam_path, fasta, paired, csv_file, params):
+    def setup(self, params):
+        self.__params = params
+        self.__out_dir = os.path.join(
+            params["dirs"]["output"], "BitVector_Files/"
+        )
+        os.makedirs(params["dirs"]["output"], exist_ok=True)
+        os.makedirs(self.__out_dir, exist_ok=True)
+
+    def run(self, sam_path, fasta, paired, csv_file):
         log.info("starting bitvector generation")
         self.__ref_seqs = fasta_to_dict(fasta)
         self.__bit_vec_iterator = BitVectorIterator(
             sam_path, self.__ref_seqs, paired
         )
-        self.__map_score_cutoff = params["bitvector"]["map_score_cutoff"]
+        self.__mut_histos = {}
+        self.__map_score_cutoff = self.__params["bit_vector"]["map_score_cutoff"]
         self.__csv_file = csv_file
-        self.__out_dir = params["dirs"]["output"] + "/BitVector_Files/"
-        self.__summary_only = params["bit_vector"]["summary_output_only"]
-        self.__params = params
+        self.__summary_only = self.__params["bit_vector"]["summary_output_only"]
         # setup parameters about generating bit vectors
-        # self.__run_picard_sam_convert()
         self.__generate_all_bit_vectors()
         self.__generate_plots()
-        #self.__write_summary_csv()
+        self.__write_summary_csv()
 
     def __write_summary_csv(self):
-        f = open("output/BitVector_Files/summary.csv", "w")
-        s = "name,reads,aligned,no_mut,1_mut,2_mut,3_mut,3plus_mut,sn"
-        f.write(s + "\n")
-        headers = s.split(",")
-        table = []
-        for mh in self._mut_histos.values():
-            try:
-                data = [
-                    mh.name,
-                    mh.num_reads,
-                    round(mh.num_aligned / mh.num_reads * 100, 2),
-                ]
-            except:
-                data = [mh.name, mh.num_reads, 0]
-            data += mh.get_percent_mutations()
-            data.append(mh.get_signal_to_noise())
-            table.append(data)
-            f.write(",".join([str(x) for x in data]) + "\n")
+        cols = [
+            "name",
+            "reads",
+            "aligned",
+            "no_mut",
+            "1_mut",
+            "2_mut",
+            "3_mut",
+            "3plus_mut",
+            "sn",
+        ]
+        df = get_dataframe(self.__mut_histos, cols)
         log.info(
-            "MUTATION SUMMARY:\n" + tabulate(table, headers, tablefmt="github")
+            "MUTATION SUMMARY:\n"
+            + tabulate(df, df.columns, tablefmt="github", showindex=False)
         )
-        f.close()
+        sum_path = os.path.join(self.__out_dir, "summary.csv")
+        df.to_csv(sum_path, index=False)
 
     def __generate_plots(self):
-        """for mh in self._mut_histos.values():
-            if not p.bit_vector.summary_output_only:
-                plot_population_avg(mh, p)
-            if p.restore_org_behavior:
-                plot_population_avg_old(mh, p)
-                plot_read_coverage(mh, p)
-                plot_modified_bases(mh, p)
-                plot_mutation_histogram(mh, p)
-                generate_quality_control_file(mh, p)"""
-        pass
+        for _, mh in self.__mut_histos.items():
+            fname = f"{self.__out_dir}/{mh.name}_{mh.start}_{mh.end}_"
+            if not self.__summary_only:
+                df = mh.get_pop_avg_dataframe()
+                plot_population_avg(df, mh.name, f"{fname}pop_avg.html")
+            if self.__params["restore_org_behavior"]:
+                df = mh.get_summary_dataframe()
+                plot_population_avg_old(df, mh.name, f"{fname}pop_avg.html")
+                plot_modified_bases(
+                    mh.get_nuc_coords(), mh.mod_bases, f"{fname}mutations.html"
+                )
+                plot_mutation_histogram(
+                    mh.get_nuc_coords(),
+                    mh.num_of_mutations,
+                    f"{fname}mutation_histogram.html",
+                )
+                plot_read_coverage(
+                    mh.get_nuc_coords(),
+                    mh.get_read_coverage(),
+                    f"{fname}read_coverage.html",
+                )
 
     def __generate_all_bit_vectors(self):
-        self._mut_histos = {}
         """if (
             os.path.isfile(bit_vector_pickle_file)
             and not self._p.bit_vector.overwrite
@@ -292,7 +318,7 @@ class BitVectorGenerator(object):
 
         self._bit_vector_writers = {}
         for ref_name, seq in self.__ref_seqs.items():
-            self._mut_histos[ref_name] = MutationHistogram(
+            self.__mut_histos[ref_name] = MutationHistogram(
                 ref_name, seq, "DMS", 1, len(seq)
             )
             if not self.__summary_only:
@@ -301,20 +327,19 @@ class BitVectorGenerator(object):
                 )
         for bit_vector in self.__bit_vec_iterator:
             self.__record_bit_vector(bit_vector)
-        if self.__csv_file is not None:
+        if self.__csv_file != "":
             df = pd.read_csv(self.__csv_file)
             for i, row in df.iterrows():
-                if row["name"] in self._mut_histos:
-                    self._mut_histos[row["name"]].structure = row["structure"]
+                if row["name"] in self.__mut_histos:
+                    self.__mut_histos[row["name"]].structure = row["structure"]
         bit_vector_pickle_file = "output/BitVector_Files/mutation_histos.p"
         f = open(self.__out_dir + "mutation_histos.p", "wb")
-        pickle.dump(self._mut_histos, f)
+        pickle.dump(self.__mut_histos, f)
 
     def __record_bit_vector(self, bit_vector):
         read = bit_vector.reads[0]
         ref_seq = self.__ref_seqs[read.rname]
-        mh = self._mut_histos[read.rname]
-        per = len(bit_vector.data) / len(ref_seq)
+        mh = self.__mut_histos[read.rname]
         for read in bit_vector.reads:
             per = len(read.seq) / len(ref_seq)
             if per < self.__params["bit_vector"]["percent_length_cutoff"]:
@@ -335,18 +360,25 @@ class BitVectorGenerator(object):
             return
         if not self.__params["bit_vector"]["summary_output_only"]:
             self._bit_vector_writers[read.rname].write_bit_vector(
-                read.qname, bit_vector
+                read.qname, bit_vector.data
             )
-        mh.record_bit_vector(bit_vector, self.__params)
+        self.__update_mut_histo(mh, bit_vector.data)
 
-    def __run_picard_sam_convert(self):
-        # TODO fix path
-        if (
-            os.path.isfile(self.__out_dir + "/converted.sam")
-            and not self.__params["bit_vector"]["overwrite"]
-        ):
-            log.info(
-                "SKIPPING picard SAM convert, it has been run already! specify "
-                + "-overwrite to rerun"
-            )
-            return
+    def __update_mut_histo(self, mh: MutationHistogram, bit_vector):
+        mh.num_reads += 1
+        mh.num_aligned += 1
+        total_muts = 0
+        for pos in mh.get_nuc_coords():
+            if pos not in bit_vector:
+                continue
+            read_bit = bit_vector[pos]
+            if read_bit != self.__bts.ambig_info:
+                mh.cov_bases[pos] += 1
+            if read_bit in self.__bases:
+                total_muts += 1
+                mh.mod_bases[read_bit][pos] += 1
+                mh.mut_bases[pos] += 1
+            elif read_bit == self.__bts.del_bit:
+                mh.del_bases[pos] += 1
+            mh.info_bases[pos] += 1
+        mh.num_of_mutations[total_muts] += 1

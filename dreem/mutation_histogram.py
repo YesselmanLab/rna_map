@@ -13,7 +13,6 @@ from plotly.subplots import make_subplots
 
 class MutationHistogram(object):
     def __init__(self, name, sequence, data_type, start=None, end=None):
-        self.__bases = ["A", "C", "G", "T"]
         self.name = name
         self.sequence = sequence
         self.structure = None
@@ -128,25 +127,6 @@ class MutationHistogram(object):
         for key in self.mod_bases.keys():
             self.mod_bases[key] += other.mod_bases[key]
 
-    def record_bit_vector(self, bit_vector, p):
-        self.num_reads += 1
-        self.num_aligned += 1
-        total_muts = 0
-        for pos in self.get_nuc_coords():
-            if pos not in bit_vector:
-                continue
-            read_bit = bit_vector[pos]
-            if read_bit != p.bit_vector.ambig_info:
-                self.cov_bases[pos] += 1
-            if read_bit in self.__bases:
-                total_muts += 1
-                self.mod_bases[read_bit][pos] += 1
-                self.mut_bases[pos] += 1
-            elif read_bit == p.bit_vector.del_bit:
-                self.del_bases[pos] += 1
-            self.info_bases[pos] += 1
-        self.num_of_mutations[total_muts] += 1
-
     def record_skip(self, t):
         self.num_reads += 1
         self.skips[t] += 1
@@ -260,8 +240,19 @@ def get_dataframe(
                 data_row.append(mut_histo.structure)
             elif dc == "num_reads" or dc == "reads":
                 data_row.append(mut_histo.num_reads)
-            elif dc == "num_aligned" or dc == "aligned":
+            elif dc == "num_aligned":
                 data_row.append(mut_histo.num_aligned)
+            elif dc == "aligned":
+                aligned = 0.0
+                try:
+                    aligned = round(
+                        float(mut_histo.num_aligned)
+                        / float(mut_histo.num_reads),
+                        2,
+                    )
+                except ZeroDivisionError:
+                    pass
+                data_row.append(aligned)
             elif dc == "num_of_mutations":
                 data_row.append(mut_histo.num_of_mutations)
             elif dc == "no_mut":
@@ -276,7 +267,7 @@ def get_dataframe(
                 data_row.append(mut_histo.num_of_mutations[4])
             elif dc == "percent_mutations":
                 data_row.append(mut_histo.get_percent_mutations())
-            elif dc == "signal_to_noise":
+            elif dc == "signal_to_noise" or dc == "sn":
                 data_row.append(mut_histo.get_signal_to_noise())
             elif dc == "read_coverage":
                 data_row.append(mut_histo.get_read_coverage())

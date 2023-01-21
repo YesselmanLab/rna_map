@@ -1,6 +1,6 @@
 colorlog
 click
-click-option-group
+cloup
 plotly
 matplotlib
 numpy

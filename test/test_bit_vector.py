@@ -2,13 +2,17 @@
 test bit_vector module
 """
 import os
+import shutil
+import pytest
 from dreem.util import fasta_to_dict
 from dreem.parameters import get_default_params
 from dreem.bit_vector import BitVectorIterator, BitVectorGenerator
+from dreem.logger import setup_applevel_logger
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
+@pytest.mark.quick
 def test_bit_vector_iterator():
     """
     test bit vector iterator
@@ -31,11 +35,12 @@ def test_bit_vector_iterator():
         count += 1
     assert count == 2356
 
-
-def _test_bit_vector_generator():
+@pytest.mark.quick
+def test_bit_vector_generator():
     """
     test bit vector generation
     """
+    # setup_applevel_logger()
     fa_path = os.path.join(TEST_DIR, "resources", "case_1", "test.fasta")
     sam_path = os.path.join(
         TEST_DIR,
@@ -46,4 +51,7 @@ def _test_bit_vector_generator():
         "converted.sam",
     )
     bv_gen = BitVectorGenerator()
-    bv_gen.run(sam_path, fa_path, False, "", get_default_params())
+    bv_gen.setup(get_default_params())
+    bv_gen.run(sam_path, fa_path, False, "")
+    assert os.path.exists("output/BitVector_Files/summary.csv")
+    shutil.rmtree("output")

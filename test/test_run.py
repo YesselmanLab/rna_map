@@ -3,7 +3,7 @@ import shutil
 import os
 from click.testing import CliRunner
 
-from dreem import run, settings, util, run_docker
+#from dreem import run, settings, util, run_docker
 
 """
 TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )

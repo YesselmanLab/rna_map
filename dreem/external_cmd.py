@@ -281,13 +281,13 @@ def run_picard_sort(bam_file: str, sorted_bam_file: str) -> ProgOutput:
     return run_named_command("picard BAM sort", cmd)
 
 
-def run_picard_sam_convert(sam_file: str, bam_file: str) -> ProgOutput:
+def run_picard_sam_convert(bam_file: str, sam_file: str) -> ProgOutput:
     """
     Convert a sam file to a bam file
     :sam_file: input path to sam file
     :bam_file: output path to bam file
     """
-    picard_path = get_py_path() + "/picard.jar"
+    picard_path = get_py_path() + "/resources/picard.jar"
     cmd = (
         f"java -jar {picard_path} SamFormatConverter I={bam_file} "
         f"O={sam_file}"

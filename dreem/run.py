@@ -1,8 +1,8 @@
 import re
 import sys
-import click
-from click_option_group import optgroup
-
+import subprocess
+import cloup
+from cloup import option_group, option
 from dreem import mapping
 from dreem.settings import get_py_path
 
@@ -14,10 +14,11 @@ from dreem.parameters import (
     get_default_params,
     validate_parameters,
 )
+from dreem.bit_vector import BitVectorGenerator
+from dreem.external_cmd import does_program_exist
 from dreem.util import *
 
 log = get_logger("RUN")
-
 
 
 # logging/settings/args ###############################################################
@@ -90,42 +91,220 @@ def validate_inputs(fa, fq1, fq2, csv):
     return Inputs(fa, fq1, fq2, csv)
 
 
-@click.command()
-@optgroup.group("main arguments")
-@optgroup.option(
-    "-fa",
-    "--fasta",
-    type=click.Path(exists=True),
-    required=True,
-    help="reference sequences in fasta format",
-)
-@optgroup.option(
-    "-fq1",
-    "--fastq1",
-    type=click.Path(exists=True),
-    required=True,
-    help="fastq sequencing file of mate 1",
-)
-@optgroup.option(
-    "-fq2",
-    "--fastq2",
-    type=click.Path(exists=True),
-    help="fastq sequencing file of mate 2",
-    default=None,
-)
-@optgroup.group("common options")
-@optgroup.option(
-    "--dot_bracket",
-    type=click.Path(exists=True),
-    help="A csv formatted file that contains dot bracket info for each sequence",
-)
-@optgroup.option(
-    "-pf",
-    "--param-file",
-    type=click.Path(exists=True),
-    help="A yml formatted file to specify parameters",
-)
+def add_cmd_args_to_params(params, args):
+    """
+    add the command line arguments to the parameters
+    :param params: the parameters
+    :param args: the command line arguments
+    :return: the parameters
+    """
+    params["overwrite"] = args["overwrite"]
+    if args["restore_org_behavior"]:
+        params["restore_org_behavior"] = True
+
+
+def run_in_docker(args):
+    if not does_program_exist("docker"):
+        raise ValueError("docker is not installed")
+
+    file_map = {
+        'dot_bracket': 'test.csv',
+        'param_file' : 'test.yml',
+        'fasta'      : 'test.fasta',
+        'fastq1'     : 'test_mate1.fastq',
+        'fastq2'     : 'test_mate2.fastq'
+    }
+    file_args = {
+        'dot_bracket': '--dot-bracket',
+        'param_file' : '--param-file',
+        'fasta'      : '--fasta',
+        'fastq1'     : '--fastq1',
+        'fastq2'     : '--fastq2'
+    }
+    files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
+    docker_cmd = f"docker run -v $(pwd):/data "
+    dreem_cmd = "dreem "
+    dirs = {
+        os.getcwd() : '/data'
+    }
+    dcount = 2
+    # TODO add other args into dreem_cmd
+    for f in files:
+        f_path = args[f]
+        if f_path is None or f_path == "":
+            continue
+        dir_name = os.path.abspath(os.path.dirname(f_path))
+        if dir_name == os.path.abspath(os.getcwd()):
+            dreem_cmd += f"{file_args[f]} {file_map[f]} "
+            continue
+        if dir_name not in dirs:
+            dirs[dir_name] = f"/data{dcount}"
+            docker_cmd += f"-v {dir_name}:/{dirs[dir_name]} "
+            dcount += 1
+        dreem_cmd += f"{file_args[f]} {dirs[dir_name]}/{file_map[f]} "
+    docker_cmd += " dreem_dev  "
+    docker_cmd += dreem_cmd
+    print(docker_cmd)
+
+# cli #########################################################################
+
+
+def main_options():
+    """
+    The main options for the command line interface
+    :return: the options
+    """
+    return option_group(
+        "Main arguments",
+        "These are the main arguments for the command line interface",
+        option(
+            "-fa",
+            "--fasta",
+            type=cloup.Path(exists=True),
+            required=True,
+            help="The fasta file containing the reference sequences",
+        ),
+        option(
+            "-fq1",
+            "--fastq1",
+            type=cloup.Path(exists=True),
+            required=True,
+            help="The first fastq file containing the reads",
+        ),
+        option(
+            "-fq2",
+            "--fastq2",
+            type=str,
+            default="",
+            help="The second fastq file containing the reads",
+        ),
+        option(
+            "--dot-bracket",
+            "-d",
+            type=str,
+            default="",
+            help="The dot bracket file containing the secondary structure",
+        ),
+        option(
+            "-pf",
+            "--param-file",
+            type=str,
+            help="A yml formatted file to specify parameters",
+        ),
+        option(
+            "--docker",
+            is_flag=True,
+            help="Run the pipeline in a docker container",
+        ),
+    )
+
+
+def mapping_options():
+    """
+    The mapping options for the command line interface
+    :return: the options
+    """
+    return option_group(
+        "Mapping options",
+        "These are the options for the mapping stage",
+        option(
+            "--skip-fastqc",
+            is_flag=True,
+            help="do not run fastqc for quality control of sequence data",
+        ),
+        option(
+            "--skip-trim-galore",
+            is_flag=True,
+            help="do not run trim galore to remove adapter sequences at ends",
+        ),
+        option("--tg-q-cutoff", default=None, help="TODO"),
+        option("--bt2-alignment-args", default=None, help="TODO"),
+    )
+
+
+def bit_vector_options():
+    """
+    The bit vector options for the command line interface
+    """
+    return option_group(
+        "Bit vector options",
+        "These are the options for the bit vector stage",
+        option(
+            "--skip-bit-vector",
+            is_flag=True,
+            help="do not run the bit vector stage",
+        ),
+        option(
+            "--qscore-cutoff",
+            default=None,
+            help="quality score of read nucleotide, sets to ambigious if under "
+            "this val",
+        ),
+        option(
+            "--num-of-surbases",
+            default=None,
+            help="number of bases around a mutation",
+        ),
+        option(
+            "--mutation-count-cutoff",
+            default=None,
+            help="maximum number of mutations in a read allowable",
+        ),
+        option(
+            "--percent-length-cutoff",
+            default=None,
+            help="read is discarded if less than this percent of a ref sequence"
+            " is included",
+        ),
+        option(
+            "--summary-output-only",
+            is_flag=True,
+            help="do not generate bit vector files or plots recommended when "
+            "there are thousands of sequences",
+        ),
+        option("--plot_sequence", is_flag=True, help=""),
+    )
+
+
+def misc_options():
+    """
+    The misc options for the command line interface
+    :return: the options
+    """
+    return option_group(
+        "Misc options",
+        "These are the options for the misc stage",
+        option(
+            "--overwrite",
+            is_flag=True,
+            help="overwrite the output directory if it exists",
+        ),
+        option(
+            "--restore-org-behavior",
+            is_flag=True,
+            help="restore the original behavior of dreem",
+        ),
+        option(
+            "--debug",
+            is_flag=True,
+            help="turn on debug logging",
+        ),
+        option(
+            "-ll",
+            "--log-level",
+            help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)",
+            default="INFO",
+        ),
+    )
+
+
+# TODO validate that the csv file is in the correct format
 # TODO add options from command line into params
+@cloup.command()
+@main_options()
+@mapping_options()
+@bit_vector_options()
+@misc_options()
 def main(**args):
     """
     DREEM processes DMS next generation sequencing data to produce mutational
@@ -135,6 +314,13 @@ def main(**args):
     setup_applevel_logger()
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
+    print(sys.argv)
+    if args["docker"]:
+        print("running in docker")
+        sys.argv.pop(0)
+        sys.argv.remove("--docker")
+        run_in_docker(args)
+        return
     # log.setLevel(logger.str_to_log_level(kwargs["log_level"]))
     # having fastq2 be a "" is a bit of a hack, but it works
     if args["fastq2"] is None:
@@ -155,6 +341,7 @@ def main(**args):
     )
 
 
+# TODO flag a warning about fasta files with more than 1000 sequences
 def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     ins = Inputs(fasta, fastq1, fastq2, dot_bracket)
     if params is None:
@@ -162,15 +349,19 @@ def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     else:
         validate_parameters(params)
     params["overwrite"] = False
-    #build_directories(params)
     # p.to_yaml_file(p.dirs.log + "/parameters.yml")
     # perform read mapping to reference sequences
     m = mapping.Mapper()
+    m.setup(params)
     m.check_program_versions()
-    m.run(ins, params)
+    m.run(ins)
     # convert aligned reads to bit vectors
-    # bt = bit_vector.BitVectorGenerator()
-    # bt.run(p)
+    bt = BitVectorGenerator()
+    bt.setup(params)
+    sam_path = os.path.join(
+        params["dirs"]["output"], "Mapping_Files", "converted.sam"
+    )
+    bt.run(sam_path, ins.fasta, ins.is_paired(), ins.csv)
 
 
 if __name__ == "__main__":

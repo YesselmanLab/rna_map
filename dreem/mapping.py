@@ -6,14 +6,10 @@ import os
 import shutil
 from typing import Dict
 from pathlib import Path
-import pandas as pd
 from dreem import logger
 from dreem.parameters import Inputs
-from dreem.settings import get_py_path
 from dreem.exception import (
-    DREEMInputException,
     DREEMMissingRequirementsException,
-    DREEMExternalProgramException,
 )
 from dreem.external_cmd import (
     does_program_exist,
@@ -22,6 +18,7 @@ from dreem.external_cmd import (
     get_cutadapt_version,
     get_trim_galore_version,
     run_picard_bam_convert,
+    run_picard_sam_convert,
     run_picard_sort,
     run_bowtie_alignment,
     run_bowtie_build,
@@ -36,8 +33,7 @@ class Mapper(object):
     def __init__(self):
         self.__setup = False
 
-    def setup(self, ins: Inputs, params: Dict):
-        self.__ins = ins
+    def setup(self, params: Dict):
         self.__params = params
         self.__setup = True
         # params
@@ -74,13 +70,18 @@ class Mapper(object):
         log.info(f"trim_galore {get_trim_galore_version()} detected!")
         log.info(f"cutapt {get_cutadapt_version()} detected!")
 
-    def run(self):
+    def run(self, ins: Inputs):
+        if not self.__setup:
+            raise Exception("Must call setup before running")
+        self.__ins = ins
         self.__run_fastqc()
         self.__run_trim_glore()
         self.__run_bowtie_build()  # run bowtie build
         self.__run_bowtie_alignment()  # row bowtie
         self.__run_picard_bam_convert()  # convert sam to bam
         self.__run_picard_sort()  # sort bam file
+        # TODO not sure if I actually need this
+        self.__run_picard_sam_convert()
         log.info("finished mapping!")
 
     def __program_not_found(self, p_name):
@@ -208,3 +209,14 @@ class Mapper(object):
             self.skip_without_overwrite("picard_sort")
             return
         return run_picard_sort(bam_path, sorted_bam_path)
+
+    def __run_picard_sam_convert(self):
+        """
+        convert bam to sam
+        """
+        bam_path = os.path.join(self.__out_dir, "aligned_sorted.bam")
+        sam_path = os.path.join(self.__out_dir, "converted.sam")
+        if os.path.isfile(sam_path) and not self.__overwrite:
+            self.skip_without_overwrite("picard_sam_convert")
+            return
+        return run_picard_sam_convert(bam_path, sam_path)

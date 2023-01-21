@@ -52,11 +52,11 @@ def test_mapping():
     ins = Inputs(p["fasta"], p["fastq1"], p["fastq2"], "")
     params = get_default_params()
     m = Mapper()
-    m.setup(ins, params)
-    m.run()
+    m.setup(params)
+    m.run(ins)
     assert os.path.isfile("input/test.1.bt2")
     try:
-        m.run()
+        m.run(ins)
     except Exception as e:
         pytest.fail(str(e))
     remove_directories(os.getcwd())

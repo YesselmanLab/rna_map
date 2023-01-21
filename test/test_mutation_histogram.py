@@ -8,6 +8,7 @@ import pytest
 
 from dreem.mutation_histogram import (
     MutationHistogram,
+    get_dataframe,
     get_mut_histos_from_json_file,
     plot_read_coverage,
     plot_modified_bases,
@@ -86,6 +87,26 @@ def test_merge_all_merge_mut_histo_dicts():
     d = merge_all_merge_mut_histo_dicts([d, d1, d2])
     assert len(d) == 2
     assert d[mh.name].num_reads == mh2.num_reads * 3
+
+
+def test_get_dataframe():
+    mh = get_example_mut_histo()
+    cols = [
+        "name",
+        "reads",
+        "aligned",
+        "no_mut",
+        "1_mut",
+        "2_mut",
+        "3_mut",
+        "3plus_mut",
+        "sn"
+    ]
+    try:
+        df = get_dataframe({mh.name: mh}, cols)
+    except Exception as e:
+        pytest.fail(f"Exception raised: {e}")
+    assert len(df) == 1
 
 
 def test_read_mutation_histogram():
