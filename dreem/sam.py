@@ -103,6 +103,7 @@ class PairedSamIterator(object):
             raise StopIteration
         self._read_1 = get_aligned_read_from_line(self._read_1_line)
         self._read_2 = get_aligned_read_from_line(self._read_2_line)
+
         # check if reads are paired
         if not (
             self._read_1.pnext == self._read_2.pos
@@ -113,6 +114,9 @@ class PairedSamIterator(object):
                 f"mate_2 is inconsistent with mate_1 for read: "
                 f"{self._read_1.qname} SKIPPING!"
             )
+            print(self._read_1)
+            print(self._read_2)
+            exit()
             self.__next__()
         if not (
             self._read_1.qname == self._read_2.qname

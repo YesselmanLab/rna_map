@@ -1,5 +1,6 @@
 import re
 import sys
+import logging
 import subprocess
 import cloup
 from cloup import option_group, option
@@ -311,7 +312,12 @@ def main(**args):
     profiles that relate to DMS modification rates written by Silvi Rouskin and the
     Rouskin lab (https://www.rouskinlab.com/)
     """
-    setup_applevel_logger()
+    if args["debug"]:
+        setup_applevel_logger(is_debug=True)
+        log.info("Debug logging is on")
+    else:
+        setup_applevel_logger()
+
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
     print(sys.argv)
