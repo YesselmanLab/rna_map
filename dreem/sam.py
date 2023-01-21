@@ -114,9 +114,6 @@ class PairedSamIterator(object):
                 f"mate_2 is inconsistent with mate_1 for read: "
                 f"{self._read_1.qname} SKIPPING!"
             )
-            print(self._read_1)
-            print(self._read_2)
-            exit()
             self.__next__()
         if not (
             self._read_1.qname == self._read_2.qname

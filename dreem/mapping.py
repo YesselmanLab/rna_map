@@ -179,10 +179,12 @@ class Mapper(object):
         if os.path.isfile(sam_path) and not self.__overwrite:
             self.skip_without_overwrite("bowtie_alignment")
             return
+        fq1_path = f"{self.__out_dir}/{Path(self.__ins.fastq1).stem}_val_1.fq"
+        fq2_path = f"{self.__out_dir}/{Path(self.__ins.fastq2).stem}_val_2.fq"
         return run_bowtie_alignment(
             self.__ins.fasta,
-            self.__ins.fastq1,
-            self.__ins.fastq2,
+            fq1_path,
+            fq2_path,
             self.__in_dir,
             self.__out_dir,
             self.__params["map"]["bt2_alignment_args"],

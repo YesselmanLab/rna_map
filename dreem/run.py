@@ -361,6 +361,7 @@ def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     m.setup(params)
     m.check_program_versions()
     m.run(ins)
+    exit()
     # convert aligned reads to bit vectors
     bt = BitVectorGenerator()
     bt.setup(params)
