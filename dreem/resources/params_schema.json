@@ -55,7 +55,7 @@
           "type": "boolean",
           "default": false
         },
-        "experimental": {
+        "stricter_constraints": {
           "type": "object",
           "properties": {
             "min_mut_distance": {
@@ -104,7 +104,7 @@
       "type": "boolean",
       "default": false
     },
-    "experimental_features": {
+    "stricter_bv_constraints": {
       "type": "boolean",
       "default": false
     }

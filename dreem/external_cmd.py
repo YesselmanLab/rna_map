@@ -244,7 +244,7 @@ def run_bowtie_alignment(
     sam_file = out_dir + "/aligned.sam"
     cmd = f"bowtie2 {bt2_args} -x {bt2_index} -S {sam_file} "
     if fastq2 != "":
-        cmd += f"-1 {fastq1} -2 {fastq2}"
+        cmd += f"-1 {fastq1} -2 {fastq2}  --un-conc unaligned.fastq"
     else:
         cmd += f"-U {fastq1}"
     out = run_named_command("bowtie2 alignment", cmd)

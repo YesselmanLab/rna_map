@@ -101,7 +101,11 @@ def add_cmd_args_to_params(params, args):
     """
     params["overwrite"] = args["overwrite"]
     if args["restore_org_behavior"]:
+        log.info("NOTE: restoring original behavior")
         params["restore_org_behavior"] = True
+    if args["stricter_bv_constraints"]:
+        log.info("NOTE: using stricter bit vector constraints")
+        params["stricter_bv_constraints"] = True
 
 
 def run_in_docker(args):
@@ -109,25 +113,23 @@ def run_in_docker(args):
         raise ValueError("docker is not installed")
 
     file_map = {
-        'dot_bracket': 'test.csv',
-        'param_file' : 'test.yml',
-        'fasta'      : 'test.fasta',
-        'fastq1'     : 'test_mate1.fastq',
-        'fastq2'     : 'test_mate2.fastq'
+        "dot_bracket": "test.csv",
+        "param_file": "test.yml",
+        "fasta": "test.fasta",
+        "fastq1": "test_mate1.fastq",
+        "fastq2": "test_mate2.fastq",
     }
     file_args = {
-        'dot_bracket': '--dot-bracket',
-        'param_file' : '--param-file',
-        'fasta'      : '--fasta',
-        'fastq1'     : '--fastq1',
-        'fastq2'     : '--fastq2'
+        "dot_bracket": "--dot-bracket",
+        "param_file": "--param-file",
+        "fasta": "--fasta",
+        "fastq1": "--fastq1",
+        "fastq2": "--fastq2",
     }
     files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
     docker_cmd = f"docker run -v $(pwd):/data "
     dreem_cmd = "dreem "
-    dirs = {
-        os.getcwd() : '/data'
-    }
+    dirs = {os.getcwd(): "/data"}
     dcount = 2
     # TODO add other args into dreem_cmd
     for f in files:
@@ -146,6 +148,7 @@ def run_in_docker(args):
     docker_cmd += " dreem_dev  "
     docker_cmd += dreem_cmd
     print(docker_cmd)
+
 
 # cli #########################################################################
 
@@ -286,6 +289,12 @@ def misc_options():
             help="restore the original behavior of dreem",
         ),
         option(
+            "--stricter-bv-constraints",
+            is_flag=True,
+            type=bool,
+            help="use stricter bit vector constraints use at your own risk",
+        ),
+        option(
             "--debug",
             is_flag=True,
             help="turn on debug logging",
@@ -320,14 +329,13 @@ def main(**args):
 
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
-    print(sys.argv)
+    #print(sys.argv)
     if args["docker"]:
         print("running in docker")
         sys.argv.pop(0)
         sys.argv.remove("--docker")
         run_in_docker(args)
         return
-    # log.setLevel(logger.str_to_log_level(kwargs["log_level"]))
     # having fastq2 be a "" is a bit of a hack, but it works
     if args["fastq2"] is None:
         args["fastq2"] = ""
@@ -337,6 +345,7 @@ def main(**args):
         params = get_default_params()
     else:
         params = parse_parameters_from_file(args["param_file"])
+    add_cmd_args_to_params(params, args)
     # TODO add cmd line arguments into params
     run(
         args.pop("fasta"),
@@ -348,13 +357,14 @@ def main(**args):
 
 
 # TODO flag a warning about fasta files with more than 1000 sequences
+# TODO add validation back in
+# TODO validate that the csv file is in the correct format
 def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     ins = Inputs(fasta, fastq1, fastq2, dot_bracket)
     if params is None:
         params = get_default_params()
     else:
         validate_parameters(params)
-    params["overwrite"] = False
     # p.to_yaml_file(p.dirs.log + "/parameters.yml")
     # perform read mapping to reference sequences
     m = mapping.Mapper()

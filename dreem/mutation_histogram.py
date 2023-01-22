@@ -19,7 +19,12 @@ class MutationHistogram(object):
         self.data_type = data_type
         self.num_reads = 0
         self.num_aligned = 0
-        self.skips = {"low_mapq": 0, "short_read": 0, "too_many_muts": 0}
+        self.skips = {
+            "low_mapq": 0,
+            "short_read": 0,
+            "too_many_muts": 0,
+            "muts_to_close": 0,
+        }
         self.num_of_mutations = [0] * (len(sequence) + 1)
         self.mut_bases = np.zeros(len(sequence) + 1)
         self.info_bases = np.zeros(len(sequence) + 1)

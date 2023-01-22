@@ -71,6 +71,11 @@ class BitVectorFileReader(object):
 
 
 class BitVectorIterator(object):
+    """
+    A class to generate bit vectors from a SAM files. Does mininal checking
+    to the bitvector is acceptable.
+    """
+
     def __init__(
         self, sam_path, ref_seqs, paired, qscore_cutoff=25, num_of_surbases=10
     ):
@@ -252,12 +257,17 @@ class BitVectorGenerator(object):
             sam_path, self.__ref_seqs, paired
         )
         self.__mut_histos = {}
-        self.__map_score_cutoff = self.__params["bit_vector"]["map_score_cutoff"]
+        self.__map_score_cutoff = self.__params["bit_vector"][
+            "map_score_cutoff"
+        ]
         self.__csv_file = csv_file
         self.__summary_only = self.__params["bit_vector"]["summary_output_only"]
+        self.__rejected_out = open(self.__out_dir + "rejected_bvs.csv", "w")
+        self.__rejected_out.write("qname,rname,reason,read1,read2,bitvector\n")
         # setup parameters about generating bit vectors
         self.__generate_all_bit_vectors()
         self.__generate_plots()
+        self.__get_skip_summary()
         self.__write_summary_csv()
 
     def __write_summary_csv(self):
@@ -277,10 +287,31 @@ class BitVectorGenerator(object):
             "MUTATION SUMMARY:\n"
             + tabulate(df, df.columns, tablefmt="github", showindex=False)
         )
+
         sum_path = os.path.join(self.__out_dir, "summary.csv")
         df.to_csv(sum_path, index=False)
 
+    def __get_skip_summary(self):
+        data = []
+        cols = ["low_mapq"]
+        if self.__params["stricter_bv_constraints"]:
+            cols += ["short_read", "too_many_muts", "muts_to_close"]
+        for mut_histo in self.__mut_histos.values():
+            row = [mut_histo.name]
+            for col in cols:
+                row.append(mut_histo.skips[col] / mut_histo.num_reads * 100)
+            data.append(row)
+        df = pd.DataFrame(data, columns=["name"] + cols)
+        log.info(
+            "REMOVED READS:\n"
+            + tabulate(df, df.columns, tablefmt="github", showindex=False)
+            + "\n"
+        )
+
     def __generate_plots(self):
+        """
+        Generate plots for each mutation histogram
+        """
         for _, mh in self.__mut_histos.items():
             fname = f"{self.__out_dir}/{mh.name}_{mh.start}_{mh.end}_"
             if not self.__summary_only:
@@ -304,6 +335,7 @@ class BitVectorGenerator(object):
                 )
 
     def __generate_all_bit_vectors(self):
+        # TODO turn this overwrite check back on
         """if (
             os.path.isfile(bit_vector_pickle_file)
             and not self._p.bit_vector.overwrite
@@ -325,44 +357,35 @@ class BitVectorGenerator(object):
                 self._bit_vector_writers[ref_name] = BitVectorFileWriter(
                     self.__out_dir, ref_name, seq, "DMS", 1, len(seq)
                 )
-        for bit_vector in self.__bit_vec_iterator:
-            self.__record_bit_vector(bit_vector)
         if self.__csv_file != "":
             df = pd.read_csv(self.__csv_file)
             for i, row in df.iterrows():
                 if row["name"] in self.__mut_histos:
                     self.__mut_histos[row["name"]].structure = row["structure"]
-        bit_vector_pickle_file = "output/BitVector_Files/mutation_histos.p"
-        f = open(self.__out_dir + "mutation_histos.p", "wb")
-        pickle.dump(self.__mut_histos, f)
+        for bit_vector in self.__bit_vec_iterator:
+            self.__record_bit_vector(bit_vector)
+        # pickle mutational histograms
+        pickle_file = os.path.join(self.__out_dir, "mutation_histos.p")
+        with open(pickle_file, "wb") as handle:
+            pickle.dump(self.__mut_histos, handle)
 
     def __record_bit_vector(self, bit_vector):
-        read = bit_vector.reads[0]
-        ref_seq = self.__ref_seqs[read.rname]
-        mh = self.__mut_histos[read.rname]
+        mh = self.__mut_histos[bit_vector.reads[0].rname]
+        # if the reads do not meet the minimum mapping score, skip
         for read in bit_vector.reads:
-            per = len(read.seq) / len(ref_seq)
-            if per < self.__params["bit_vector"]["percent_length_cutoff"]:
-                mh.record_skip("short_read")
-                return
             if read.mapq < self.__map_score_cutoff:
+                self.__write_rejected_bit_vector(bit_vector, "low_mapq")
                 mh.record_skip("low_mapq")
                 return
-        muts = 0
-        for pos in range(mh.start, mh.end + 1):
-            if pos not in bit_vector.data:
-                continue
-            read_bit = bit_vector.data[pos]
-            if read_bit in self.__bases:
-                muts += 1
-        if muts > self.__params["bit_vector"]["mutation_count_cutoff"]:
-            mh.record_skip("too_many_muts")
+        # experimental features
+        # must turn --experimental-features to use these
+        if self.__are_reads_to_short(mh, bit_vector):
             return
+        self.__update_mut_histo(mh, bit_vector.data)
         if not self.__params["bit_vector"]["summary_output_only"]:
             self._bit_vector_writers[read.rname].write_bit_vector(
                 read.qname, bit_vector.data
             )
-        self.__update_mut_histo(mh, bit_vector.data)
 
     def __update_mut_histo(self, mh: MutationHistogram, bit_vector):
         mh.num_reads += 1
@@ -382,3 +405,43 @@ class BitVectorGenerator(object):
                 mh.del_bases[pos] += 1
             mh.info_bases[pos] += 1
         mh.num_of_mutations[total_muts] += 1
+
+    # bit vector constraints ###################################################
+
+    def __are_reads_to_short(self, mh, bit_vector) -> bool:
+        if not self.__params["stricter_bv_constraints"]:
+            return False
+        cutoff = self.__params["bit_vector"]["stricter_constraints"][
+            "percent_length_cutoff"
+        ]
+        ref_seq = self.__ref_seqs[bit_vector.reads[0].rname]
+        for read in bit_vector.reads:
+            per = len(read.seq) / len(ref_seq)
+            if per < cutoff:
+                self.__write_rejected_bit_vector(bit_vector, "short_read")
+                mh.record_skip("short_read")
+                return True
+        return False
+
+    def __too_many_mutations(self, mh, bit_vector):
+        muts = 0
+        for pos in mh.get_nuc_coords():
+            if pos not in bit_vector.data:
+                continue
+            read_bit = bit_vector.data[pos]
+            if read_bit in self.__bases:
+                muts += 1
+        if muts > self.__params["bit_vector"]["mutation_count_cutoff"]:
+            mh.record_skip("too_many_muts")
+            return
+
+    def __write_rejected_bit_vector(self, bit_vector, reason):
+        read1 = bit_vector.reads[0]
+        if len(bit_vector.reads) == 2:
+            read2_seq = bit_vector.reads[1].seq
+        else:
+            read2_seq = ""
+        self.__rejected_out.write(
+            f"{read1.qname},{read1.rname},{reason},{read1.seq},{read2_seq},"
+            f"{bit_vector.data}\n"
+        )

@@ -6,7 +6,7 @@
 # arguments related to mapping step
 overwrite: False
 restore_org_behavior: False
-experimental_features: False
+stricter_bv_constraints: False
 map:
   skip: False
   skip_fastqc: False
@@ -23,7 +23,7 @@ bit_vector:
   map_score_cutoff: 15
   plot_sequence: False
   summary_output_only: False
-  experimental: # new cutoffs for bit vectors use at your own risk
+  stricter_constraints: # new cutoffs for bit vectors use at your own risk
       min_mut_distance: 5 # minimum distance between mutations
       percent_length_cutoff: 0.01 #
       mutation_count_cutoff: 10

@@ -25,7 +25,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='dreem',
-    version='0.2.0',
+    version='0.3.0',
     description='',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Joe Yesselman',
@@ -38,6 +38,7 @@ setup(
     py_modules=[
         'dreem/bit_vector',
         'dreem/exception',
+        'dreem/external_cmd',
         'dreem/fastq',
         'dreem/logger',
         'dreem/mapping',
