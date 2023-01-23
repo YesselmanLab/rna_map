@@ -25,8 +25,8 @@ bit_vector:
   summary_output_only: False
   stricter_constraints: # new cutoffs for bit vectors use at your own risk
       min_mut_distance: 5 # minimum distance between mutations
-      percent_length_cutoff: 0.01 #
-      mutation_count_cutoff: 10
+      percent_length_cutoff: 0.10 #
+      mutation_count_cutoff: 5
 dirs:
   log: log
   input: input

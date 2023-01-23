@@ -8,7 +8,8 @@ import json
 
 import plotly
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
+import plotly.io as pio
+pio.kaleido.scope.chromium_args += ("--single-process",)
 
 
 class MutationHistogram(object):
@@ -23,7 +24,7 @@ class MutationHistogram(object):
             "low_mapq": 0,
             "short_read": 0,
             "too_many_muts": 0,
-            "muts_to_close": 0,
+            "muts_too_close": 0,
         }
         self.num_of_mutations = [0] * (len(sequence) + 1)
         self.mut_bases = np.zeros(len(sequence) + 1)
@@ -252,7 +253,7 @@ def get_dataframe(
                 try:
                     aligned = round(
                         float(mut_histo.num_aligned)
-                        / float(mut_histo.num_reads),
+                        / float(mut_histo.num_reads) * 100,
                         2,
                     )
                 except ZeroDivisionError:
@@ -374,47 +375,6 @@ def plot_mutation_histogram(nuc_pos, num_of_mutations, fname) -> None:
     plotly.offline.plot(mut_hist_fig, filename=fname, auto_open=False)
 
 
-def plot_population_avg_old(
-    df: pd.DataFrame, name: str, fname: str, plot_sequence=False
-) -> None:
-    colors = colors_for_sequence(df["nuc"])
-    delmut_trace = go.Bar(
-        x=list(df["position"]),
-        y=list(df["mismatch_del"]),
-        text=list(df["nuc"]),
-        marker=dict(color=colors),
-        showlegend=False,
-    )
-    mut_trace = go.Bar(
-        x=list(df["position"]),
-        y=list(df["mismatches"]),
-        text=list(df["nuc"]),
-        marker=dict(color=colors),
-        showlegend=False,
-    )
-    title1 = "Mismatches + Deletions: " + name
-    title2 = "Mismatches: " + name
-    mut_fig = make_subplots(rows=2, cols=1, subplot_titles=(title1, title2))
-    mut_fig.add_trace(delmut_trace, 1, 1)
-    mut_fig.add_trace(mut_trace, 2, 1)
-    mut_fig["layout"]["xaxis1"].update(title="Position")
-    mut_fig["layout"]["xaxis2"].update(title="Position")
-    mut_fig["layout"]["yaxis1"].update(title="Fraction", range=[0, 0.1])
-    mut_fig["layout"]["yaxis2"].update(title="Fraction", range=[0, 0.1])
-    if plot_sequence:
-        seqs = list(df["nuc"])
-        if "structure" in df.columns:
-            db = list(df["structure"])
-        else:
-            db = " " * len(seqs)
-        mut_fig.update_xaxes(
-            tickvals=list(df["position"]),
-            ticktext=["%s<br>%s" % (x, y) for (x, y) in zip(seqs, db)],
-            tickangle=0,
-        )
-    plotly.offline.plot(mut_fig, filename=fname, auto_open=False)
-
-
 def plot_population_avg(
     df: pd.DataFrame, name: str, fname: str, plot_sequence=False
 ) -> None:
@@ -449,95 +409,12 @@ def plot_population_avg(
             tickangle=0,
         )
     plotly.offline.plot(mut_fig, filename=fname, auto_open=False)
+    # TODO add options for this maybe move to another function?
+    file_path = fname[:-5] + ".png"
+    mut_fig.write_image(file_path, height=400, width=1000)
 
 
 # analysis functions ###########################################################
-
-
-def generate_quality_control_file(mh: MutationHistogram, p):
-    file_base_name = (
-        p.dirs.bitvector
-        + mh.name
-        + "_"
-        + str(mh.start)
-        + "_"
-        + str(mh.end)
-        + "_"
-    )
-    qc_filename = file_base_name + "Quality_Control.txt"
-    qc_file = open(qc_filename, "w")
-
-    # Read coverage
-    qc_file.write(
-        mh.name + " has " + str(mh.num_reads) + " reads mapping to it"
-    )
-    qc_file.write(". This is: ")
-    if mh.num_reads < 50000:
-        qc_file.write("BAD.\n")
-    elif 50000 <= mh.num_reads < 100000:
-        qc_file.write("MEDIUM.\n")
-    else:
-        qc_file.write("GOOD.\n")
-
-    # Signal-noise ratio
-    sig_noise = mh.get_signal_to_noise()
-    qc_file.write(
-        "The signal-to-noise ratio for the sample is: " + str(sig_noise)
-    )
-    qc_file.write(". This is: ")
-    if sig_noise < 0.75:
-        qc_file.write("BAD.\n")
-    elif 0.75 <= sig_noise < 0.9:
-        qc_file.write("MEDIUM.\n")
-    else:
-        qc_file.write("GOOD.\n")
-
-    # Distribution of coverage
-    qc_file.write("Distribution of coverage:\n")
-    m = max(mh.cov_bases)
-    norm_read_cov = [i / m for i in mh.cov_bases]
-    n1, n2, n3 = 0, 0, 0
-    for cov in norm_read_cov:
-        if cov < 0.5:
-            n1 += 1
-        elif 0.5 <= cov < 0.75:
-            n2 += 1
-        elif 0.75 <= cov:
-            n3 += 1
-    n1 = str(round(n1 * 100 / len(mh.cov_bases), 2))
-    n2 = str(round(n2 * 100 / len(mh.cov_bases), 2))
-    n3 = str(round(n3 * 100 / len(mh.cov_bases), 2))
-    n1_s = "{}% of bases have less than {}% of reads mapping to them\n"
-    n1_s = n1_s.format(n1, 50)
-    n2_s = "{}% of bases have between {}% and {}% of reads mapping to them\n"
-    n2_s = n2_s.format(n2, 50, 75)
-    n3_s = "{}% of bases have greater than {}% of reads mapping to them\n\n"
-    n3_s = n3_s.format(n3, 75)
-    qc_file.write(n1_s)
-    qc_file.write(n2_s)
-    qc_file.write(n3_s)
-
-    # Info on numbers:
-    qc_file.write("FOR REFERENCE:\n")
-
-    # Read coverage
-    qc_file.write("Read coverage:\n")
-    qc_file.write("Number of reads < 50000: BAD\n")
-    qc_file.write("50000 < Number of reads < 100000: MEDIUM\n")
-    qc_file.write("Number of reads > 100000: GOOD\n\n")
-
-    # Signal-to-noise ratio
-    qc_file.write("Signal-to-noise ratio:\n")
-    qc_file.write("Signal-noise ratio < 0.75: BAD\n")
-    qc_file.write("0.75 < Signal-noise ratio < 0.9: MEDIUM\n")
-    qc_file.write("Signal-noise ratio > 0.9: GOOD\n\n")
-
-    qc_file.write(
-        "If you are only interested in the population average"
-        + " and not clustering, 1000-10000 reads might be sufficient.\n\n"
-    )
-
-    qc_file.close()
 
 
 def merge_mut_histo_dicts(

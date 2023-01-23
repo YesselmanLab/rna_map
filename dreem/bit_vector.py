@@ -15,7 +15,6 @@ from dreem.mutation_histogram import (
     plot_modified_bases,
     plot_mutation_histogram,
     plot_population_avg,
-    plot_population_avg_old,
     plot_read_coverage,
 )
 from dreem.logger import get_logger
@@ -295,7 +294,7 @@ class BitVectorGenerator(object):
         data = []
         cols = ["low_mapq"]
         if self.__params["stricter_bv_constraints"]:
-            cols += ["short_read", "too_many_muts", "muts_to_close"]
+            cols += ["short_read", "too_many_muts", "muts_too_close"]
         for mut_histo in self.__mut_histos.values():
             row = [mut_histo.name]
             for col in cols:
@@ -317,9 +316,8 @@ class BitVectorGenerator(object):
             if not self.__summary_only:
                 df = mh.get_pop_avg_dataframe()
                 plot_population_avg(df, mh.name, f"{fname}pop_avg.html")
+            # TODO add generate other plots arg?
             if self.__params["restore_org_behavior"]:
-                df = mh.get_summary_dataframe()
-                plot_population_avg_old(df, mh.name, f"{fname}pop_avg.html")
                 plot_modified_bases(
                     mh.get_nuc_coords(), mh.mod_bases, f"{fname}mutations.html"
                 )
@@ -374,17 +372,21 @@ class BitVectorGenerator(object):
         # if the reads do not meet the minimum mapping score, skip
         for read in bit_vector.reads:
             if read.mapq < self.__map_score_cutoff:
-                self.__write_rejected_bit_vector(bit_vector, "low_mapq")
+                self.__write_rejected_bit_vector(mh, bit_vector, "low_mapq")
                 mh.record_skip("low_mapq")
                 return
         # experimental features
-        # must turn --experimental-features to use these
+        # must turn --stricter-bv-constraints to use these
         if self.__are_reads_to_short(mh, bit_vector):
+            return
+        if self.__too_many_mutations(mh, bit_vector):
+            return
+        if self.__muts_too_close(mh, bit_vector):
             return
         self.__update_mut_histo(mh, bit_vector.data)
         if not self.__params["bit_vector"]["summary_output_only"]:
-            self._bit_vector_writers[read.rname].write_bit_vector(
-                read.qname, bit_vector.data
+            self._bit_vector_writers[bit_vector.reads[0].rname].write_bit_vector(
+                bit_vector.reads[0].qname, bit_vector.data
             )
 
     def __update_mut_histo(self, mh: MutationHistogram, bit_vector):
@@ -418,12 +420,17 @@ class BitVectorGenerator(object):
         for read in bit_vector.reads:
             per = len(read.seq) / len(ref_seq)
             if per < cutoff:
-                self.__write_rejected_bit_vector(bit_vector, "short_read")
+                self.__write_rejected_bit_vector(mh, bit_vector, "short_read")
                 mh.record_skip("short_read")
                 return True
         return False
 
     def __too_many_mutations(self, mh, bit_vector):
+        if not self.__params["stricter_bv_constraints"]:
+            return False
+        cutoff = self.__params["bit_vector"]["stricter_constraints"][
+            "mutation_count_cutoff"
+        ]
         muts = 0
         for pos in mh.get_nuc_coords():
             if pos not in bit_vector.data:
@@ -431,17 +438,49 @@ class BitVectorGenerator(object):
             read_bit = bit_vector.data[pos]
             if read_bit in self.__bases:
                 muts += 1
-        if muts > self.__params["bit_vector"]["mutation_count_cutoff"]:
+        if muts > cutoff:
+            self.__write_rejected_bit_vector(mh, bit_vector, "too_many_muts")
             mh.record_skip("too_many_muts")
-            return
+            return True
+        return False
 
-    def __write_rejected_bit_vector(self, bit_vector, reason):
+    def __muts_too_close(self, mh, bit_vector):
+        if not self.__params["stricter_bv_constraints"]:
+            return False
+        cutoff = self.__params["bit_vector"]["stricter_constraints"][
+            "min_mut_distance"
+        ]
+        for pos in range(mh.start, mh.end + 1):
+            if pos not in bit_vector.data:
+                continue
+            read_bit = bit_vector.data[pos]
+            if read_bit in self.__bases:
+                for pos2 in range(pos - cutoff, pos + cutoff):
+                    if pos2 == pos:
+                        continue
+                    if pos2 not in bit_vector.data:
+                        continue
+                    if bit_vector.data[pos2] in self.__bases:
+                        self.__write_rejected_bit_vector(
+                            mh, bit_vector, "muts_too_close"
+                        )
+                        mh.record_skip("muts_too_close")
+                        return True
+        return False
+
+    def __write_rejected_bit_vector(self, mh, bit_vector, reason):
         read1 = bit_vector.reads[0]
         if len(bit_vector.reads) == 2:
             read2_seq = bit_vector.reads[1].seq
         else:
             read2_seq = ""
+        bv_vec = []
+        for nuc in mh.get_nuc_coords():
+            if nuc in bit_vector.data:
+                bv_vec.append(bit_vector.data[nuc])
+            else:
+                bv_vec.append(".")
         self.__rejected_out.write(
             f"{read1.qname},{read1.rname},{reason},{read1.seq},{read2_seq},"
-            f"{bit_vector.data}\n"
+            f"{''.join(bv_vec)}\n"
         )

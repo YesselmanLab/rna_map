@@ -4,7 +4,8 @@ test cli interface
 import os
 import shutil
 import pytest
-from dreem.run import validate_inputs, validate_fasta_file, run
+from click.testing import CliRunner
+from dreem.run import validate_inputs, validate_fasta_file, main
 from dreem.logger import setup_applevel_logger
 from dreem.exception import DREEMInputException
 
@@ -83,13 +84,15 @@ def _test_fasta_checks():
     print(exc_info)
 
 
-def _test_run():
+def test_cli_single():
     """
     test running the program
     """
-    setup_applevel_logger()
-    p = get_test_inputs_paired()
-    ins = validate_inputs(p["fasta"], p["fastq1"], p["fastq2"], "")
-    run(ins.fasta, ins.fastq1, ins.fastq2, ins.csv)
-    #remove_directories(os.getcwd())
-
+    path = TEST_DIR + "/resources/case_unit/"
+    runner = CliRunner()
+    result = runner.invoke(
+        main, ["-fa", f"{path}/test.fasta", "-fq1", f"{path}/test_mate1.fastq"]
+    )
+    assert result.exit_code == 0
+    assert os.path.isfile(f"output/test_mate1.fastq.dreem")
+    remove_directories(os.getcwd())

@@ -13,7 +13,6 @@ from dreem.mutation_histogram import (
     plot_read_coverage,
     plot_modified_bases,
     plot_mutation_histogram,
-    plot_population_avg_old,
     plot_population_avg,
     merge_mut_histo_dicts,
     merge_all_merge_mut_histo_dicts,
@@ -100,7 +99,7 @@ def test_get_dataframe():
         "2_mut",
         "3_mut",
         "3plus_mut",
-        "sn"
+        "sn",
     ]
     try:
         df = get_dataframe({mh.name: mh}, cols)
@@ -176,18 +175,6 @@ def test_get_pop_avg_dataframe():
     )
     # df.to_csv("test.tsv", sep="\t", index=False)
     # popavg_filename = file_base_name + "popavg_reacts.txt"
-
-
-def test_plot_population_avg_old():
-    """
-    test plot_population_avg_old
-    """
-    mh = get_example_mut_histo()
-    df = mh.get_pop_avg_dataframe()
-    fname = f"{mh.name}_{mh.start}_{mh.end}_pop_avg.html"
-    plot_population_avg_old(df, mh.name, fname)
-    assert os.path.isfile("mttr-6-alt-h3_1_134_pop_avg.html")
-    os.remove("mttr-6-alt-h3_1_134_pop_avg.html")
 
 
 def test_plot_population_avg():

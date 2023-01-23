@@ -39,7 +39,7 @@ RUN wget -q $URL/$ZIP -O $DST/$ZIP && \
 RUN if [$(which bowtie2) = ""]; then exit 1; fi
 
 ## setup correct python and packages
-RUN pip install cython colorlog click future plotly matplotlib pandas
+RUN pip install cython colorlog click future plotly matplotlib pandas kaleido
 
 ## install cutadapt
 RUN wget -q https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip -O $DST/v1.18.zip && \

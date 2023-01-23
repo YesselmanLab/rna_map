@@ -7,6 +7,13 @@ from cloup import option_group, option
 from dreem import mapping
 from dreem.settings import get_py_path
 
+from dreem.cli_opts import (
+    bit_vector_options,
+    main_options,
+    mapping_options,
+    misc_options,
+    parse_cli_args,
+)
 from dreem.exception import DREEMInputException
 from dreem.logger import setup_applevel_logger, get_logger
 from dreem.parameters import (
@@ -92,22 +99,6 @@ def validate_inputs(fa, fq1, fq2, csv):
     return Inputs(fa, fq1, fq2, csv)
 
 
-def add_cmd_args_to_params(params, args):
-    """
-    add the command line arguments to the parameters
-    :param params: the parameters
-    :param args: the command line arguments
-    :return: the parameters
-    """
-    params["overwrite"] = args["overwrite"]
-    if args["restore_org_behavior"]:
-        log.info("NOTE: restoring original behavior")
-        params["restore_org_behavior"] = True
-    if args["stricter_bv_constraints"]:
-        log.info("NOTE: using stricter bit vector constraints")
-        params["stricter_bv_constraints"] = True
-
-
 def run_in_docker(args):
     if not does_program_exist("docker"):
         raise ValueError("docker is not installed")
@@ -152,162 +143,6 @@ def run_in_docker(args):
 
 # cli #########################################################################
 
-
-def main_options():
-    """
-    The main options for the command line interface
-    :return: the options
-    """
-    return option_group(
-        "Main arguments",
-        "These are the main arguments for the command line interface",
-        option(
-            "-fa",
-            "--fasta",
-            type=cloup.Path(exists=True),
-            required=True,
-            help="The fasta file containing the reference sequences",
-        ),
-        option(
-            "-fq1",
-            "--fastq1",
-            type=cloup.Path(exists=True),
-            required=True,
-            help="The first fastq file containing the reads",
-        ),
-        option(
-            "-fq2",
-            "--fastq2",
-            type=str,
-            default="",
-            help="The second fastq file containing the reads",
-        ),
-        option(
-            "--dot-bracket",
-            "-d",
-            type=str,
-            default="",
-            help="The dot bracket file containing the secondary structure",
-        ),
-        option(
-            "-pf",
-            "--param-file",
-            type=str,
-            help="A yml formatted file to specify parameters",
-        ),
-        option(
-            "--docker",
-            is_flag=True,
-            help="Run the pipeline in a docker container",
-        ),
-    )
-
-
-def mapping_options():
-    """
-    The mapping options for the command line interface
-    :return: the options
-    """
-    return option_group(
-        "Mapping options",
-        "These are the options for the mapping stage",
-        option(
-            "--skip-fastqc",
-            is_flag=True,
-            help="do not run fastqc for quality control of sequence data",
-        ),
-        option(
-            "--skip-trim-galore",
-            is_flag=True,
-            help="do not run trim galore to remove adapter sequences at ends",
-        ),
-        option("--tg-q-cutoff", default=None, help="TODO"),
-        option("--bt2-alignment-args", default=None, help="TODO"),
-    )
-
-
-def bit_vector_options():
-    """
-    The bit vector options for the command line interface
-    """
-    return option_group(
-        "Bit vector options",
-        "These are the options for the bit vector stage",
-        option(
-            "--skip-bit-vector",
-            is_flag=True,
-            help="do not run the bit vector stage",
-        ),
-        option(
-            "--qscore-cutoff",
-            default=None,
-            help="quality score of read nucleotide, sets to ambigious if under "
-            "this val",
-        ),
-        option(
-            "--num-of-surbases",
-            default=None,
-            help="number of bases around a mutation",
-        ),
-        option(
-            "--mutation-count-cutoff",
-            default=None,
-            help="maximum number of mutations in a read allowable",
-        ),
-        option(
-            "--percent-length-cutoff",
-            default=None,
-            help="read is discarded if less than this percent of a ref sequence"
-            " is included",
-        ),
-        option(
-            "--summary-output-only",
-            is_flag=True,
-            help="do not generate bit vector files or plots recommended when "
-            "there are thousands of sequences",
-        ),
-        option("--plot_sequence", is_flag=True, help=""),
-    )
-
-
-def misc_options():
-    """
-    The misc options for the command line interface
-    :return: the options
-    """
-    return option_group(
-        "Misc options",
-        "These are the options for the misc stage",
-        option(
-            "--overwrite",
-            is_flag=True,
-            help="overwrite the output directory if it exists",
-        ),
-        option(
-            "--restore-org-behavior",
-            is_flag=True,
-            help="restore the original behavior of dreem",
-        ),
-        option(
-            "--stricter-bv-constraints",
-            is_flag=True,
-            type=bool,
-            help="use stricter bit vector constraints use at your own risk",
-        ),
-        option(
-            "--debug",
-            is_flag=True,
-            help="turn on debug logging",
-        ),
-        option(
-            "-ll",
-            "--log-level",
-            help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)",
-            default="INFO",
-        ),
-    )
-
-
 # TODO validate that the csv file is in the correct format
 # TODO add options from command line into params
 @cloup.command()
@@ -326,26 +161,18 @@ def main(**args):
         log.info("Debug logging is on")
     else:
         setup_applevel_logger()
-
-    log.info("ran at commandline as: ")
-    log.info(" ".join(sys.argv))
-    #print(sys.argv)
+    # print(sys.argv)
     if args["docker"]:
         print("running in docker")
-        sys.argv.pop(0)
-        sys.argv.remove("--docker")
         run_in_docker(args)
         return
-    # having fastq2 be a "" is a bit of a hack, but it works
-    if args["fastq2"] is None:
-        args["fastq2"] = ""
-    if args["dot_bracket"] is None:
-        args["dot_bracket"] = ""
+    log.info("ran at commandline as: ")
+    log.info(" ".join(sys.argv))
     if args["param_file"] is None:
         params = get_default_params()
     else:
         params = parse_parameters_from_file(args["param_file"])
-    add_cmd_args_to_params(params, args)
+    parse_cli_args(params, args)
     # TODO add cmd line arguments into params
     run(
         args.pop("fasta"),
