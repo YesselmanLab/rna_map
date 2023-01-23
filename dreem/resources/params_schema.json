@@ -96,6 +96,25 @@
       "default": {},
       "additionalProperties": false
     },
+    "docker": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "default": "dreem"
+        },
+        "cont-name": {
+          "type": "string",
+          "default": "dreem-cont"
+        },
+        "platform": {
+          "type": "string",
+          "default": "linux/amd64"
+        }
+      },
+      "default": {},
+      "additionalProperties": false
+    },
     "overwrite": {
       "type": "boolean",
       "default": false

@@ -73,7 +73,7 @@ def main(param_file):
             if "log_msg" in opt_vals:
                 if "{value}" in opt_vals["log_msg"]:
                     f.write(
-                        f"{t}{t}log.info(\"{opt_vals['log_msg']}\", value=args['{opt_name}'])\n"
+                        f"{t}{t}log.info(\"{opt_vals['log_msg']}\".format(value=args['{opt_name}']))\n"
                     )
                 else:
                     f.write(f"{t}{t}log.info(\"{opt_vals['log_msg']}\")\n")

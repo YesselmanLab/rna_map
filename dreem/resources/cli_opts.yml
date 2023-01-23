@@ -26,9 +26,13 @@ main:
       type: str
       default: None
       help: A yml formatted file to specify parameters, see dreem/resources/default.yml for an example
-    --docker:
-      is_flag: True
-      help: Run the program in a docker container
+
+docker:
+  name: Docker options
+  description: These are the options for running the command line interface in a docker container
+  --docker:
+    is_flag: True
+    help: Run the program in a docker container
 
 mapping:
   name: Mapping options
@@ -74,6 +78,12 @@ bit_vector:
         log_msg: plotting sequence/structure on bit vector plots
         is_flag: True
         help: plot sequence and structure is supplied under the population average plots
+    --map-score-cutoff:
+        param: bit_vector:map_score_cutoff
+        log_msg: mapping score cutoff set to {value}
+        type: int
+        default: 15
+        help: reject any bit vector where the mapping score for bowtie2 alignment is less than this value
     --qscore-cutoff:
         param: bit_vector:qscore_cutoff
         log_msg: qscore cutoff set to {value}

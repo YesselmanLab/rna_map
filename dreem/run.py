@@ -118,11 +118,37 @@ def run_in_docker(args):
         "fastq2": "--fastq2",
     }
     files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
-    docker_cmd = f"docker run -v $(pwd):/data "
+    docker_cmd = (
+        f"docker run --name dreem-cont --platform linux/amd64 "
+        f" -v $(pwd):/data "
+    )
     dreem_cmd = "dreem "
     dirs = {os.getcwd(): "/data"}
     dcount = 2
-    # TODO add other args into dreem_cmd
+    pos = 1
+    skip_args = [
+        "-fa",
+        "--fasta",
+        "-fq1",
+        "--fastq1",
+        "-fq2",
+        "--fastq2",
+        "-db",
+        "--dot-bracket",
+        "-pf",
+        "--param-file",
+    ]
+    keep_args = []
+    while pos < len(sys.argv):
+        if sys.argv[pos] in skip_args:
+            pos += 2
+            continue
+        if sys.argv[pos] == "--docker":
+            pos += 1
+            continue
+        keep_args.append(sys.argv[pos])
+        pos += 1
+    dreem_cmd += " ".join(keep_args) + " "
     for f in files:
         f_path = args[f]
         if f_path is None or f_path == "":

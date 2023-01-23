@@ -2,7 +2,7 @@
 # tg -> trim galore
 # bt2 -> bowtie 2
 
-## map ################################################################################
+## map ########################################################################
 # arguments related to mapping step
 overwrite: False
 restore_org_behavior: False
@@ -15,7 +15,7 @@ map:
   # default args for bowtie alignment seperated by ","
   bt2_alignment_args: "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
 
-## bit_vector #########################################################################
+## bit_vector #################################################################
 bit_vector:
   skip: False
   qscore_cutoff: 25
@@ -27,7 +27,13 @@ bit_vector:
       min_mut_distance: 5 # minimum distance between mutations
       percent_length_cutoff: 0.10 #
       mutation_count_cutoff: 5
+# dirs locations ##############################################################
 dirs:
   log: log
   input: input
   output: output
+# docker ######################################################################
+docker:
+  image: dreem # name of docker image
+  cont-name: dreem-cont # name of docker container
+  platform: linux/amd64 # platform to run docker image on
