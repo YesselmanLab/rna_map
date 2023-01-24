@@ -1,0 +1,27 @@
+# abbreviations
+# tg -> trim galore
+# bt2 -> bowtie 2
+
+## map ################################################################################
+# arguments related to mapping step
+overwrite: False
+map:
+  skip: False
+  skip_fastqc: False
+  skip_trim_galore: False
+  tg_q_cutoff: 20 # trim galore quality cutoff
+  # default args for bowtie alignment seperated by ","
+  bt2_alignment_args: "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+
+## bit_vector #########################################################################
+bit_vector:
+  skip: False
+  qscore_cutoff: 15 # changed
+  num_of_surbases: 5 # changed
+  map_score_cutoff: 25
+  plot_sequence: False
+  summary_output_only: False
+dirs:
+  log: log
+  input: input
+  output: output

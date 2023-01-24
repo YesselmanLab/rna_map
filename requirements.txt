@@ -1,7 +1,6 @@
 colorlog
 click
-click-option-group
-biopython
+cloup
 plotly
 matplotlib
 numpy
@@ -10,3 +9,4 @@ tabulate
 pyyaml
 future
 pytest
+jsonschema

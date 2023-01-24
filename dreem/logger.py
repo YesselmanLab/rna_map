@@ -1,54 +1,49 @@
-import os
+"""
+Handles logging for module
+"""
+
 import logging
-import colorlog
+import sys
 
-class DreemError(Exception):
-    pass
+APP_LOGGER_NAME = "dreem"
 
-def init_logger(dunder_name, log_outfile=None, testing_mode=False, start=False) -> logging.Logger:
-    log_format = (
-        "[%(asctime)s " "%(name)s " "%(funcName)s] " "%(levelname)s " "%(message)s"
-    )
-    bold_seq = "\033[1m"
-    colorlog_format = f"{bold_seq}" "%(log_color)s" f"{log_format}"
-    logger = logging.getLogger(dunder_name)
-    # colorlog.basicConfig(format=colorlog_format, datefmt="%H:%M")
-    handler = colorlog.StreamHandler()
-    handler.setFormatter(
-        colorlog.ColoredFormatter(
-            colorlog_format,
-            datefmt="%H:%M",
-            reset=True,
-            log_colors={
-                "DEBUG": "cyan",
-                "WARNING": "yellow",
-                "ERROR": "red",
-                "CRITICAL": "red,bg_white",
-            },
-        )
-    )
 
-    logger.addHandler(handler)
+def setup_applevel_logger(
+    logger_name=APP_LOGGER_NAME, is_debug=False, file_name=None
+):
+    """
+    Set up the logger for the app
+    """
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG if is_debug else logging.INFO)
 
-    if log_outfile is not None:
-        if start:
-            if os.path.isfile(log_outfile):
-                os.remove(log_outfile)
-        fileHandler = logging.FileHandler(log_outfile)
-        fileHandler.setFormatter(logging.Formatter(log_format))
-        logger.addHandler(fileHandler)
+    formatter = logging.Formatter("%(name)s - %(levelname)s - %(message)s")
 
-    if testing_mode:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    # pylint: disable=C0103
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(formatter)
+    logger.handlers.clear()
+    logger.addHandler(sh)
+
+    if file_name:
+        # pylint: disable=C0103
+        fh = logging.FileHandler(file_name)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
 
     return logger
 
 
-def log_error_and_exit(log, msg):
+def get_logger(module_name):
+    """
+    Get the logger for the module
+    """
+    return logging.getLogger(APP_LOGGER_NAME).getChild(module_name)
+
+
+def log_error_and_exit(log, msg, exception):
     log.error(msg)
-    raise DreemError(msg)
+    raise exception(msg)
 
 
 def str_to_log_level(s: str):
@@ -65,5 +60,3 @@ def str_to_log_level(s: str):
         return logging.CRITICAL
     else:
         raise ValueError("unknown log level: {}".format(s))
-
-log = init_logger("bit_vector.py", "dreem.log", start=True)

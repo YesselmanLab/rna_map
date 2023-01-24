@@ -1,26 +1,52 @@
-from dreem import settings
-from dreem.logger import *
+"""
+custom module for parsing sam files probably should use existing package
+"""
 
-log = init_logger("sam.py")
+from dataclasses import dataclass
+from dreem import logger
+
+log = logger.get_logger("SAM")
 
 
+@dataclass(frozen=True, order=True)
 class AlignedRead:
-    def __init__(self, line):
-        line_split = line.split()
-        if len(line_split) < 11:
-            raise ValueError("cannot setup Mate object from split, its too short")
-        self.QNAME = line_split[0]
-        self.FLAG = line_split[1]
-        self.RNAME = line_split[2]
-        self.POS = int(line_split[3])
-        self.MAPQ = int(line_split[4])
-        self.CIGAR = line_split[5]
-        self.RNEXT = line_split[6]
-        self.PNEXT = int(line_split[7])
-        self.TLEN = line_split[8]
-        self.SEQ = line_split[9]
-        self.QUAL = line_split[10]
-        self.MDSTRING = line_split[11].split(":")[2]
+    qname: str
+    flag: str
+    rname: str
+    pos: int
+    mapq: int
+    cigar: str
+    rnext: str
+    pnext: int
+    tlen: int
+    seq: str
+    qual: str
+    md_string: str
+
+
+def get_aligned_read_from_line(line):
+    """
+    Get an AlignedRead object from a line of a sam file
+    """
+    spl = line.split()
+    if len(spl) < 11:
+        raise ValueError(
+            "cannot setup AlignRead object from split, its too short"
+        )
+    return AlignedRead(
+        spl[0],
+        spl[1],
+        spl[2],
+        int(spl[3]),
+        int(spl[4]),
+        spl[5],
+        spl[6],
+        int(spl[7]),
+        int(spl[8]),
+        spl[9],
+        spl[10],
+        spl[11].split(":")[2],
+    )
 
 
 # TODO add stats to print at the end
@@ -52,8 +78,9 @@ class SingleSamIterator(object):
         self._read_1_line = self._f.readline().strip()
         if len(self._read_1_line) == 0:
             raise StopIteration
-        self._read_1 = AlignedRead(self._read_1_line)
+        self._read_1 = get_aligned_read_from_line(self._read_1_line)
         return [self._read_1]
+
 
 class PairedSamIterator(object):
     def __init__(self, samfile_path, ref_seqs):
@@ -74,28 +101,27 @@ class PairedSamIterator(object):
         self._read_2_line = self._f.readline().strip()
         if len(self._read_1_line) == 0 or len(self._read_2_line) == 0:
             raise StopIteration
-        self._read_1 = AlignedRead(self._read_1_line)
-        self._read_2 = AlignedRead(self._read_2_line)
+        self._read_1 = get_aligned_read_from_line(self._read_1_line)
+        self._read_2 = get_aligned_read_from_line(self._read_2_line)
+
         # check if reads are paired
         if not (
-            self._read_1.PNEXT == self._read_2.POS
-            and self._read_1.RNAME == self._read_2.RNAME
-            and self._read_1.RNEXT == "="
+            self._read_1.pnext == self._read_2.pos
+            and self._read_1.rname == self._read_2.rname
+            and self._read_1.rnext == "="
         ):
             log.warning(
-                "mate_2 is inconsistent with mate_1 for read: {} SKIPPING!".format(
-                    self._read_1.QNAME
-                )
+                f"mate_2 is inconsistent with mate_1 for read: "
+                f"{self._read_1.qname} SKIPPING!"
             )
             self.__next__()
         if not (
-            self._read_1.QNAME == self._read_2.QNAME
-            and self._read_1.MAPQ == self._read_2.MAPQ
+            self._read_1.qname == self._read_2.qname
+            and self._read_1.mapq == self._read_2.mapq
         ):
             log.warning(
-                "mate_2 is inconsistent with mate_1 for read: {} SKIPPING!".format(
-                    self._read_1.QNAME
-                )
+                f"mate_2 is inconsistent with mate_1 for read: "
+                f"{self._read_1.qname} SKIPPING!"
             )
             self.__next__()
         return [self._read_1, self._read_2]

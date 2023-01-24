@@ -1,66 +1,78 @@
 import pytest
 import shutil
 import os
-from click.testing import CliRunner
+import shutil
+import pytest
 
-from dreem import run, settings, util, run_docker
+from dreem.run import validate_inputs, validate_fasta_file
+from dreem.exception import DREEMInputException
 
-TEST_DIR = os.path.dirname( os.path.realpath( __file__ ) )
-BASE_DIR = os.path.dirname(TEST_DIR)
-
-
-@pytest.mark.integration
-def test_case_1():
-    util.safe_rmdir("output")
-    util.safe_rmdir("input")
-
-    path = BASE_DIR + "/test/resources/case_1/"
-    runner = CliRunner()
-
-    args = [
-        "--fasta", path + "test.fasta",
-        "--fastq1", path + "test_mate1.fastq",
-        "--fastq2", path + "test_mate2.fastq",
-        "-ow"
-    ]
-    result = runner.invoke(run_docker, args, prog_name='dreem-test')
-          
-    assert os.path.isfile("output/BitVector_Files/mttr-6-alt-h3_1_134_pop_avg.html")
-    util.safe_rmdir("output")
-    util.safe_rmdir("input")
+TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
-def test_entrypoints_work():
+def get_test_inputs_paired():
+    """
+    Get the test inputs
+    """
+    test_data_dir = os.path.join(TEST_DIR, "resources", "case_1")
+    return {
+        "fasta": test_data_dir + "/test.fasta",
+        "fastq1": test_data_dir + "/test_mate1.fastq",
+        "fastq2": test_data_dir + "/test_mate2.fastq",
+    }
 
-    assert not os.system('dreem --help')
-    assert not os.system('dreem-docker --help')
+
+def remove_directories(cur_dir):
+    """
+    Remove the directory for testing
+    """
+    shutil.rmtree(os.path.join(cur_dir, "input"))
+    shutil.rmtree(os.path.join(cur_dir, "log"))
+    shutil.rmtree(os.path.join(cur_dir, "output"))
 
 
-@pytest.mark.integration
-def test_case_2():
-    DIR_WITH_SPACES = 'test\\ dir'
-    
-    util.safe_rmdir( DIR_WITH_SPACES )
-    os.mkdir(DIR_WITH_SPACES)
-    os.chdir(DIR_WITH_SPACES)
-    util.safe_rmdir("output")
-    util.safe_rmdir("input")
+def test_input_validation():
+    """
+    test input validation
+    """
+    p = get_test_inputs_paired()
+    ins = validate_inputs(p["fasta"], p["fastq1"], "", "")
+    assert p["fasta"] == ins.fasta
+    assert ins.csv == ""
+    assert ins.is_paired() == False
+    assert ins.supplied_csv() == False
 
-    path = BASE_DIR + "/test/resources/case_1/"
-    runner = CliRunner()
+    # check to make sure we get the proper errors for supplying file that does
+    # not exist
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_inputs(p["fasta"], "", "", "")
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_inputs("fake_path", p["fastq1"], "", "")
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_inputs(p["fasta"], p["fastq1"], "fake_path", "")
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_inputs(p["fasta"], p["fastq1"], "", "fake_path")
 
-    args = [
-        "--fasta", path + "test.fasta",
-        "--fastq1", path + "test_mate1.fastq",
-        "--fastq2", path + "test_mate2.fastq",
-        "-ow"
-    ]
-    result = runner.invoke(run_docker, args, prog_name='dreem-test')
-          
-    assert os.path.isfile("output/BitVector_Files/mttr-6-alt-h3_1_134_pop_avg.html")
-    util.safe_rmdir("output")
-    util.safe_rmdir("input")
 
-    os.chdir('..')
-    util.safe_rmdir( DIR_WITH_SPACES )
-
+# TODO create these files or maybe grab them from the server repo?
+def _test_fasta_checks():
+    fasta_test_path = TEST_DIR + "/resources/test_fastas/"
+    path = fasta_test_path + "blank_line.fasta"
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_fasta_file(path)
+    assert (
+        exc_info.value.args[0]
+        == "blank line found on ln: 1. These are not allowed in fastas."
+    )
+    path = fasta_test_path + "incorrect_format.fasta"
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_fasta_file(path)
+    assert (
+        exc_info.value.args[0]
+        == "reference sequence names are on line zero and even numbers. line 0 "
+        "has value which is not correct format in the fasta"
+    )
+    path = fasta_test_path + "incorrect_sequence.fasta"
+    with pytest.raises(DREEMInputException) as exc_info:
+        validate_fasta_file(path)
+    print(exc_info)

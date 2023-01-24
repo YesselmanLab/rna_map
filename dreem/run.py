@@ -1,117 +1,152 @@
-import sys
-import colorlog
+"""
+run main program of dreem
+"""
+
+import re
 import os
-import subprocess
-import shutil
-import click
-from click_option_group import optgroup
+import pandas as pd
+import yaml
 
-from dreem import settings, logger, mapping, bit_vector
-from dreem.parameters import *
-from dreem.util import *
+from dreem.bit_vector import BitVectorGenerator
 
+from dreem.exception import DREEMInputException
+from dreem.logger import get_logger
+from dreem.parameters import (
+    Inputs,
+    get_default_params,
+    validate_parameters,
+)
+from dreem.mapping import Mapper
+from dreem.util import fasta_to_dict
 
-# TODO make sure to validate right format of fasta file "> " vs ">"
-# TODO check the version of trim_galore
-# TODO add setup.py which checks for everything
-
-# logging/settings/args ###############################################################
-
-
-def write_log_file(fname, output):
-    pass
+log = get_logger("RUN")
 
 
-# universal logger
-log = logger.log
+# validate inputs #############################################################
 
 
-def build_directories(p: Parameters):
-    log.info("building directory structure")
-    safe_mkdir(p.dirs.input)
-    safe_mkdir(p.dirs.log)
-    safe_mkdir(p.dirs.output)
-    safe_mkdir(p.dirs.mapping)
-    safe_mkdir(p.dirs.bitvector)
-
-
-@click.command()
-@optgroup.group("main arguments")
-@optgroup.option("-fa", "--fasta", type=click.Path(exists=True), required=True,
-                 help="reference sequences in fasta format")
-@optgroup.option("-fq1", "--fastq1", type=click.Path(exists=True), required=True,
-                 help="fastq sequencing file of mate 1")
-@optgroup.option("-fq2", "--fastq2", type=click.Path(exists=True),
-                 help="fastq sequencing file of mate 2", default=None)
-@optgroup.group("common options")
-@optgroup.option("--dot_bracket", type=click.Path(exists=True),
-                 help="A csv formatted file that contains dot bracket info for each sequence")
-@optgroup.option("-pf", "--param-file", type=click.Path(exists=True),
-                 help="A yml formatted file to specify parameters")
-@optgroup.option("-ow", "--overwrite", is_flag=True,
-                 help="overwrites previous results, if not set will keep previous "
-                      "calculation checkpoints")
-@optgroup.option("-ll", "--log-level", help="set log level (INFO|WARN|DEBUG|ERROR|FATAL)",
-                 default="INFO")
-@optgroup.option("-rob", "--restore_org_behavior", is_flag=True, default=False,
-                 help="retores the original behavior of dreem upon first release")
-@optgroup.group("map options")
-@optgroup.option("--map-overwrite", is_flag=True,
-                 help="overwrite mapping calculation")
-@optgroup.option("--skip", is_flag=True,
-                 help="do not perform sequence mapping, not recommended")
-@optgroup.option("--skip_fastqc", is_flag=True,
-                 help="do not run fastqc for quality control of sequence data")
-@optgroup.option("--skip_trim_galore", is_flag=True,
-                 help="do not run trim galore to remove adapter sequences at ends")
-@optgroup.option("--tg_q_cutoff", default=None,
-                 help="TODO")
-@optgroup.option("--bt2_alignment_args", default=None,
-                 help="TODO")
-@optgroup.group("bv options")
-@optgroup.option("--skip", is_flag=True,
-                 help="skip bit vector generation step, not recommended")
-@optgroup.option("--bv-overwrite", is_flag=True,
-                 help="overwrite bit vector calculation")
-@optgroup.option("--qscore_cutoff", default=None,
-                 help="quality score of read nucleotide, sets to ambigious if under this val")
-@optgroup.option("--num_of_surbases", default=None,
-                 help="number of bases around a mutation")
-@optgroup.option("--map_score_cutoff", default=None,
-                 help="map alignment score cutoff for a read, read is discarded if under this value")
-@optgroup.option("--mutation_count_cutoff", default=None,
-                 help="maximum number of mutations in a read allowable")
-@optgroup.option("--percent_length_cutoff", default=None,
-                 help="read is discarded if less than this percent of a ref sequence is included")
-@optgroup.option("--summary_output_only", is_flag=True,
-                 help="")
-@optgroup.option("--plot_sequence", is_flag=True,
-                 help="")
-def main(**args):
+def validate_fasta_file(fa: str) -> None:
     """
-    DREEM processes DMS next generation sequencing data to produce mutational
-    profiles that relate to DMS modification rates written by Silvi Rouskin and the
-    Rouskin lab (https://www.rouskinlab.com/)
+    ensure that the fasta file is in the correct format
+    :param fa: path to the fasta file
     """
-    run(args)
+    with open(fa, "r", encoding="utf8") as f:
+        lines = f.readlines()
+    if len(lines) > 2000:
+        log.warning(
+            "fasta file contains more than 1000 sequences, this may lead"
+            " to file generation issues. Its recommended to use --summary-output-only "
+        )
+    num = 0
+    for i, l in enumerate(lines):
+        l = l.rstrip()
+        if len(l) == 0:
+            raise DREEMInputException(
+                f"blank line found on ln: {i}. These are not allowed in fastas."
+            )
+        # should be a reference sequence declartion
+        if i % 2 == 0:
+            num += 1
+            if not l.startswith(">"):
+                raise DREEMInputException(
+                    f"reference sequence names are on line zero and even numbers."
+                    f" line {i} has value which is not correct format in the fasta"
+                )
+            if l.startswith("> "):
+                raise DREEMInputException(
+                    f"there should be no spaces between > and reference name."
+                    f"this occured on ln: {i} in the fasta file"
+                )
+        elif i % 2 == 1:
+            if l.startswith(">"):
+                raise DREEMInputException(
+                    f"sequences should be on are on odd line numbers."
+                    f" line {i} has value which is not correct format in fasta file"
+                )
+            if re.search(r"[^AGCT]", l):
+                raise DREEMInputException(
+                    f"reference sequences must contain only AGCT characters."
+                    f" line {i} is not consisetnt with this in fasta"
+                )
+    log.info(f"found {num} valid reference sequences in {fa}")
 
 
-def run(args):
-    log.info("ran at commandline as: ")
-    log.info(" ".join(sys.argv))
-    log.setLevel(logger.str_to_log_level(args["log_level"]))
-    # setup parameters
-    setup_parameters(args)
-    p = get_parameters()
-    build_directories(p)
-    p.to_yaml_file(p.dirs.log + "/parameters.yml")
+def validate_csv_file(fa: str, csv: str) -> None:
+    """
+    ensure that the fasta file is in the correct format
+    :param fa: path to the fasta file
+    """
+    ref_seqs = fasta_to_dict(fa)
+    df = pd.read_csv(csv)
+    if "name" not in df.columns:
+        raise DREEMInputException(
+            f"csv file does not contain a column named 'name'."
+        )
+    if "sequence" not in df.columns:
+        raise DREEMInputException(
+            f"csv file does not contain a column named 'sequence'"
+        )
+    if "structure" not in df.columns:
+        raise DREEMInputException(
+            f"csv file does not contain a column named 'structure'"
+        )
+    if len(ref_seqs) != len(df):
+        raise DREEMInputException(
+            f"number of reference sequences in fasta ({len(ref_seqs)}) does not match"
+            f" number of reference sequences in dot-bracket file ({len(df)})"
+        )
+    for i, row in df.iterrows():
+        if row["name"] not in ref_seqs:
+            raise DREEMInputException(
+                f"reference sequence name {row['name']} in csv file does not match"
+                f" any reference sequence names in fasta file"
+            )
+
+
+def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
+    if not os.path.isfile(fa):
+        raise DREEMInputException(f"fasta file: does not exist {fa}!")
+    else:
+        log.info(f"fasta file: {fa} exists")
+        validate_fasta_file(fa)
+    if not os.path.isfile(fq1):
+        raise DREEMInputException(f"fastq1 file: does not exist {fq1}!")
+    else:
+        log.info(f"fastq1 file: {fq1} exists")
+    if fq2 != "":
+        if not os.path.isfile(fq2):
+            raise DREEMInputException(f"fastq2 file: does not exist {fq2}!")
+        else:
+            log.info(f"fastq2 file: {fq2} exists")
+            log.info("two fastq files supplied, thus assuming paired reads")
+    if csv != "":
+        if not os.path.isfile(csv):
+            raise DREEMInputException(f"csv file: does not exist {csv}!")
+        else:
+            log.info(f"csv file: {csv} exists")
+            validate_csv_file(fa, csv)
+    return Inputs(fa, fq1, fq2, csv)
+
+# run #########################################################################
+
+def run(fasta, fastq1, fastq2, dot_bracket, params=None):
+    ins = validate_inputs(fasta, fastq1, fastq2, dot_bracket)
+    if params is None:
+        params = get_default_params()
+    else:
+        validate_parameters(params)
     # perform read mapping to reference sequences
-    m = mapping.Mapper()
-    m.run(p)
+    m = Mapper()
+    m.setup(params)
+    m.check_program_versions()
+    m.run(ins)
     # convert aligned reads to bit vectors
-    bt = bit_vector.BitVectorGenerator()
-    bt.run(p)
-
-
-if __name__ == "__main__":
-    main()
+    bt = BitVectorGenerator()
+    bt.setup(params)
+    sam_path = os.path.join(
+        params["dirs"]["output"], "Mapping_Files", "aligned.sam"
+    )
+    bt.run(sam_path, ins.fasta, ins.is_paired(), ins.csv)
+    # log parameter file
+    with open(os.path.join(params["dirs"]["log"], "params.yml"), "w") as f:
+        yaml.dump(params, f)

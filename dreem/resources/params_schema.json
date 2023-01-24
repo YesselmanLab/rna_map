@@ -1,0 +1,134 @@
+{
+  "type": "object",
+  "properties": {
+    "map": {
+      "type": "object",
+      "properties": {
+        "skip": {
+          "type": "boolean",
+          "default": false
+        },
+        "skip_fastqc": {
+          "type": "boolean",
+          "default": false
+        },
+        "skip_trim_galore": {
+          "type": "boolean",
+          "default": false
+        },
+        "tg_q_cutoff": {
+          "type": "integer",
+          "default": 20
+        },
+        "bt2_alignment_args": {
+          "type": "string",
+          "default": "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+        }
+      },
+      "default": {},
+      "additionalProperties": false
+    },
+    "bit_vector": {
+      "type": "object",
+      "properties": {
+        "skip": {
+          "type": "boolean",
+          "default": false
+        },
+        "qscore_cutoff": {
+          "type": "integer",
+          "default": 25
+        },
+        "num_of_surbases": {
+          "type": "integer",
+          "default": 10
+        },
+        "map_score_cutoff": {
+          "type": "integer",
+          "default": 15
+        },
+        "plot_sequence": {
+          "type": "boolean",
+          "default": false
+        },
+        "summary_output_only": {
+          "type": "boolean",
+          "default": false
+        },
+        "stricter_constraints": {
+          "type": "object",
+          "properties": {
+            "min_mut_distance": {
+              "type": "integer",
+              "default": 5
+            },
+            "mutation_count_cutoff": {
+              "type": "integer",
+              "default": 10
+            },
+            "percent_length_cutoff": {
+              "type": "number",
+              "default": 0.01
+            }
+          },
+          "default": {}
+        }
+      },
+      "default": {},
+      "additionalProperties": false
+    },
+    "dirs": {
+      "type": "object",
+      "properties": {
+        "log": {
+          "type": "string",
+          "default": "log"
+        },
+        "input": {
+          "type": "string",
+          "default": "input"
+        },
+        "output": {
+          "type": "string",
+          "default": "output"
+        }
+      },
+      "default": {},
+      "additionalProperties": false
+    },
+    "docker": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "string",
+          "default": "dreem"
+        },
+        "cont-name": {
+          "type": "string",
+          "default": "dreem-cont"
+        },
+        "platform": {
+          "type": "string",
+          "default": "linux/amd64"
+        }
+      },
+      "default": {},
+      "additionalProperties": false
+    },
+    "overwrite": {
+      "type": "boolean",
+      "default": false
+    },
+    "restore_org_behavior": {
+      "type": "boolean",
+      "default": false
+    },
+    "stricter_bv_constraints": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "default": {},
+  "required": []
+}
+

@@ -1,0 +1,144 @@
+main:
+  name: Main arguments
+  description: These are the main arguments for the command line interface
+  opts:
+    -fa:
+      alt_name: "--fasta"
+      type: cloup.Path(exists=True)
+      required: True
+      help: The fasta file containing the reference sequences
+    -fq1:
+      alt_name: "--fastq1"
+      type: cloup.Path(exists=True)
+      required: True
+      help: The fastq file containing the single end reads or the first pair of paired end reads
+    -fq2:
+      alt_name: "--fastq2"
+      type: str
+      default: ""
+      help: The fastq file containing the second pair of paired end reads
+    --dot-bracket:
+      type: str
+      default: ""
+      help: The directory containing the input files
+    -pf:
+      alt_name: "--param-file"
+      type: str
+      default: None
+      help: A yml formatted file to specify parameters, see dreem/resources/default.yml for an example
+
+docker:
+  name: Docker options
+  description: These are the options for running the command line interface in a docker container
+  opts:
+    --docker:
+      is_flag: True
+      help: Run the program in a docker container
+    --docker-image:
+      type: str
+      default: dreem
+      help: The docker image to use
+    --docker-platform:
+      type: str
+      default: linux/amd64
+      help: The platform to use for the docker image
+
+mapping:
+  name: Mapping options
+  description: These are the options for pre processing of fastq files and alignment to reference sequences
+  opts:
+    --skip-fastqc:
+      param: map:skip_fastqc
+      log_msg: skipping fastqc for quality control only do this if you are confident in the quality of your data
+      is_flag: True
+      help: do not run fastqc for quality control of sequence data
+    --skip-trim-galore:
+      param: map:skip_trim_galore
+      log_msg: skipping trim galore for quality control not recommended
+      is_flag: True
+      help: do not run trim galore for quality control of sequence data
+    --tg-q-cutoff:
+      param: map:tg_q_cutoff
+      log_msg: trim galore quality cutoff set to {value}
+      type: int
+      default: 20
+      help: the quality cutoff for trim galore
+    --bt2-alignment-args:
+      param: map:bt2_alignment_args
+      log_msg: bowtie2 alignment arguments set to {value}
+      help: the arguments to pass to bowtie2 for alignment seperated by commas
+
+bit_vector:
+  name: Bit vector options
+  description: These are the options for the bit vector step
+  opts:
+    --skip-bit-vector:
+      param: bit_vector:skip
+      log_msg: skipping bit vector step
+      is_flag: True
+      help: do not run the bit vector step
+    --summary-output-only:
+        param: bit_vector:summary_output_only
+        log_msg: only outputting summary files
+        is_flag: True
+        help: do not generate bit vector files or plots recommended when there are thousands of reference sequences
+    --plot-sequence:
+        param: bit_vector:plot_sequence
+        log_msg: plotting sequence/structure on bit vector plots
+        is_flag: True
+        help: plot sequence and structure is supplied under the population average plots
+    --map-score-cutoff:
+        param: bit_vector:map_score_cutoff
+        log_msg: mapping score cutoff set to {value}
+        type: int
+        default: 15
+        help: reject any bit vector where the mapping score for bowtie2 alignment is less than this value
+    --qscore-cutoff:
+        param: bit_vector:qscore_cutoff
+        log_msg: qscore cutoff set to {value}
+        type: int
+        default: 25
+        help: quality score of read nucleotide, sets to ambigious if under this val
+    --mutation-count-cutoff:
+        param: bit_vector:stricter_constraints:mutation_count_cutoff
+        log_msg: mutation count cutoff set to {value} this will only run if --stricter-bv-constraints is set
+        type: int
+        default: 5
+        help: maximum number of mutations allowed in a bit vector will be discarded if higher
+    --percent-length-cutoff:
+        param: bit_vector:stricter_constraints:percent_length_cutoff
+        log_msg: percent length cutoff set to {value} this will only run if --stricter-bv-constraints is set
+        type: float
+        default: 0.10
+        help: minium percent of the length of the reference sequence allowed in a bit vector will be discarded if lower
+    --min-mut-distance:
+        param: bit_vector:stricter_constraints:min_mut_distance
+        log_msg: minimum mutation distance set to {value} this will only run if --stricter-bv-constraints is set
+        type: int
+        default: 5
+        help: minimum distance between mutations in a bit vector will be discarded if lower
+
+misc:
+  name: Misc options
+  description: These are the options for the misc stage
+  opts:
+    --overwrite:
+      param: overwrite
+      log_msg: will overwrite all existing files
+      is_flag: True
+      help: overwrite the output directory if it exists
+    --restore-org-behavior:
+      param: "restore_org_behavior"
+      log_msg: "restoring original behavior of dreem publications"
+      is_flag: True
+      help: "restore the original behavior of the dreem"
+    --stricter-bv-constraints:
+      param: stricter_bv_constraints
+      log_msg: stricter bit vector constraints are active please use at your own risk
+      is_flag: True
+      help: use stricter constraints for bit vector generation, use at your own risk!
+    --debug:
+      is_flag: True
+      log_msg: debug mode is active
+      help: enable debug mode
+

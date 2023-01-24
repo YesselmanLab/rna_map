@@ -1,0 +1,9 @@
+# abbreviations
+# tg -> trim galore
+# bt2 -> bowtie 2
+
+## map ################################################################################
+# arguments related to mapping step
+# catches all arguments that exist but wrong type
+map:
+  fake: True
