@@ -1,5 +1,6 @@
 [![Build Status](https://app.travis-ci.com/jyesselm/dreem.svg?branch=main)](https://app.travis-ci.com/jyesselm/dreem)
 
+Moving updates to a new repo https://github.com/YesselmanLab/rna_map. 
 
 # DREEM 
 
