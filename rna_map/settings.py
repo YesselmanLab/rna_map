@@ -9,7 +9,7 @@ def get_lib_path():
 
 
 def get_py_path():
-    return get_lib_path() + "/dreem/"
+    return get_lib_path() + "/rna_map/"
 
 
 def get_test_path():

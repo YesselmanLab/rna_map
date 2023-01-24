@@ -54,7 +54,7 @@ RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz -
 
 RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
     unzip 0.2.0.zip                                                         && \
-    mv dreem-0.2.0 dreem                                                    && \
+    mv rna_map-0.2.0 rna_map                                                    && \
    /bin/bash -c "cd dreem && python setup.py install"
 
 WORKDIR /data

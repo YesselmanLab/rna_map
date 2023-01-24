@@ -34,6 +34,6 @@ dirs:
   output: output
 # docker ######################################################################
 docker:
-  image: dreem # name of docker image
-  cont-name: dreem-cont # name of docker container
+  image: rna_map # name of docker image
+  cont-name: rna_map-cont # name of docker container
   platform: linux/amd64 # platform to run docker image on

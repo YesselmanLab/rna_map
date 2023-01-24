@@ -1,5 +1,5 @@
 """
-defines exceptions for dreem package
+defines exceptions for rna_map package
 """
 
 

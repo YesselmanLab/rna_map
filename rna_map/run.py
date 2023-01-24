@@ -1,5 +1,5 @@
 """
-run main program of dreem
+run main program of rna_map
 """
 
 import re
@@ -7,17 +7,17 @@ import os
 import pandas as pd
 import yaml
 
-from dreem.bit_vector import BitVectorGenerator
+from rna_map.bit_vector import BitVectorGenerator
 
-from dreem.exception import DREEMInputException
-from dreem.logger import get_logger
-from dreem.parameters import (
+from rna_map.exception import DREEMInputException
+from rna_map.logger import get_logger
+from rna_map.parameters import (
     Inputs,
     get_default_params,
     validate_parameters,
 )
-from dreem.mapping import Mapper
-from dreem.util import fasta_to_dict
+from rna_map.mapping import Mapper
+from rna_map.util import fasta_to_dict
 
 log = get_logger("RUN")
 

@@ -9,9 +9,9 @@ from pathlib import Path
 from dataclasses import dataclass
 import pandas as pd
 
-from dreem.settings import get_py_path
-from dreem.logger import get_logger
-from dreem.exception import DREEMInputException, DREEMExternalProgramException
+from rna_map.settings import get_py_path
+from rna_map.logger import get_logger
+from rna_map.exception import DREEMInputException, DREEMExternalProgramException
 
 log = get_logger("EXTERNAL_CMD")
 

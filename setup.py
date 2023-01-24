@@ -25,29 +25,29 @@ with open('requirements.txt') as f:
 
 # TODO make sure to string format for markdown
 setup(
-    name='dreem',
+    name='rna_map',
     version='0.3.0',
     description='',
     long_description=readme + '\n\n' + doclink + '\n\n' + history,
     author='Joe Yesselman',
     author_email='jyesselm@unl.edu',
-    url='https://github.com/jyesselm/dreem',
+    url='https://github.com/YesselmanLab/rna_map',
     packages=[
-        'dreem',
+        'rna_map',
     ],
-    package_dir={'dreem': 'dreem'},
+    package_dir={'rna_map': 'rna_map'},
     py_modules=[
-        'dreem/bit_vector',
-        'dreem/cli',
-        'dreem/exception',
-        'dreem/external_cmd',
-        'dreem/logger',
-        'dreem/mapping',
-        'dreem/parameters',
-        'dreem/run',
-        'dreem/sam',
-        'dreem/settings',
-        'dreem/util'
+        'rna_map/bit_vector',
+        'rna_map/cli',
+        'rna_map/exception',
+        'rna_map/external_cmd',
+        'rna_map/logger',
+        'rna_map/mapping',
+        'rna_map/parameters',
+        'rna_map/run',
+        'rna_map/sam',
+        'rna_map/settings',
+        'rna_map/util'
     ],
     include_package_data=True,
     install_requires=requirements,
@@ -61,7 +61,7 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
-            'dreem = dreem.cli : cli',
+            'rna-map = rna_map.cli : cli',
         ]
     }
 )

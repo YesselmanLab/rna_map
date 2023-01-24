@@ -1,12 +1,12 @@
 """
-command line iterface for dreem
+command line iterface for rna_map
 """
 import os
 import sys
 import subprocess
 import cloup
 
-from dreem.cli_opts import (
+from rna_map.cli_opts import (
     bit_vector_options,
     docker_options,
     main_options,
@@ -14,11 +14,11 @@ from dreem.cli_opts import (
     misc_options,
     parse_cli_args,
 )
-from dreem.external_cmd import does_program_exist
-from dreem.logger import setup_applevel_logger, get_logger
-from dreem.parameters import parse_parameters_from_file, get_default_params
-from dreem.run import run
-from dreem.settings import get_py_path
+from rna_map.external_cmd import does_program_exist
+from rna_map.logger import setup_applevel_logger, get_logger
+from rna_map.parameters import parse_parameters_from_file, get_default_params
+from rna_map.run import run
+from rna_map.settings import get_py_path
 
 log = get_logger("CLI")
 
@@ -60,10 +60,10 @@ def run_in_docker(args):
     }
     files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
     docker_cmd = (
-        f"docker run --name dreem-cont "
+        f"docker run --name rna_map-cont "
         f"--platform {args['docker_platform']} -v $(pwd):/data "
     )
-    dreem_cmd = "dreem "
+    dreem_cmd = "rna_map "
     dirs = {os.getcwd(): "/data"}
     dcount = 2
     pos = 1
@@ -112,7 +112,7 @@ def run_in_docker(args):
         f": {docker_cmd}"
     )
     subprocess.call(docker_cmd, shell=True)
-    subprocess.call("docker rm dreem-cont", shell=True)
+    subprocess.call("docker rm rna_map-cont", shell=True)
 
 
 
@@ -127,9 +127,7 @@ def run_in_docker(args):
 @misc_options()
 def cli(**args):
     """
-    DREEM processes DMS next generation sequencing data to produce mutational
-    profiles that relate to DMS modification rates written by Silvi Rouskin and the
-    Rouskin lab (https://www.rouskinlab.com/)
+    rapid analysis of RNA mutational profiling (MaP) experiments.
     """
     # setup logging
     if args["debug"]:
@@ -152,7 +150,7 @@ def cli(**args):
     else:
         params = parse_parameters_from_file(args["param_file"])
     parse_cli_args(params, args)
-    # run dreem pipeline
+    # run rna_map pipeline
     run(
         args.pop("fasta"),
         args.pop("fastq1"),

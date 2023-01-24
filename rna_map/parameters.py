@@ -6,8 +6,8 @@ from jsonschema import Draft4Validator, validators
 from pathlib import Path
 from dataclasses import dataclass
 
-from dreem import settings, logger
-from dreem.settings import get_py_path
+from rna_map import settings, logger
+from rna_map.settings import get_py_path
 
 log = logger.get_logger("PARAMETERS")
 

@@ -5,9 +5,9 @@ import os
 import pytest
 import shutil
 
-from dreem.logger import setup_applevel_logger
-from dreem.mapping import Mapper
-from dreem.parameters import Inputs, get_default_params
+from rna_map.logger import setup_applevel_logger
+from rna_map.mapping import Mapper
+from rna_map.parameters import Inputs, get_default_params
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 

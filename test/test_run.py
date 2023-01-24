@@ -4,8 +4,8 @@ import os
 import shutil
 import pytest
 
-from dreem.run import validate_inputs, validate_fasta_file
-from dreem.exception import DREEMInputException
+from rna_map.run import validate_inputs, validate_fasta_file
+from rna_map.exception import DREEMInputException
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 

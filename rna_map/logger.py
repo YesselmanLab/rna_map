@@ -5,7 +5,7 @@ Handles logging for module
 import logging
 import sys
 
-APP_LOGGER_NAME = "dreem"
+APP_LOGGER_NAME = "rna_map"
 
 
 def setup_applevel_logger(

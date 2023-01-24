@@ -2,8 +2,8 @@
 test sam module
 """
 import os
-from dreem.sam import SingleSamIterator
-from dreem.util import fasta_to_dict
+from rna_map.sam import SingleSamIterator
+from rna_map.util import fasta_to_dict
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 

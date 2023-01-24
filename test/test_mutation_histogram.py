@@ -6,7 +6,7 @@ import pickle
 import json
 import pytest
 
-from dreem.mutation_histogram import (
+from rna_map.mutation_histogram import (
     MutationHistogram,
     get_dataframe,
     get_mut_histos_from_json_file,

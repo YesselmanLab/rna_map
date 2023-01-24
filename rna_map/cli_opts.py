@@ -1,7 +1,7 @@
 import yaml
 import cloup
 from cloup import option_group, option
-from dreem.logger import get_logger
+from rna_map.logger import get_logger
 
 log = get_logger('CLI_OPTS')
 
@@ -41,7 +41,7 @@ def main_options():
             "--param-file",
             type=str,
             default=None,
-            help="A yml formatted file to specify parameters, see dreem/resources/default.yml for an example",
+            help="A yml formatted file to specify parameters, see rna_map/resources/default.yml for an example",
         ),
     )
 
@@ -57,7 +57,7 @@ def docker_options():
         option(
             "--docker-image",
             type=str,
-            default="dreem",
+            default="rna_map",
             help="The docker image to use",
         ),
         option(
@@ -157,7 +157,7 @@ def misc_options():
         option(
             "--restore-org-behavior",
             is_flag=True,
-            help="restore the original behavior of the dreem",
+            help="restore the original behavior of the rna_map",
         ),
         option(
             "--stricter-bv-constraints",
@@ -219,7 +219,7 @@ def parse_cli_args(params, args):
         log.info("will overwrite all existing files")
         params["overwrite"] = args['overwrite']
     if args['restore_org_behavior']:
-        log.info("restoring original behavior of dreem publications")
+        log.info("restoring original behavior of rna_map publications")
         params["restore_org_behavior"] = args['restore_org_behavior']
     if args['stricter_bv_constraints']:
         log.info("stricter bit vector constraints are active please use at your own risk")

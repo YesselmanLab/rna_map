@@ -5,7 +5,7 @@ import os
 import pytest
 import shutil
 
-from dreem.external_cmd import (
+from rna_map.external_cmd import (
     does_program_exist,
     get_bowtie2_version,
     get_fastqc_version,
@@ -18,8 +18,8 @@ from dreem.external_cmd import (
     run_bowtie_alignment,
     validate_bowtie2_args,
 )
-from dreem.exception import DREEMInputException
-from dreem.parameters import Inputs
+from rna_map.exception import DREEMInputException
+from rna_map.parameters import Inputs
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 

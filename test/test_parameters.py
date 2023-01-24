@@ -5,7 +5,7 @@ testing the parameters module
 import pytest
 import os
 
-from dreem.parameters import parse_parameters_from_file
+from rna_map.parameters import parse_parameters_from_file
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 BASE_DIR = os.path.dirname(TEST_DIR)

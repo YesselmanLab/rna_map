@@ -8,8 +8,8 @@ from typing import Dict, List
 import pandas as pd
 from tabulate import tabulate
 
-from dreem import settings
-from dreem.mutation_histogram import (
+from rna_map import settings
+from rna_map.mutation_histogram import (
     MutationHistogram,
     get_dataframe,
     plot_modified_bases,
@@ -17,9 +17,9 @@ from dreem.mutation_histogram import (
     plot_population_avg,
     plot_read_coverage,
 )
-from dreem.logger import get_logger
-from dreem.sam import AlignedRead, SingleSamIterator, PairedSamIterator
-from dreem.util import parse_phred_qscore_file, fasta_to_dict
+from rna_map.logger import get_logger
+from rna_map.sam import AlignedRead, SingleSamIterator, PairedSamIterator
+from rna_map.util import parse_phred_qscore_file, fasta_to_dict
 
 log = get_logger("BIT_VECTOR")
 

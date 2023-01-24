@@ -5,7 +5,7 @@ import os
 import shutil
 
 from click.testing import CliRunner
-from dreem.cli import cli
+from rna_map.cli import cli
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 

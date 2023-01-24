@@ -25,7 +25,7 @@ main:
       alt_name: "--param-file"
       type: str
       default: None
-      help: A yml formatted file to specify parameters, see dreem/resources/default.yml for an example
+      help: A yml formatted file to specify parameters, see rna_map/resources/default.yml for an example
 
 docker:
   name: Docker options
@@ -36,7 +36,7 @@ docker:
       help: Run the program in a docker container
     --docker-image:
       type: str
-      default: dreem
+      default: rna_map
       help: The docker image to use
     --docker-platform:
       type: str
@@ -129,9 +129,9 @@ misc:
       help: overwrite the output directory if it exists
     --restore-org-behavior:
       param: "restore_org_behavior"
-      log_msg: "restoring original behavior of dreem publications"
+      log_msg: "restoring original behavior of rna_map publications"
       is_flag: True
-      help: "restore the original behavior of the dreem"
+      help: "restore the original behavior of the rna_map"
     --stricter-bv-constraints:
       param: stricter_bv_constraints
       log_msg: stricter bit vector constraints are active please use at your own risk

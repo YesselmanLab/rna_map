@@ -6,12 +6,12 @@ import os
 import shutil
 from typing import Dict
 from pathlib import Path
-from dreem import logger
-from dreem.parameters import Inputs
-from dreem.exception import (
+from rna_map import logger
+from rna_map.parameters import Inputs
+from rna_map.exception import (
     DREEMMissingRequirementsException,
 )
-from dreem.external_cmd import (
+from rna_map.external_cmd import (
     does_program_exist,
     get_fastqc_version,
     get_bowtie2_version,
