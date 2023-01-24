@@ -258,38 +258,3 @@ def run_bowtie_alignment(
     log.info("results for bowtie alignment: \n" + "\n".join(keep))
     return out
 
-
-def run_picard_bam_convert(sam_file: str, bam_file: str) -> ProgOutput:
-    """
-    Convert a sam file to a bam file
-    :sam_file: input path to sam file
-    :bam_file: output path to bam file
-    """
-    picard_path = get_py_path() + "/resources/picard.jar"
-    cmd = (
-        f"java -jar {picard_path} SamFormatConverter I={sam_file} O={bam_file}"
-    )
-    return run_named_command("picard BAM conversion", cmd)
-
-
-def run_picard_sort(bam_file: str, sorted_bam_file: str) -> ProgOutput:
-    picard_path = get_py_path() + "/resources/picard.jar"
-    cmd = (
-        f"java -jar {picard_path} SortSam I={bam_file} O={sorted_bam_file} "
-        f"SORT_ORDER=coordinate"
-    )
-    return run_named_command("picard BAM sort", cmd)
-
-
-def run_picard_sam_convert(bam_file: str, sam_file: str) -> ProgOutput:
-    """
-    Convert a sam file to a bam file
-    :sam_file: input path to sam file
-    :bam_file: output path to bam file
-    """
-    picard_path = get_py_path() + "/resources/picard.jar"
-    cmd = (
-        f"java -jar {picard_path} SamFormatConverter I={bam_file} "
-        f"O={sam_file}"
-    )
-    return run_named_command("picard SAM convert", cmd)

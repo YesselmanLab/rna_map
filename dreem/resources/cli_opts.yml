@@ -30,9 +30,18 @@ main:
 docker:
   name: Docker options
   description: These are the options for running the command line interface in a docker container
-  --docker:
-    is_flag: True
-    help: Run the program in a docker container
+  opts:
+    --docker:
+      is_flag: True
+      help: Run the program in a docker container
+    --docker-image:
+      type: str
+      default: dreem
+      help: The docker image to use
+    --docker-platform:
+      type: str
+      default: linux/amd64
+      help: The platform to use for the docker image
 
 mapping:
   name: Mapping options

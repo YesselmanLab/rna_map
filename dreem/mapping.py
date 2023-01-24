@@ -17,9 +17,6 @@ from dreem.external_cmd import (
     get_bowtie2_version,
     get_cutadapt_version,
     get_trim_galore_version,
-    run_picard_bam_convert,
-    run_picard_sam_convert,
-    run_picard_sort,
     run_bowtie_alignment,
     run_bowtie_build,
     run_fastqc,
@@ -78,10 +75,6 @@ class Mapper(object):
         self.__run_trim_glore()
         self.__run_bowtie_build()  # run bowtie build
         self.__run_bowtie_alignment()  # row bowtie
-        self.__run_picard_bam_convert()  # convert sam to bam
-        self.__run_picard_sort()  # sort bam file
-        # TODO not sure if I actually need this
-        self.__run_picard_sam_convert()
         log.info("finished mapping!")
 
     def __program_not_found(self, p_name):
@@ -199,36 +192,3 @@ class Mapper(object):
             self.__out_dir,
             self.__params["map"]["bt2_alignment_args"],
         )
-
-    def __run_picard_bam_convert(self):
-        """
-        convert sam to bam
-        """
-        sam_path = os.path.join(self.__out_dir, "aligned.sam")
-        bam_path = os.path.join(self.__out_dir, "aligned.bam")
-        if os.path.isfile(bam_path) and not self.__overwrite:
-            self.skip_without_overwrite("picard_bam_convert")
-            return
-        return run_picard_bam_convert(sam_path, bam_path)
-
-    def __run_picard_sort(self):
-        """
-        sort bam file
-        """
-        bam_path = os.path.join(self.__out_dir, "aligned.bam")
-        sorted_bam_path = os.path.join(self.__out_dir, "aligned_sorted.bam")
-        if os.path.isfile(sorted_bam_path) and not self.__overwrite:
-            self.skip_without_overwrite("picard_sort")
-            return
-        return run_picard_sort(bam_path, sorted_bam_path)
-
-    def __run_picard_sam_convert(self):
-        """
-        convert bam to sam
-        """
-        bam_path = os.path.join(self.__out_dir, "aligned.bam")
-        sam_path = os.path.join(self.__out_dir, "converted.sam")
-        if os.path.isfile(sam_path) and not self.__overwrite:
-            self.skip_without_overwrite("picard_sam_convert")
-            return
-        return run_picard_sam_convert(bam_path, sam_path)

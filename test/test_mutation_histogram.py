@@ -187,3 +187,4 @@ def test_plot_population_avg():
     plot_population_avg(df, mh.name, fname)
     assert os.path.isfile("mttr-6-alt-h3_1_134_pop_avg.html")
     os.remove("mttr-6-alt-h3_1_134_pop_avg.html")
+    os.remove("mttr-6-alt-h3_1_134_pop_avg.png")

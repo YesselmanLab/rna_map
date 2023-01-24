@@ -16,14 +16,13 @@ from dreem.external_cmd import (
     run_trim_glore,
     run_bowtie_build,
     run_bowtie_alignment,
-    run_picard_bam_convert,
     validate_bowtie2_args,
 )
 from dreem.exception import DREEMInputException
-from dreem.logger import setup_applevel_logger
 from dreem.parameters import Inputs
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 def setup_directories(cur_dir):
     """
@@ -56,6 +55,7 @@ def get_test_inputs_paired():
         test_data_dir + "/test_mate2.fastq",
     )
 
+
 # tests #######################################################################
 
 
@@ -72,7 +72,7 @@ def test_get_bowtie2_version():
     test get_bowtie2_version
     """
     version = get_bowtie2_version()
-    #assert version == "2.4.5"
+    # assert version == "2.4.5"
 
 
 def test_get_fastqc_version():
@@ -81,6 +81,7 @@ def test_get_fastqc_version():
     """
     version = get_fastqc_version()
     assert version == "v0.11.9"
+
 
 def test_get_trim_glore_version():
     """

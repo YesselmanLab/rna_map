@@ -43,10 +43,28 @@ def main_options():
             default=None,
             help="A yml formatted file to specify parameters, see dreem/resources/default.yml for an example",
         ),
+    )
+
+def docker_options():
+    return option_group(
+        "Docker options",
+        "These are the options for running the command line interface in a docker container",
         option(
             "--docker",
             is_flag=True,
             help="Run the program in a docker container",
+        ),
+        option(
+            "--docker-image",
+            type=str,
+            default="dreem",
+            help="The docker image to use",
+        ),
+        option(
+            "--docker-platform",
+            type=str,
+            default="linux/amd64",
+            help="The platform to use for the docker image",
         ),
     )
 
@@ -157,6 +175,7 @@ def misc_options():
 
 def parse_cli_args(params, args):
     # main options
+    # docker options
     # mapping options
     if args['skip_fastqc']:
         log.info("skipping fastqc for quality control only do this if you are confident in the quality of your data")

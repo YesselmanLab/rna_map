@@ -23,6 +23,7 @@ history = ""
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
+# TODO make sure to string format for markdown
 setup(
     name='dreem',
     version='0.3.0',
@@ -37,20 +38,21 @@ setup(
     package_dir={'dreem': 'dreem'},
     py_modules=[
         'dreem/bit_vector',
+        'dreem/cli',
         'dreem/exception',
         'dreem/external_cmd',
-        'dreem/fastq',
         'dreem/logger',
         'dreem/mapping',
         'dreem/parameters',
         'dreem/run',
+        'dreem/sam',
         'dreem/settings',
         'dreem/util'
     ],
     include_package_data=True,
     install_requires=requirements,
     zip_safe=False,
-    keywords='seq_tools',
+    keywords='rna_map',
     classifiers=[
         'Intended Audience :: Developers',
         'Natural Language :: English',
@@ -59,9 +61,7 @@ setup(
     ],
     entry_points = {
         'console_scripts' : [
-            'dreem = dreem.run : main',
-            'dreem-docker = dreem.run_docker:main',
-            'dreem-multi = dreeem.run_multi:main'
+            'dreem = dreem.cli : cli',
         ]
     }
 )

@@ -33,6 +33,10 @@ def main(param_file):
             if "default" in opt_vals:
                 if opt_vals["default"] == "":
                     f.write(f'{t}{t}{t}default="",\n')
+                elif opt_vals["default"] == "None":
+                    f.write(f'{t}{t}{t}default=None,\n')
+                elif type(opt_vals["default"]) == str:
+                    f.write(f'{t}{t}{t}default="{opt_vals["default"]}",\n')
                 else:
                     f.write(f"{t}{t}{t}default={opt_vals['default']},\n")
             if "required" in opt_vals:
