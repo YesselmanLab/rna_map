@@ -17,7 +17,7 @@ def test_single_sam_iterator():
         "case_1",
         "output",
         "Mapping_Files",
-        "converted.sam",
+        "aligned.sam",
     )
     sam_iter = SingleSamIterator(sam_path, ref_seqs)
     read = next(sam_iter)[0]

@@ -25,7 +25,7 @@ def test_bit_vector_iterator():
         "case_1",
         "output",
         "Mapping_Files",
-        "converted.sam",
+        "aligned.sam",
     )
     bit_vector_iter = BitVectorIterator(sam_path, ref_seqs, False)
     bit_vector = next(bit_vector_iter)
@@ -48,7 +48,7 @@ def test_bit_vector_generator():
         "case_1",
         "output",
         "Mapping_Files",
-        "converted.sam",
+        "aligned.sam",
     )
     bv_gen = BitVectorGenerator()
     bv_gen.setup(get_default_params())

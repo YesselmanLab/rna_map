@@ -23,6 +23,10 @@
         "bt2_alignment_args": {
           "type": "string",
           "default": "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+        },
+        "save_unaligned": {
+          "type": "boolean",
+          "default": false
         }
       },
       "default": {},

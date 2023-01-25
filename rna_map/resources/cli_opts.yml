@@ -67,6 +67,11 @@ mapping:
       param: map:bt2_alignment_args
       log_msg: bowtie2 alignment arguments set to {value}
       help: the arguments to pass to bowtie2 for alignment seperated by commas
+    --save-unaligned:
+      param: map:save_unaligned
+      is_flag: True
+      log_msg: saving unaligned reads to {value}
+      help: the path to save unaligned reads to
 
 bit_vector:
   name: Bit vector options

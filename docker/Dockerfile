@@ -2,12 +2,12 @@
 
 FROM biocontainers/biocontainers:latest
 
-################## METADATA ######################
-LABEL base.image="biocontainers:latest"
+################## METADATA ########################
+LABEL base.image="continuumio/miniconda3:latest"
 LABEL version="1"
 LABEL software="dreem"
 LABEL software.version="0.1.0"
-LABEL about.summary="analysis of DMS reactivity of RNA by the Rouskin lab (https://www.rouskinlab.com/)"
+LABEL about.summary="analysis of mutational profiling (MaP) of RNA"
 LABEL about.tags="RNA bioinformatics,RNA structure"
 
 ################## MAINTAINER ######################
@@ -52,15 +52,15 @@ RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz -
     cp TrimGalore-0.6.6/trim_galore $DST && \
     rm -rf TrimGalore-0.6.6 trim_galore.tar.gz
 
-RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
-    unzip 0.2.0.zip                                                         && \
-    mv rna_map-0.2.0 rna_map                                                    && \
-   /bin/bash -c "cd dreem && python setup.py install"
+#RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
+#    unzip 0.2.0.zip                                                         && \
+#    mv rna_map-0.2.0 rna_map                                                    && \
+#   /bin/bash -c "cd dreem && python setup.py install"
 
-WORKDIR /data
+#WORKDIR /data
 
 # Change user
-USER biodocker
+#USER biodocker
 
 
-CMD ["dreem"]
+#CMD ["dreem"]
