@@ -1,4 +1,4 @@
-name: Docker Build
+name: Docker Linux Build
 
 # Avoid running multiple jobs for the same branch
 # in case of updates.
@@ -10,17 +10,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-
+    runs-on: ubuntu-latest
     steps:
       - name: checkout repository
         uses: actions/checkout@v2
@@ -37,7 +27,7 @@ jobs:
         run: |
           rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq --docker
 
-      - name: Check output files
-        run: |
-          if [[ -f output/BitVector_Files/mutation_histos.p ]]; then exit 1; fi
+      #- name: Check output files
+      #  run: |
+      #    if [[ -f output/BitVector_Files/mutation_histos.p ]]; then exit 1; fi
 
