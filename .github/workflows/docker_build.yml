@@ -1,4 +1,4 @@
-name: Build and Test for Linux
+name: Docker Build
 
 # Avoid running multiple jobs for the same branch
 # in case of updates.
@@ -10,22 +10,26 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    #strategy:
-    #  matrix:
-    #    python-version: ["3.8", "3.9", "3.10", "3.11"]
+    strategy:
+      matrix:
+        runs-on: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v2
-      - name: Testing with version ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+      - name: checkout repository
+        uses: actions/checkout@v2
+
       - name: Build Docker Image
         run: |
           docker build -t rna-map -f docker/Dockerfile .
+
       - name: Install dependencies
         run: |
           pip install .
+
       - name: Run Docker test 1
         run: |
           rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq --docker
+
+      - name: Check output files
+        run: |
+          if [[ -f output/BitVector_Files/mutation_histos.p ]]; then exit 1; fi
+

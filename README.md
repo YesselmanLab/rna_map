@@ -3,6 +3,7 @@
 
 # RNA MAP
 
+[![Build and Test for Linux](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_build.yml/badge.svg)](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_build.yml)
 
 ## How to install
 

@@ -105,15 +105,15 @@
       "properties": {
         "image": {
           "type": "string",
-          "default": "dreem"
+          "default": "rna-map"
         },
         "cont-name": {
           "type": "string",
-          "default": "dreem-cont"
+          "default": "rna-map-cont"
         },
         "platform": {
           "type": "string",
-          "default": "linux/amd64"
+          "default": ""
         }
       },
       "default": {},

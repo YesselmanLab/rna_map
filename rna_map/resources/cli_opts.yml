@@ -40,7 +40,7 @@ docker:
       help: The docker image to use
     --docker-platform:
       type: str
-      default: linux/amd64
+      default: ""
       help: The platform to use for the docker image
 
 mapping:

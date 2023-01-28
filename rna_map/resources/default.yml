@@ -35,6 +35,6 @@ dirs:
   output: output
 # docker ######################################################################
 docker:
-  image: rna_map # name of docker image
-  cont-name: rna_map-cont # name of docker container
-  platform: linux/amd64 # platform to run docker image on
+  image: rna-map # name of docker image
+  cont-name: rna-map-cont # name of docker container
+  platform: "" # platform to run docker image on

@@ -22,6 +22,7 @@ from rna_map.settings import get_py_path
 
 log = get_logger("CLI")
 
+
 def get_logo() -> str:
     with open(os.path.join(get_py_path(), "resources", "logo.txt"), "r") as f:
         return "".join(f.readlines())
@@ -59,10 +60,11 @@ def run_in_docker(args):
         "fastq2": "--fastq2",
     }
     files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
-    docker_cmd = (
-        f"docker run --name rna-map-cont "
-        f"--platform {args['docker_platform']} -v $(pwd):/data "
-    )
+    platform = args["docker_platform"]
+    platform_str = ""
+    if platform != "":
+        platform_str = "--platform " + platform
+    docker_cmd = f"docker run --name rna-map-cont " f"{platform_str} -v $(pwd):/data "
     dreem_cmd = "rna-map "
     dirs = {os.getcwd(): "/data"}
     dcount = 2
@@ -115,9 +117,8 @@ def run_in_docker(args):
     subprocess.call("docker rm rna-map-cont", shell=True)
 
 
-
-
 # cli #########################################################################
+
 
 @cloup.command()
 @main_options()

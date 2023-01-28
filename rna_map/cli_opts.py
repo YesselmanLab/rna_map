@@ -63,7 +63,7 @@ def docker_options():
         option(
             "--docker-platform",
             type=str,
-            default="linux/amd64",
+            default="",
             help="The platform to use for the docker image",
         ),
     )
