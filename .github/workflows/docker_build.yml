@@ -11,12 +11,13 @@ on: [push, pull_request]
 jobs:
   build:
     name: ${{ matrix.os }}
-      runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
       defaults:
         run:
           shell: bash -l {0}
 
     strategy:
+      fail-fast: false
       matrix:
         runs-on: [ubuntu-latest, macos-latest]
 
