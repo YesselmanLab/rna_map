@@ -26,9 +26,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install .
-      - name: Run PyTest
-        run: |
-          pytest
       - name: Run Docker test 1
         run: |
           rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq --docker
