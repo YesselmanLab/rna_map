@@ -10,9 +10,16 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: ${{ matrix.os }}
+      runs-on: ${{ matrix.os }}
+      defaults:
+        run:
+          shell: bash -l {0}
+
     strategy:
       matrix:
         runs-on: [ubuntu-latest, macos-latest]
+
     steps:
       - name: checkout repository
         uses: actions/checkout@v2
