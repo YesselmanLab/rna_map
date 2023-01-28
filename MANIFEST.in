@@ -1,3 +1,4 @@
 include reqirements.txt
-include dreem/resources/*
+include rna_map/resources/*
 recursive-exclude * *.py[co]
+recursive-exclude test

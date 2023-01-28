@@ -1,8 +1,8 @@
 ################## BASE IMAGE ######################
 
-FROM biocontainers/biocontainers:latest
+FROM continuumio/miniconda3:latest
 
-################## METADATA ########################
+################## METADATA ######################
 LABEL base.image="continuumio/miniconda3:latest"
 LABEL version="1"
 LABEL software="dreem"
@@ -15,12 +15,18 @@ MAINTAINER Joe Yesselman <jyesselm@unl.edu>
 
 ################## INSTALLATION ######################
 
+USER root
+
+RUN /bin/bash -c "mkdir /data && mkdir /data2 && mkdir /data3 && mkdir /data4 "
+
+## install fastqc and unzip
+RUN apt-get update && \
+    apt-get -y -q install fastqc gcc unzip curl
+
 ENV ZIP=bowtie2-2.2.9-linux-x86_64.zip
 ENV URL=https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/
 ENV FOLDER=bowtie2-2.2.9
-ENV DST=/home/biodocker/bin
-
-USER root
+ENV DST=/bin
 
 ## install bowtie2
 RUN wget -q $URL/$ZIP -O $DST/$ZIP && \
@@ -29,16 +35,11 @@ RUN wget -q $URL/$ZIP -O $DST/$ZIP && \
     mv $DST/$FOLDER/* $DST && \
     rmdir $DST/$FOLDER
 
-## install fastqc
-RUN apt-get update && \
-    apt-get -y -q install fastqc
+ # check that bowtie2 is accessible
+RUN if [$(which bowtie2) = ""]; then exit 1; fi
 
 ## setup correct python and packages
-RUN conda create --name py3 python=3.7 --yes
-ENV PATH /opt/conda/envs/py3/bin:$PATH
-RUN /bin/bash -c "source activate py3"
-RUN echo "source activate py3" > ~/.bashrc
-RUN pip install cython colorlog click future biopython plotly matplotlib pandas
+RUN pip install cython colorlog click future plotly matplotlib pandas kaleido
 
 ## install cutadapt
 RUN wget -q https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip -O $DST/v1.18.zip && \
@@ -52,15 +53,15 @@ RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz -
     cp TrimGalore-0.6.6/trim_galore $DST && \
     rm -rf TrimGalore-0.6.6 trim_galore.tar.gz
 
-#RUN wget https://github.com/jyesselm/dreem/archive/refs/tags/0.2.0.zip      && \
-#    unzip 0.2.0.zip                                                         && \
-#    mv rna_map-0.2.0 rna_map                                                    && \
-#   /bin/bash -c "cd dreem && python setup.py install"
+ # check that trim_galore is accessible
+RUN if [$(which trim_galore) = ""]; then exit 1; fi
 
-#WORKDIR /data
-
-# Change user
-#USER biodocker
+RUN /bin/bash -c "mkdir -p /bin/rna_map"
+COPY . /bin/rna_map
+RUN /bin/bash -c "cd /bin/rna_map && python setup.py install"
+RUN /bin/bash -c "cd /bin/rna_map && pytest -m quick"
 
 
-#CMD ["dreem"]
+WORKDIR /data
+
+CMD ["rna-map"]

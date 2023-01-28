@@ -57,7 +57,7 @@ def docker_options():
         option(
             "--docker-image",
             type=str,
-            default="rna_map",
+            default="rna-map",
             help="The docker image to use",
         ),
         option(
@@ -91,6 +91,11 @@ def mapping_options():
         option(
             "--bt2-alignment-args",
             help="the arguments to pass to bowtie2 for alignment seperated by commas",
+        ),
+        option(
+            "--save-unaligned",
+            is_flag=True,
+            help="the path to save unaligned reads to",
         ),
     )
 
@@ -189,6 +194,9 @@ def parse_cli_args(params, args):
     if args['bt2_alignment_args'] is not None:
         log.info("bowtie2 alignment arguments set to {value}".format(value=args['bt2_alignment_args']))
         params["map"]["bt2_alignment_args"] = args['bt2_alignment_args']
+    if args['save_unaligned']:
+        log.info("saving unaligned reads to {value}".format(value=args['save_unaligned']))
+        params["map"]["save_unaligned"] = args['save_unaligned']
     # bit_vector options
     if args['skip_bit_vector']:
         log.info("skipping bit vector step")

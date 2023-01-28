@@ -133,7 +133,6 @@ class Mapper(object):
         """
         run trim galore on the fastq files
         """
-        # TODO move fastq files to output dir and rename them to trim_galore
         # version
         fq1_path = f"{self.__out_dir}/{Path(self.__ins.fastq1).stem}_val_1.fq"
         if self.__params["map"]["skip_trim_galore"]:

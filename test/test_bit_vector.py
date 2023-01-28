@@ -7,9 +7,9 @@ import pytest
 from rna_map.util import fasta_to_dict
 from rna_map.parameters import get_default_params
 from rna_map.bit_vector import BitVectorIterator, BitVectorGenerator
-from rna_map.logger import setup_applevel_logger
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 
 @pytest.mark.quick

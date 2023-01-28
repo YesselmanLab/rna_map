@@ -60,10 +60,10 @@ def run_in_docker(args):
     }
     files = "fasta,fastq1,fastq2,dot_bracket,param_file".split(",")
     docker_cmd = (
-        f"docker run --name rna_map-cont "
+        f"docker run --name rna-map-cont "
         f"--platform {args['docker_platform']} -v $(pwd):/data "
     )
-    dreem_cmd = "rna_map "
+    dreem_cmd = "rna-map "
     dirs = {os.getcwd(): "/data"}
     dcount = 2
     pos = 1
@@ -112,7 +112,7 @@ def run_in_docker(args):
         f": {docker_cmd}"
     )
     subprocess.call(docker_cmd, shell=True)
-    subprocess.call("docker rm rna_map-cont", shell=True)
+    subprocess.call("docker rm rna-map-cont", shell=True)
 
 
 

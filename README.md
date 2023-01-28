@@ -6,11 +6,18 @@
 
 ## How to install
 
+### with docker 
+```shell
+# on linux and intel mac
+docker build -t rna-map -f docker/Dockerfile .
+
+# on mac with apple silicon
+docker build -t rna-map --platform linux/amd64 -f docker/Dockerfile .
+```
 
 ## How to use 
 
 ### running paired end reads
-
 
 ```shell
  rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_unit/test_mate1.fastq -fq2 test/resources/case_unit/test_mate2.fastq 
@@ -71,3 +78,10 @@ rna_map.BIT_VECTOR - INFO - MUTATION SUMMARY:
 | mttr-6-alt-h3 |      24 |       100 |       50 |   33.33 |    12.5 |    4.17 |           0 | 4.91 |
 ```
 
+
+
+### running with docker 
+`--docker` flag will run the docker image. if you have run docker build first
+```shell
+rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_unit/test_mate1.fastq -fq2 test/resources/case_unit/test_mate2.fastq --docker
+```

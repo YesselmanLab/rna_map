@@ -36,7 +36,7 @@ docker:
       help: Run the program in a docker container
     --docker-image:
       type: str
-      default: rna_map
+      default: rna-map
       help: The docker image to use
     --docker-platform:
       type: str
