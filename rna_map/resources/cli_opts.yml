@@ -26,6 +26,11 @@ main:
       type: str
       default: None
       help: A yml formatted file to specify parameters, see rna_map/resources/default.yml for an example
+    -pp:
+      alt_name: "--param-preset"
+      type: str
+      default: None
+      help: run a set of parameters for specific uses like 'barcoded-libraries'
 
 docker:
   name: Docker options

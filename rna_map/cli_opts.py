@@ -43,6 +43,13 @@ def main_options():
             default=None,
             help="A yml formatted file to specify parameters, see rna_map/resources/default.yml for an example",
         ),
+        option(
+            "-pp",
+            "--param-preset",
+            type=str,
+            default=None,
+            help="run a set of parameters for specific uses like 'barcoded-libraries'",
+        ),
     )
 
 def docker_options():

@@ -3,7 +3,9 @@
 
 # RNA MAP
 
-[![Build and Test for Linux](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_build.yml/badge.svg)](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_build.yml)
+[![Docker Linux Build](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_linux_build.yml/badge.svg)](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_linux_build.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 
 ## How to install
 

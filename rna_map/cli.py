@@ -146,10 +146,20 @@ def cli(**args):
     log.info("ran at commandline as: ")
     log.info(" ".join(sys.argv))
     # setup parameters
-    if args["param_file"] is None:
-        params = get_default_params()
-    else:
+    if args["param_file"] is not None and args["param_preset"] is not None:
+        raise ValueError("cannot specify both param_file and param_preset")
+    if args["param_preset"] is not None:
+        param_path = os.path.join(
+            get_py_path(), "resources", "presets", f"{args['param_preset']}.yml"
+        )
+        if not os.path.isfile(param_path):
+            raise ValueError(f"preset {args['param_preset']} does not exist")
+        log.info(f"using param preset: {args['param_preset']}")
+        params = parse_parameters_from_file(param_path)
+    elif args["param_file"] is not None:
         params = parse_parameters_from_file(args["param_file"])
+    else:
+        params = get_default_params()
     parse_cli_args(params, args)
     # run rna_map pipeline
     run(
