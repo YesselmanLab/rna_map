@@ -2,9 +2,9 @@
 tracking mutations
 """
 from typing import Dict, List
+import json
 import numpy as np
 import pandas as pd
-import json
 
 import plotly
 import plotly.graph_objs as go
