@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: checkout repository
