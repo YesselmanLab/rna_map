@@ -36,14 +36,15 @@ pip install rna-map
 ### with docker 
 ```shell
 # on linux and intel mac
+git clone https://github.com/YesselmanLab/rna_map
+cd rna_map
+pip install .
+
 docker build -t rna-map -f docker/Dockerfile .
 
 # on mac with apple silicon / or other arm64 platforms
 docker build -t rna-map --platform linux/amd64 -f docker/Dockerfile .
 
-git clone https://github.com/YesselmanLab/rna_map
-cd rna_map
-pip install .
 ```
 
 ## How to use 
