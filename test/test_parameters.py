@@ -4,6 +4,7 @@ testing the parameters module
 
 import pytest
 import os
+from pathlib import Path
 
 from rna_map.parameters import parse_parameters_from_file
 
@@ -16,7 +17,7 @@ def test_parse_parameters_empty_file():
     test parse_parameters_from_file with an empty file
     should fill in with all defaults
     """
-    path = TEST_DIR + "/resources/test.yml"
+    path = Path(TEST_DIR) / "resources" / "test.yml"
     params = parse_parameters_from_file(path)
     assert params["map"]["skip"] == False
 
@@ -25,13 +26,13 @@ def test_parse_parameter_from_default():
     """
     testing the default parameters
     """
-    path = TEST_DIR + "/resources/default.yml"
+    path = Path(TEST_DIR) / "resources" / "test.yml"
     params = parse_parameters_from_file(path)
     assert params["map"]["skip"] == False
 
 
 def test_parse_parameter_overwrite():
-    path = TEST_DIR + "/resources/changed_params.yml"
+    path = Path(TEST_DIR) / "resources" / "changed_params.yml"
     params = parse_parameters_from_file(path)
     assert params["map"]["skip"] == False
     # parameters that were changed
@@ -39,12 +40,12 @@ def test_parse_parameter_overwrite():
 
 
 def test_partially_filled_parameters():
-    path = TEST_DIR + "/resources/few.yml"
+    path = Path(TEST_DIR) / "resources" / "few.yml"
     params = parse_parameters_from_file(path)
     assert params["map"]["skip"] == True
 
 
 def test_invalid_parameters():
-    path = TEST_DIR + "/resources/invalid.yml"
+    path = Path(TEST_DIR) / "resources" / "invalid.yml"
     with pytest.raises(Exception):
         parse_parameters_from_file(path)

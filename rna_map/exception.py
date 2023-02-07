@@ -20,6 +20,7 @@ class DREEMMissingRequirementsException(DREEMInputException):
     Exception raised for missing requirements
     """
 
+
 class DREEMExternalProgramException(DREEMException):
     """
     Exception raised for errors in external programs

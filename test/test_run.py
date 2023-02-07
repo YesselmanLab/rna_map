@@ -1,8 +1,7 @@
-import pytest
-import shutil
 import os
 import shutil
 import pytest
+from pathlib import Path
 
 from rna_map.run import validate_inputs, validate_fasta_file
 from rna_map.exception import DREEMInputException
@@ -14,11 +13,11 @@ def get_test_inputs_paired():
     """
     Get the test inputs
     """
-    test_data_dir = os.path.join(TEST_DIR, "resources", "case_1")
+    test_data_dir = Path(TEST_DIR) / "resources" / "case_1"
     return {
-        "fasta": test_data_dir + "/test.fasta",
-        "fastq1": test_data_dir + "/test_mate1.fastq",
-        "fastq2": test_data_dir + "/test_mate2.fastq",
+        "fasta": test_data_dir / "test.fasta",
+        "fastq1": test_data_dir / "test_mate1.fastq",
+        "fastq2": test_data_dir / "test_mate2.fastq",
     }
 
 
@@ -44,13 +43,13 @@ def test_input_validation():
 
     # check to make sure we get the proper errors for supplying file that does
     # not exist
-    with pytest.raises(DREEMInputException) as exc_info:
+    with pytest.raises(DREEMInputException):
         validate_inputs(p["fasta"], "", "", "")
-    with pytest.raises(DREEMInputException) as exc_info:
+    with pytest.raises(DREEMInputException):
         validate_inputs("fake_path", p["fastq1"], "", "")
-    with pytest.raises(DREEMInputException) as exc_info:
+    with pytest.raises(DREEMInputException):
         validate_inputs(p["fasta"], p["fastq1"], "fake_path", "")
-    with pytest.raises(DREEMInputException) as exc_info:
+    with pytest.raises(DREEMInputException):
         validate_inputs(p["fasta"], p["fastq1"], "", "fake_path")
 
 
@@ -75,4 +74,3 @@ def _test_fasta_checks():
     path = fasta_test_path + "incorrect_sequence.fasta"
     with pytest.raises(DREEMInputException) as exc_info:
         validate_fasta_file(path)
-    print(exc_info)

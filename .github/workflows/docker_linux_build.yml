@@ -6,7 +6,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   build:
@@ -27,6 +27,9 @@ jobs:
         run: |
           rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq --docker
 
+      - name: Run Docker test 2
+        run: |
+          rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_1/test_mate1.fastq -fq2 test/resources/case_1/test_mate2.fastq --docker
       #- name: Check output files
       #  run: |
       #    if [[ -f output/BitVector_Files/mutation_histos.p ]]; then exit 1; fi

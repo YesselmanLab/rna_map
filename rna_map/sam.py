@@ -30,9 +30,7 @@ def get_aligned_read_from_line(line):
     """
     spl = line.split()
     if len(spl) < 11:
-        raise ValueError(
-            "cannot setup AlignRead object from split, its too short"
-        )
+        raise ValueError("cannot setup AlignRead object from split, its too short")
     return AlignedRead(
         spl[0],
         spl[1],

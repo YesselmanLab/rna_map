@@ -3,7 +3,7 @@ test cli interface
 """
 import os
 import shutil
-
+from pathlib import Path
 from click.testing import CliRunner
 from rna_map.cli import cli
 
@@ -13,17 +13,16 @@ def remove_directories(cur_dir):
     """
     Remove the directory for testing
     """
-    shutil.rmtree(os.path.join(cur_dir, "input"))
-    shutil.rmtree(os.path.join(cur_dir, "log"))
-    shutil.rmtree(os.path.join(cur_dir, "output"))
-
+    shutil.rmtree(Path(cur_dir) / "output")
+    shutil.rmtree(Path(cur_dir) / "log")
+    shutil.rmtree(Path(cur_dir) / "input")
 
 
 def test_cli_single():
     """
     test running the program
     """
-    path = TEST_DIR + "/resources/case_unit/"
+    path = Path(TEST_DIR) / "resources" / "case_unit/"
     runner = CliRunner()
     result = runner.invoke(
         cli, ["-fa", f"{path}/test.fasta", "-fq1", f"{path}/test_mate1.fastq"]

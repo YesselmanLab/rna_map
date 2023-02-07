@@ -3,7 +3,8 @@ import cloup
 from cloup import option_group, option
 from rna_map.logger import get_logger
 
-log = get_logger('CLI_OPTS')
+log = get_logger("CLI_OPTS")
+
 
 def main_options():
     return option_group(
@@ -52,6 +53,7 @@ def main_options():
         ),
     )
 
+
 def docker_options():
     return option_group(
         "Docker options",
@@ -74,6 +76,7 @@ def docker_options():
             help="The platform to use for the docker image",
         ),
     )
+
 
 def mapping_options():
     return option_group(
@@ -105,6 +108,7 @@ def mapping_options():
             help="the path to save unaligned reads to",
         ),
     )
+
 
 def bit_vector_options():
     return option_group(
@@ -157,6 +161,7 @@ def bit_vector_options():
         ),
     )
 
+
 def misc_options():
     return option_group(
         "Misc options",
@@ -184,58 +189,91 @@ def misc_options():
     )
 
 
-
 def parse_cli_args(params, args):
     # main options
     # docker options
     # mapping options
-    if args['skip_fastqc']:
-        log.info("skipping fastqc for quality control only do this if you are confident in the quality of your data")
-        params["map"]["skip_fastqc"] = args['skip_fastqc']
-    if args['skip_trim_galore']:
+    if args["skip_fastqc"]:
+        log.info(
+            "skipping fastqc for quality control only do this if you are confident in the quality of your data"
+        )
+        params["map"]["skip_fastqc"] = args["skip_fastqc"]
+    if args["skip_trim_galore"]:
         log.info("skipping trim galore for quality control not recommended")
-        params["map"]["skip_trim_galore"] = args['skip_trim_galore']
-    if args['tg_q_cutoff'] != 20:
-        log.info("trim galore quality cutoff set to {value}".format(value=args['tg_q_cutoff']))
-        params["map"]["tg_q_cutoff"] = args['tg_q_cutoff']
-    if args['bt2_alignment_args'] is not None:
-        log.info("bowtie2 alignment arguments set to {value}".format(value=args['bt2_alignment_args']))
-        params["map"]["bt2_alignment_args"] = args['bt2_alignment_args']
-    if args['save_unaligned']:
-        log.info("saving unaligned reads to {value}".format(value=args['save_unaligned']))
-        params["map"]["save_unaligned"] = args['save_unaligned']
+        params["map"]["skip_trim_galore"] = args["skip_trim_galore"]
+    if args["tg_q_cutoff"] != 20:
+        log.info(
+            "trim galore quality cutoff set to {value}".format(
+                value=args["tg_q_cutoff"]
+            )
+        )
+        params["map"]["tg_q_cutoff"] = args["tg_q_cutoff"]
+    if args["bt2_alignment_args"] is not None:
+        log.info(
+            "bowtie2 alignment arguments set to {value}".format(
+                value=args["bt2_alignment_args"]
+            )
+        )
+        params["map"]["bt2_alignment_args"] = args["bt2_alignment_args"]
+    if args["save_unaligned"]:
+        log.info(
+            "saving unaligned reads to {value}".format(value=args["save_unaligned"])
+        )
+        params["map"]["save_unaligned"] = args["save_unaligned"]
     # bit_vector options
-    if args['skip_bit_vector']:
+    if args["skip_bit_vector"]:
         log.info("skipping bit vector step")
-        params["bit_vector"]["skip"] = args['skip_bit_vector']
-    if args['summary_output_only']:
+        params["bit_vector"]["skip"] = args["skip_bit_vector"]
+    if args["summary_output_only"]:
         log.info("only outputting summary files")
-        params["bit_vector"]["summary_output_only"] = args['summary_output_only']
-    if args['plot_sequence']:
+        params["bit_vector"]["summary_output_only"] = args["summary_output_only"]
+    if args["plot_sequence"]:
         log.info("plotting sequence/structure on bit vector plots")
-        params["bit_vector"]["plot_sequence"] = args['plot_sequence']
-    if args['map_score_cutoff'] != 15:
-        log.info("mapping score cutoff set to {value}".format(value=args['map_score_cutoff']))
-        params["bit_vector"]["map_score_cutoff"] = args['map_score_cutoff']
-    if args['qscore_cutoff'] != 25:
-        log.info("qscore cutoff set to {value}".format(value=args['qscore_cutoff']))
-        params["bit_vector"]["qscore_cutoff"] = args['qscore_cutoff']
-    if args['mutation_count_cutoff'] != 5:
-        log.info("mutation count cutoff set to {value} this will only run if --stricter-bv-constraints is set".format(value=args['mutation_count_cutoff']))
-        params["bit_vector"]["stricter_constraints"]["mutation_count_cutoff"] = args['mutation_count_cutoff']
-    if args['percent_length_cutoff'] != 0.1:
-        log.info("percent length cutoff set to {value} this will only run if --stricter-bv-constraints is set".format(value=args['percent_length_cutoff']))
-        params["bit_vector"]["stricter_constraints"]["percent_length_cutoff"] = args['percent_length_cutoff']
-    if args['min_mut_distance'] != 5:
-        log.info("minimum mutation distance set to {value} this will only run if --stricter-bv-constraints is set".format(value=args['min_mut_distance']))
-        params["bit_vector"]["stricter_constraints"]["min_mut_distance"] = args['min_mut_distance']
+        params["bit_vector"]["plot_sequence"] = args["plot_sequence"]
+    if args["map_score_cutoff"] != 15:
+        log.info(
+            "mapping score cutoff set to {value}".format(value=args["map_score_cutoff"])
+        )
+        params["bit_vector"]["map_score_cutoff"] = args["map_score_cutoff"]
+    if args["qscore_cutoff"] != 25:
+        log.info("qscore cutoff set to {value}".format(value=args["qscore_cutoff"]))
+        params["bit_vector"]["qscore_cutoff"] = args["qscore_cutoff"]
+    if args["mutation_count_cutoff"] != 5:
+        log.info(
+            "mutation count cutoff set to {value} this will only run if --stricter-bv-constraints is set".format(
+                value=args["mutation_count_cutoff"]
+            )
+        )
+        params["bit_vector"]["stricter_constraints"]["mutation_count_cutoff"] = args[
+            "mutation_count_cutoff"
+        ]
+    if args["percent_length_cutoff"] != 0.1:
+        log.info(
+            "percent length cutoff set to {value} this will only run if --stricter-bv-constraints is set".format(
+                value=args["percent_length_cutoff"]
+            )
+        )
+        params["bit_vector"]["stricter_constraints"]["percent_length_cutoff"] = args[
+            "percent_length_cutoff"
+        ]
+    if args["min_mut_distance"] != 5:
+        log.info(
+            "minimum mutation distance set to {value} this will only run if --stricter-bv-constraints is set".format(
+                value=args["min_mut_distance"]
+            )
+        )
+        params["bit_vector"]["stricter_constraints"]["min_mut_distance"] = args[
+            "min_mut_distance"
+        ]
     # misc options
-    if args['overwrite']:
+    if args["overwrite"]:
         log.info("will overwrite all existing files")
-        params["overwrite"] = args['overwrite']
-    if args['restore_org_behavior']:
+        params["overwrite"] = args["overwrite"]
+    if args["restore_org_behavior"]:
         log.info("restoring original behavior of rna_map publications")
-        params["restore_org_behavior"] = args['restore_org_behavior']
-    if args['stricter_bv_constraints']:
-        log.info("stricter bit vector constraints are active please use at your own risk")
-        params["stricter_bv_constraints"] = args['stricter_bv_constraints']
+        params["restore_org_behavior"] = args["restore_org_behavior"]
+    if args["stricter_bv_constraints"]:
+        log.info(
+            "stricter bit vector constraints are active please use at your own risk"
+        )
+        params["stricter_bv_constraints"] = args["stricter_bv_constraints"]

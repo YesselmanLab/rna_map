@@ -1,6 +1,6 @@
 import os
 import re
-import numpy as np
+import json
 import pickle
 from dataclasses import dataclass
 from typing import Dict, List
@@ -16,6 +16,8 @@ from rna_map.mutation_histogram import (
     plot_mutation_histogram,
     plot_population_avg,
     plot_read_coverage,
+    write_mut_histos_to_json_file,
+    write_mut_histos_to_pickle_file
 )
 from rna_map.logger import get_logger
 from rna_map.sam import AlignedRead, SingleSamIterator, PairedSamIterator
@@ -180,12 +182,9 @@ class BitVectorIterator(object):
         orig_sur_start = orig_del_start - self.__num_of_surbases
         orig_sur_end = i + self.__num_of_surbases
         orig_sur_seq = (
-            ref_seq[orig_sur_start - 1 : orig_del_start - 1]
-            + ref_seq[i:orig_sur_end]
+            ref_seq[orig_sur_start - 1 : orig_del_start - 1] + ref_seq[i:orig_sur_end]
         )
-        for new_del_end in range(
-            i - length, i + length + 1
-        ):  # Alt del end points
+        for new_del_end in range(i - length, i + length + 1):  # Alt del end points
             if new_del_end == i:  # Orig end point
                 continue
             new_del_start = new_del_end - length + 1
@@ -243,22 +242,16 @@ class BitVectorGenerator(object):
 
     def setup(self, params):
         self.__params = params
-        self.__out_dir = os.path.join(
-            params["dirs"]["output"], "BitVector_Files/"
-        )
+        self.__out_dir = os.path.join(params["dirs"]["output"], "BitVector_Files/")
         os.makedirs(params["dirs"]["output"], exist_ok=True)
         os.makedirs(self.__out_dir, exist_ok=True)
 
     def run(self, sam_path, fasta, paired, csv_file):
         log.info("starting bitvector generation")
         self.__ref_seqs = fasta_to_dict(fasta)
-        self.__bit_vec_iterator = BitVectorIterator(
-            sam_path, self.__ref_seqs, paired
-        )
+        self.__bit_vec_iterator = BitVectorIterator(sam_path, self.__ref_seqs, paired)
         self.__mut_histos = {}
-        self.__map_score_cutoff = self.__params["bit_vector"][
-            "map_score_cutoff"
-        ]
+        self.__map_score_cutoff = self.__params["bit_vector"]["map_score_cutoff"]
         self.__csv_file = csv_file
         self.__summary_only = self.__params["bit_vector"]["summary_output_only"]
         self.__rejected_out = open(self.__out_dir + "rejected_bvs.csv", "w")
@@ -333,18 +326,18 @@ class BitVectorGenerator(object):
                 )
 
     def __generate_all_bit_vectors(self):
-        # TODO turn this overwrite check back on
-        """if (
-            os.path.isfile(bit_vector_pickle_file)
-            and not self._p.bit_vector.overwrite
+        pickle_file = os.path.join(self.__out_dir, "mutation_histos.p")
+        if (
+            os.path.isfile(pickle_file)
+            and not self.__params["overwrite"]
         ):
             log.info(
                 "SKIPPING bit vector generation, it has run already! specify -overwrite "
                 + "to rerun"
             )
-            with open(bit_vector_pickle_file, "rb") as handle:
+            with open(pickle_file, "rb") as handle:
                 self._mut_histos = pickle.load(handle)
-            return"""
+            return
 
         self._bit_vector_writers = {}
         for ref_name, seq in self.__ref_seqs.items():
@@ -363,9 +356,10 @@ class BitVectorGenerator(object):
         for bit_vector in self.__bit_vec_iterator:
             self.__record_bit_vector(bit_vector)
         # pickle mutational histograms
-        pickle_file = os.path.join(self.__out_dir, "mutation_histos.p")
-        with open(pickle_file, "wb") as handle:
-            pickle.dump(self.__mut_histos, handle)
+        json_file = os.path.join(self.__out_dir, "mutation_histos.json")
+        write_mut_histos_to_pickle_file(self.__mut_histos, pickle_file)
+        write_mut_histos_to_json_file(self.__mut_histos, json_file)
+
 
     def __record_bit_vector(self, bit_vector):
         mh = self.__mut_histos[bit_vector.reads[0].rname]
@@ -447,9 +441,7 @@ class BitVectorGenerator(object):
     def __muts_too_close(self, mh, bit_vector):
         if not self.__params["stricter_bv_constraints"]:
             return False
-        cutoff = self.__params["bit_vector"]["stricter_constraints"][
-            "min_mut_distance"
-        ]
+        cutoff = self.__params["bit_vector"]["stricter_constraints"]["min_mut_distance"]
         for pos in range(mh.start, mh.end + 1):
             if pos not in bit_vector.data:
                 continue

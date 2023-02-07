@@ -5,6 +5,7 @@ from typing import Dict, List
 import json
 import numpy as np
 import pandas as pd
+import pickle
 from dataclasses import dataclass
 
 import plotly
@@ -120,17 +121,29 @@ class MutationHistogram(object):
         correctly
         """
         if self.name != other.name:
-            raise ValueError("MutationalHistogram names do not match cannot merge")
+            raise ValueError(
+                "MutationalHistogram names do not match cannot merge"
+            )
         if self.sequence != other.sequence:
-            raise ValueError("MutationalHistogram sequences do not match cannot merge")
+            raise ValueError(
+                "MutationalHistogram sequences do not match cannot merge"
+            )
         if self.data_type != other.data_type:
-            raise ValueError("MutationalHistogram data_types do not match cannot merge")
+            raise ValueError(
+                "MutationalHistogram data_types do not match cannot merge"
+            )
         if self.start != other.start:
-            raise ValueError("MutationalHistogram starts do not match cannot merge")
+            raise ValueError(
+                "MutationalHistogram starts do not match cannot merge"
+            )
         if self.end != other.end:
-            raise ValueError("MutationalHistogram ends do not match cannot merge")
+            raise ValueError(
+                "MutationalHistogram ends do not match cannot merge"
+            )
         if self.structure != other.structure:
-            raise ValueError("MutationalHistogram structures do not match cannot merge")
+            raise ValueError(
+                "MutationalHistogram structures do not match cannot merge"
+            )
         self.num_reads += other.num_reads
         self.num_aligned += other.num_aligned
         for key in self.skips.keys():
@@ -206,7 +219,9 @@ class MutationHistogram(object):
         return df
 
     def get_percent_mutations(self):
-        data = np.array(self.num_of_mutations[0:4] + [sum(self.num_of_mutations[5:])])
+        data = np.array(
+            self.num_of_mutations[0:4] + [sum(self.num_of_mutations[5:])]
+        )
         data = [round(x, 2) for x in list((data / self.num_aligned) * 100)]
         return data
 
@@ -226,6 +241,30 @@ class MutationHistogram(object):
         return round(float(AC / GU), 2)
 
 
+def write_mut_histos_to_json_file(
+    mut_histos: Dict[str, MutationHistogram], fname: str
+) -> None:
+    """
+    Writes a list of mutation histograms to a json file
+    :param mut_histos: the list of mutation histograms
+    :param fname: the name of the json file
+    """
+    with open(fname, "w", encoding="utf8") as f:
+        json.dump({k: v.get_dict() for k, v in mut_histos.items()}, f)
+
+
+def write_mut_histos_to_pickle_file(
+    mut_histos: Dict[str, MutationHistogram], fname: str
+) -> None:
+    """
+    Writes a list of mutation histograms to a pickle file
+    :param mut_histos: the list of mutation histograms
+    :param fname: the name of the pickle file
+    """
+    with open(fname, "wb") as f:
+        pickle.dump(mut_histos, f)
+
+
 def get_mut_histos_from_json_file(fname: str) -> Dict[str, MutationHistogram]:
     """
     Returns a list of mutation histograms from a json file
@@ -236,7 +275,19 @@ def get_mut_histos_from_json_file(fname: str) -> Dict[str, MutationHistogram]:
     return {k: MutationHistogram.from_dict(v) for k, v in data.items()}
 
 
-def get_dataframe(mut_histos: Dict[str, MutationHistogram], data_cols) -> pd.DataFrame:
+def get_mut_histos_from_pickle_file(fname: str) -> Dict[str, MutationHistogram]:
+    """
+    Returns a list of mutation histograms from a pickle file
+    :param fname: the name of the pickle file
+    """
+    with open(fname, "rb") as f:
+        data = pickle.load(f)
+    return data
+
+
+def get_dataframe(
+    mut_histos: Dict[str, MutationHistogram], data_cols
+) -> pd.DataFrame:
     """
     Returns a dataframe of the mutation histograms
     :param mut_histos: a dictionary of mutation histograms
@@ -259,7 +310,9 @@ def get_dataframe(mut_histos: Dict[str, MutationHistogram], data_cols) -> pd.Dat
                 aligned = 0.0
                 try:
                     aligned = round(
-                        float(mut_histo.num_aligned) / float(mut_histo.num_reads) * 100,
+                        float(mut_histo.num_aligned)
+                        / float(mut_histo.num_reads)
+                        * 100,
                         2,
                     )
                 except ZeroDivisionError:
@@ -338,7 +391,9 @@ def plot_read_coverage(nuc_pos, read_coverage, fname: str) -> None:
     """
     cov_trace = go.Bar(x=nuc_pos, y=read_coverage)
     cov_layout = go.Layout(
-        title="Read coverage: " + ", Number of bit vectors: " + str(max(read_coverage)),
+        title="Read coverage: "
+        + ", Number of bit vectors: "
+        + str(max(read_coverage)),
         xaxis=dict(title="Position"),
         yaxis=dict(title="Coverage fraction"),
     )

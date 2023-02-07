@@ -5,6 +5,7 @@ import os
 import pickle
 import json
 import pytest
+from pathlib import Path
 
 from rna_map.mutation_histogram import (
     MutationHistogram,
@@ -22,13 +23,13 @@ TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def get_example_mut_histo() -> MutationHistogram:
-    pickle_path = os.path.join(
-        TEST_DIR,
-        "resources",
-        "case_1",
-        "output",
-        "BitVector_Files",
-        "mutation_histos.p",
+    pickle_path = (
+        Path(TEST_DIR)
+        / "resources"
+        / "case_1"
+        / "output"
+        / "BitVector_Files"
+        / "mutation_histos.p"
     )
     with open(pickle_path, "rb") as f:
         mhs = pickle.load(f)

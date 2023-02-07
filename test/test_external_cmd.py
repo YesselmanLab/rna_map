@@ -4,6 +4,7 @@ test running external commands
 import os
 import pytest
 import shutil
+from pathlib import Path
 
 from rna_map.external_cmd import (
     does_program_exist,
@@ -28,20 +29,20 @@ def setup_directories(cur_dir):
     """
     Set up the directory for testing
     """
-    os.makedirs(os.path.join(cur_dir, "input"))
-    os.makedirs(os.path.join(cur_dir, "log"))
-    os.makedirs(os.path.join(cur_dir, "output"))
-    os.makedirs(os.path.join(cur_dir, "output", "Mapping_Files"))
-    os.makedirs(os.path.join(cur_dir, "output", "BitVector_Files"))
+    os.makedirs(Path(cur_dir) / "input")
+    os.makedirs(Path(cur_dir) / "log")
+    os.makedirs(Path(cur_dir) / "output")
+    os.makedirs(Path(cur_dir) / "output" / "Mapping_Files")
+    os.makedirs(Path(cur_dir) / "output" / "BitVector_Files")
 
 
 def remove_directories(cur_dir):
     """
     Remove the directory for testing
     """
-    shutil.rmtree(os.path.join(cur_dir, "input"))
-    shutil.rmtree(os.path.join(cur_dir, "log"))
-    shutil.rmtree(os.path.join(cur_dir, "output"))
+    shutil.rmtree(Path(cur_dir) / "input")
+    shutil.rmtree(Path(cur_dir) / "log")
+    shutil.rmtree(Path(cur_dir) / "output")
 
 
 def get_test_inputs_paired():
@@ -119,7 +120,7 @@ def test_run_fastqc():
     """
     setup_directories(os.getcwd())
     ins = get_test_inputs_paired()
-    run_fastqc(ins.fastq1, ins.fastq2, "output/Mapping_Files/")
+    run_fastqc(ins.fastq1, ins.fastq2, Path("output/Mapping_Files/"))
     remove_directories(os.getcwd())
 
 
@@ -129,7 +130,7 @@ def test_run_trim_glore():
     """
     setup_directories(os.getcwd())
     ins = get_test_inputs_paired()
-    run_trim_glore(ins.fastq1, ins.fastq2, "output/Mapping_Files/")
+    run_trim_glore(ins.fastq1, ins.fastq2, Path("output/Mapping_Files/"))
     remove_directories(os.getcwd())
 
 
@@ -140,7 +141,7 @@ def test_run_bowtie_build():
     setup_directories(os.getcwd())
     ins = get_test_inputs_paired()
     run_bowtie_build(ins.fasta, "input")
-    assert os.path.isfile("input/test.1.bt2")
+    assert os.path.isfile(Path("input/test.1.bt2"))
     remove_directories(os.getcwd())
 
 
@@ -188,6 +189,6 @@ def test_bowtie_alignment():
     run_bowtie_alignment(
         ins.fasta, ins.fastq1, ins.fastq2, "input", "output/Mapping_Files", args
     )
-    assert os.path.isfile("output/Mapping_Files/aligned.sam")
-    assert os.path.getsize("output/Mapping_Files/aligned.sam") > 1000
+    assert os.path.isfile(Path("output/Mapping_Files/aligned.sam"))
+    assert os.path.getsize(Path("output/Mapping_Files/aligned.sam")) > 1000
     remove_directories(os.getcwd())

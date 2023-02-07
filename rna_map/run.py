@@ -79,9 +79,7 @@ def validate_csv_file(fa: str, csv: str) -> None:
     ref_seqs = fasta_to_dict(fa)
     df = pd.read_csv(csv)
     if "name" not in df.columns:
-        raise DREEMInputException(
-            f"csv file does not contain a column named 'name'."
-        )
+        raise DREEMInputException(f"csv file does not contain a column named 'name'.")
     if "sequence" not in df.columns:
         raise DREEMInputException(
             f"csv file does not contain a column named 'sequence'"
@@ -127,7 +125,9 @@ def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
             validate_csv_file(fa, csv)
     return Inputs(fa, fq1, fq2, csv)
 
+
 # run #########################################################################
+
 
 def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     ins = validate_inputs(fasta, fastq1, fastq2, dot_bracket)
@@ -143,9 +143,7 @@ def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     # convert aligned reads to bit vectors
     bt = BitVectorGenerator()
     bt.setup(params)
-    sam_path = os.path.join(
-        params["dirs"]["output"], "Mapping_Files", "aligned.sam"
-    )
+    sam_path = os.path.join(params["dirs"]["output"], "Mapping_Files", "aligned.sam")
     bt.run(sam_path, ins.fasta, ins.is_paired(), ins.csv)
     # log parameter file
     with open(os.path.join(params["dirs"]["log"], "params.yml"), "w") as f:

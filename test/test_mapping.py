@@ -4,8 +4,8 @@ test mapping functions
 import os
 import pytest
 import shutil
+from pathlib import Path
 
-from rna_map.logger import setup_applevel_logger
 from rna_map.mapping import Mapper
 from rna_map.parameters import Inputs, get_default_params
 
@@ -16,11 +16,11 @@ def get_test_inputs_paired():
     """
     Get the test inputs
     """
-    test_data_dir = os.path.join(TEST_DIR, "resources", "case_1")
+    test_data_dir = Path(TEST_DIR) / "resources" / "case_1"
     return {
-        "fasta": test_data_dir + "/test.fasta",
-        "fastq1": test_data_dir + "/test_mate1.fastq",
-        "fastq2": test_data_dir + "/test_mate2.fastq",
+        "fasta": test_data_dir / "test.fasta",
+        "fastq1": test_data_dir / "test_mate1.fastq",
+        "fastq2": test_data_dir / "test_mate2.fastq",
     }
 
 
@@ -28,9 +28,9 @@ def remove_directories(cur_dir):
     """
     Remove the directory for testing
     """
-    shutil.rmtree(os.path.join(cur_dir, "input"))
-    shutil.rmtree(os.path.join(cur_dir, "log"))
-    shutil.rmtree(os.path.join(cur_dir, "output"))
+    shutil.rmtree(Path(cur_dir) / "input")
+    shutil.rmtree(Path(cur_dir) / "log")
+    shutil.rmtree(Path(cur_dir) / "output")
 
 
 def test_check_program_versions():
@@ -54,7 +54,7 @@ def test_mapping():
     m = Mapper()
     m.setup(params)
     m.run(ins)
-    assert os.path.isfile("input/test.1.bt2")
+    assert os.path.isfile(Path("input/test.1.bt2"))
     try:
         m.run(ins)
     except Exception as e:

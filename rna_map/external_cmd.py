@@ -44,11 +44,9 @@ def get_bowtie2_version() -> str:
     """
     if not does_program_exist("bowtie2"):
         raise DREEMExternalProgramException(
-                "cannot get bowtie2 version, cannot find the exe"
+            "cannot get bowtie2 version, cannot find the exe"
         )
-    output = subprocess.check_output("bowtie2 --version", shell=True).decode(
-            "utf8"
-    )
+    output = subprocess.check_output("bowtie2 --version", shell=True).decode("utf8")
     lines = output.split("\n")
     l_spl = lines[0].split()
     return l_spl[-1]
@@ -61,15 +59,13 @@ def get_fastqc_version() -> str:
     """
     if not does_program_exist("fastqc"):
         raise DREEMExternalProgramException(
-                "cannot get fastqc version, cannot find the exe"
+            "cannot get fastqc version, cannot find the exe"
         )
     out = run_command("fastqc --version")
     lines = out.output.split("\n")
     if len(lines) < 1:
         raise ValueError(
-                "cannot get fastqc version, output is not valid: {}".format(
-                        out.output
-                )
+            "cannot get fastqc version, output is not valid: {}".format(out.output)
         )
     l_spl = lines[0].split()
     return l_spl[1]
@@ -78,15 +74,13 @@ def get_fastqc_version() -> str:
 def get_trim_galore_version():
     if not does_program_exist("trim_galore"):
         raise DREEMExternalProgramException(
-                "cannot get trim_galore version, cannot find the exe"
+            "cannot get trim_galore version, cannot find the exe"
         )
-    output = subprocess.check_output(
-            "trim_galore --version", shell=True
-    ).decode("utf8")
+    output = subprocess.check_output("trim_galore --version", shell=True).decode("utf8")
     lines = output.split("\n")
     if len(lines) < 4:
         raise ValueError(
-                "cannot get fastqc version, output is not valid: {}".format(output)
+            "cannot get fastqc version, output is not valid: {}".format(output)
         )
     for l in lines:
         if l.find("version") != -1:
@@ -98,11 +92,9 @@ def get_trim_galore_version():
 def get_cutadapt_version():
     if not does_program_exist("cutadapt"):
         raise DREEMExternalProgramException(
-                "cannot get cutadapt version, cannot find the exe"
+            "cannot get cutadapt version, cannot find the exe"
         )
-    output = subprocess.check_output("cutadapt --version", shell=True).decode(
-            "utf8"
-    )
+    output = subprocess.check_output("cutadapt --version", shell=True).decode("utf8")
     return output.rstrip().lstrip()
 
 
@@ -114,7 +106,7 @@ def run_command(cmd: str) -> ProgOutput:
     output, error_msg = None, None
     try:
         output = subprocess.check_output(
-                cmd, shell=True, stderr=subprocess.STDOUT
+            cmd, shell=True, stderr=subprocess.STDOUT
         ).decode("utf8")
     except subprocess.CalledProcessError as exc:
         error_msg = exc.output.decode("utf8")
@@ -212,8 +204,8 @@ def validate_bowtie2_args(args: str) -> bool:
         spl = full_arg.split()
         if len(spl) == 1:
             raise DREEMInputException(
-                    f"{full_arg} is not a valid bowtie2 argument. "
-                    f"Please check the documentation for valid arguments"
+                f"{full_arg} is not a valid bowtie2 argument. "
+                f"Please check the documentation for valid arguments"
             )
         arg, arg_val = spl[0], spl[1]
         if arg in valid_bt2_args:
@@ -221,15 +213,13 @@ def validate_bowtie2_args(args: str) -> bool:
         else:
             raise DREEMInputException(f"{full_arg} is an invalid bt2 argument")
         if check_type(arg_val) != valid_bt2_args[arg]:
-            raise DREEMInputException(
-                    f"{arg} must be of type {valid_bt2_args[arg]}"
-            )
+            raise DREEMInputException(f"{arg} must be of type {valid_bt2_args[arg]}")
     log.debug("all bt2 arguments are valid")
 
 
 def run_bowtie_alignment(
-        fasta: str, fastq1: str, fastq2: str, in_dir: str, out_dir: str, args: str,
-        **kwargs) -> ProgOutput:
+    fasta: str, fastq1: str, fastq2: str, in_dir: str, out_dir: str, args: str, **kwargs
+) -> ProgOutput:
     """
     Run bowtie2 alignment
     :fasta: path to fasta file

@@ -5,20 +5,152 @@
 
 [![Docker Linux Build](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_linux_build.yml/badge.svg)](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_linux_build.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/PyCQA/pylint)
+[![PYPI package](https://badge.fury.io/py/rna-map.png)](http://badge.fury.io/py/rna-map)
 
+A open-source tool for rapid analysis of RNA mutational profiling (MaP) experiments.
+This tool was inspired by the DREEM algorithm developed by the Rouskin Lab (https://www.rouskinlab.com/). Please cite this work (https://doi.org/10.1093/nar/gkac435).
+
+The MaP analysis web tool provides a simple platform for analyzing DMS-reactivity of an RNA. The user input is a raw sequencing file (.fastq) generated from a DMS-MaPseq experiment, and a sequence of the RNA of interest (.fasta). The DREEM algorithm performs sequence alignment using bowtie-2 and outputs the mismatch rate per nucleotide.
+
+## Software requirements
+
+- python 3.8 or greater
+- bowtie2 (2.2.9) - https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/
+- trim_galore (0.6.6) - https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz
+- fastqc (0.11.9) - https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip
+- cutadapt (1.18) - https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip
+- conda (optional) - https://docs.anaconda.com/anaconda/install/
+- docker (optional) - https://docs.docker.com/get-docker/
+
+If you are trying the software for the first time highly recommended to use the docker image.
 
 ## How to install
+Highly recommended to use conda to manage your python environment.
+
+```
+conda create -n rna-map python=3.8
+pip install rna-map
+```
 
 ### with docker 
 ```shell
 # on linux and intel mac
 docker build -t rna-map -f docker/Dockerfile .
 
-# on mac with apple silicon
+# on mac with apple silicon / or other arm64 platforms
 docker build -t rna-map --platform linux/amd64 -f docker/Dockerfile .
+
+git clone https://github.com/YesselmanLab/rna_map
+cd rna_map
+pip install .
 ```
 
 ## How to use 
+
+### basic usage
+
+After installed there will be a new command line tool called `rna-map` available.
+
+```shell
+# run in single end mode
+rna-map -fa <fasta file> -fq1 <fastq file>
+
+# run in paired end mode
+rna-map -fa <fasta file> -fq1 <fastq file> -fq2 <fastq file>
+
+# supply a csv with dot bracket structures. These will apppear in the 
+# results in plots and pickle file 
+rna-map -fa <fasta file> -fq1 <fastq file> --dot-bracket <csv file>
+```
+
+### running with docker 
+`--docker` flag will run the docker image. if you have run docker build first
+```shell
+# run in single end mode
+# note this will only work if you built the image with docker command above
+rna-map -fa <fasta file> -fq1 <fastq file> --docker
+```
+
+### working with large sets of RNAs
+
+
+
+### see a full list of arguments below
+
+```
+rna-map --help
+Usage: rna-map [OPTIONS]
+
+  rapid analysis of RNA mutational profiling (MaP) experiments.
+
+Main arguments:
+  These are the main arguments for the command line interface
+  -fa, --fasta PATH              The fasta file containing the reference
+                                 sequences  [required]
+  -fq1, --fastq1 PATH            The fastq file containing the single end reads
+                                 or the first pair of paired end reads
+                                 [required]
+  -fq2, --fastq2 TEXT            The fastq file containing the second pair of
+                                 paired end reads
+  --dot-bracket TEXT             The directory containing the input files
+  -pf, --param-file TEXT         A yml formatted file to specify parameters, see
+                                 rna_map/resources/default.yml for an example
+  -pp, --param-preset TEXT       run a set of parameters for specific uses like
+                                 'barcoded-libraries'
+
+Mapping options:
+  These are the options for pre processing of fastq files and alignment to
+  reference sequences
+  --skip-fastqc                  do not run fastqc for quality control of
+                                 sequence data
+  --skip-trim-galore             do not run trim galore for quality control of
+                                 sequence data
+  --tg-q-cutoff INTEGER          the quality cutoff for trim galore
+  --bt2-alignment-args TEXT      the arguments to pass to bowtie2 for alignment
+                                 seperated by commas
+  --save-unaligned               the path to save unaligned reads to
+
+Bit vector options:
+  These are the options for the bit vector step
+  --skip-bit-vector              do not run the bit vector step
+  --summary-output-only          do not generate bit vector files or plots
+                                 recommended when there are thousands of
+                                 reference sequences
+  --plot-sequence                plot sequence and structure is supplied under
+                                 the population average plots
+  --map-score-cutoff INTEGER     reject any bit vector where the mapping score
+                                 for bowtie2 alignment is less than this value
+  --qscore-cutoff INTEGER        quality score of read nucleotide, sets to
+                                 ambigious if under this val
+  --mutation-count-cutoff INTEGER
+                                 maximum number of mutations allowed in a bit
+                                 vector will be discarded if higher
+  --percent-length-cutoff FLOAT  minium percent of the length of the reference
+                                 sequence allowed in a bit vector will be
+                                 discarded if lower
+  --min-mut-distance INTEGER     minimum distance between mutations in a bit
+                                 vector will be discarded if lower
+
+Docker options:
+  These are the options for running the command line interface in a docker
+  container
+  --docker                       Run the program in a docker container
+  --docker-image TEXT            The docker image to use
+  --docker-platform TEXT         The platform to use for the docker image
+
+Misc options:
+  These are the options for the misc stage
+  --overwrite                    overwrite the output directory if it exists
+  --restore-org-behavior         restore the original behavior of the rna_map
+  --stricter-bv-constraints      use stricter constraints for bit vector
+                                 generation, use at your own risk!
+  --debug                        enable debug mode
+
+Other options:
+  --help                         Show this message and exit.
+
+```
 
 ### running paired end reads
 
@@ -83,8 +215,6 @@ rna_map.BIT_VECTOR - INFO - MUTATION SUMMARY:
 
 
 
-### running with docker 
-`--docker` flag will run the docker image. if you have run docker build first
-```shell
-rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_unit/test_mate1.fastq -fq2 test/resources/case_unit/test_mate2.fastq --docker
-```
+## TODO
+- [ ] 
+- [ ] Add mac build to github actions

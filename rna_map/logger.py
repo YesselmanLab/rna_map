@@ -8,9 +8,7 @@ import sys
 APP_LOGGER_NAME = "rna_map"
 
 
-def setup_applevel_logger(
-    logger_name=APP_LOGGER_NAME, is_debug=False, file_name=None
-):
+def setup_applevel_logger(logger_name=APP_LOGGER_NAME, is_debug=False, file_name=None):
     """
     Set up the logger for the app
     """
