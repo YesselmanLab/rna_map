@@ -1,4 +1,3 @@
-import yaml
 import cloup
 from cloup import option_group, option
 from rna_map.logger import get_logger
@@ -22,7 +21,10 @@ def main_options():
             "--fastq1",
             type=cloup.Path(exists=True),
             required=True,
-            help="The fastq file containing the single end reads or the first pair of paired end reads",
+            help=(
+                "The fastq file containing the single end reads or the first pair of"
+                " paired end reads"
+            ),
         ),
         option(
             "-fq2",
@@ -42,7 +44,10 @@ def main_options():
             "--param-file",
             type=str,
             default=None,
-            help="A yml formatted file to specify parameters, see rna_map/resources/default.yml for an example",
+            help=(
+                "A yml formatted file to specify parameters, see"
+                " rna_map/resources/default.yml for an example"
+            ),
         ),
         option(
             "-pp",
@@ -57,7 +62,8 @@ def main_options():
 def docker_options():
     return option_group(
         "Docker options",
-        "These are the options for running the command line interface in a docker container",
+        "These are the options for running the command line interface in a docker"
+        " container",
         option(
             "--docker",
             is_flag=True,
@@ -81,7 +87,8 @@ def docker_options():
 def mapping_options():
     return option_group(
         "Mapping options",
-        "These are the options for pre processing of fastq files and alignment to reference sequences",
+        "These are the options for pre processing of fastq files and alignment to"
+        " reference sequences",
         option(
             "--skip-fastqc",
             is_flag=True,
@@ -122,42 +129,62 @@ def bit_vector_options():
         option(
             "--summary-output-only",
             is_flag=True,
-            help="do not generate bit vector files or plots recommended when there are thousands of reference sequences",
+            help=(
+                "do not generate bit vector files or plots recommended when there are"
+                " thousands of reference sequences"
+            ),
         ),
         option(
             "--plot-sequence",
             is_flag=True,
-            help="plot sequence and structure is supplied under the population average plots",
+            help=(
+                "plot sequence and structure is supplied under the population average"
+                " plots"
+            ),
         ),
         option(
             "--map-score-cutoff",
             type=int,
             default=15,
-            help="reject any bit vector where the mapping score for bowtie2 alignment is less than this value",
+            help=(
+                "reject any bit vector where the mapping score for bowtie2 alignment is"
+                " less than this value"
+            ),
         ),
         option(
             "--qscore-cutoff",
             type=int,
             default=25,
-            help="quality score of read nucleotide, sets to ambigious if under this val",
+            help=(
+                "quality score of read nucleotide, sets to ambigious if under this val"
+            ),
         ),
         option(
             "--mutation-count-cutoff",
             type=int,
             default=5,
-            help="maximum number of mutations allowed in a bit vector will be discarded if higher",
+            help=(
+                "maximum number of mutations allowed in a bit vector will be discarded"
+                " if higher"
+            ),
         ),
         option(
             "--percent-length-cutoff",
             type=float,
             default=0.1,
-            help="minium percent of the length of the reference sequence allowed in a bit vector will be discarded if lower",
+            help=(
+                "minium percent of the length of the reference sequence allowed in a"
+                " bit vector will be discarded if lower"
+            ),
         ),
         option(
             "--min-mut-distance",
             type=int,
             default=5,
-            help="minimum distance between mutations in a bit vector will be discarded if lower",
+            help=(
+                "minimum distance between mutations in a bit vector will be discarded"
+                " if lower"
+            ),
         ),
     )
 
@@ -179,7 +206,10 @@ def misc_options():
         option(
             "--stricter-bv-constraints",
             is_flag=True,
-            help="use stricter constraints for bit vector generation, use at your own risk!",
+            help=(
+                "use stricter constraints for bit vector generation, use at your own"
+                " risk!"
+            ),
         ),
         option(
             "--debug",
@@ -195,7 +225,8 @@ def parse_cli_args(params, args):
     # mapping options
     if args["skip_fastqc"]:
         log.info(
-            "skipping fastqc for quality control only do this if you are confident in the quality of your data"
+            "skipping fastqc for quality control only do this if you are confident in"
+            " the quality of your data"
         )
         params["map"]["skip_fastqc"] = args["skip_fastqc"]
     if args["skip_trim_galore"]:
@@ -240,7 +271,8 @@ def parse_cli_args(params, args):
         params["bit_vector"]["qscore_cutoff"] = args["qscore_cutoff"]
     if args["mutation_count_cutoff"] != 5:
         log.info(
-            "mutation count cutoff set to {value} this will only run if --stricter-bv-constraints is set".format(
+            "mutation count cutoff set to {value} this will only run if"
+            " --stricter-bv-constraints is set".format(
                 value=args["mutation_count_cutoff"]
             )
         )
@@ -249,7 +281,8 @@ def parse_cli_args(params, args):
         ]
     if args["percent_length_cutoff"] != 0.1:
         log.info(
-            "percent length cutoff set to {value} this will only run if --stricter-bv-constraints is set".format(
+            "percent length cutoff set to {value} this will only run if"
+            " --stricter-bv-constraints is set".format(
                 value=args["percent_length_cutoff"]
             )
         )
@@ -258,9 +291,8 @@ def parse_cli_args(params, args):
         ]
     if args["min_mut_distance"] != 5:
         log.info(
-            "minimum mutation distance set to {value} this will only run if --stricter-bv-constraints is set".format(
-                value=args["min_mut_distance"]
-            )
+            "minimum mutation distance set to {value} this will only run if"
+            " --stricter-bv-constraints is set".format(value=args["min_mut_distance"])
         )
         params["bit_vector"]["stricter_constraints"]["min_mut_distance"] = args[
             "min_mut_distance"

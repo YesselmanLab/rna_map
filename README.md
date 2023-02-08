@@ -5,7 +5,7 @@
 
 [![Docker Linux Build](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_linux_build.yml/badge.svg)](https://github.com/YesselmanLab/rna_map/actions/workflows/docker_linux_build.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/PyCQA/pylint)
+[![linting: flake8](https://img.shields.io/badge/linting-flake8-greenyellow)](https://github.com/PyCQA/flake8)
 [![PYPI package](https://badge.fury.io/py/rna-map.png)](http://badge.fury.io/py/rna-map)
 
 A open-source tool for rapid analysis of RNA mutational profiling (MaP) experiments.
@@ -71,6 +71,10 @@ rna-map -fa <fasta file> -fq1 <fastq file> --dot-bracket <csv file>
 # run in single end mode
 # note this will only work if you built the image with docker command above
 rna-map -fa <fasta file> -fq1 <fastq file> --docker
+
+# TODO check is necessary? 
+# run on apple silicon on / or other arm64 platforms 
+rna-map -fa <fasta file> -fq1 <fastq file> --docker --docker-platform linux/amd64
 ```
 
 ### working with large sets of RNAs

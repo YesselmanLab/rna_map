@@ -6,7 +6,7 @@ from jsonschema import Draft4Validator, validators
 from pathlib import Path
 from dataclasses import dataclass
 
-from rna_map import settings, logger
+from rna_map import logger
 from rna_map.settings import get_py_path
 
 log = logger.get_logger("PARAMETERS")

@@ -82,9 +82,9 @@ def get_trim_galore_version():
         raise ValueError(
             "cannot get fastqc version, output is not valid: {}".format(output)
         )
-    for l in lines:
-        if l.find("version") != -1:
-            l_spl = l.split()
+    for line in lines:
+        if line.find("version") != -1:
+            l_spl = line.split()
             return l_spl[-1]
     return ""
 
@@ -205,7 +205,7 @@ def validate_bowtie2_args(args: str) -> bool:
         if len(spl) == 1:
             raise DREEMInputException(
                 f"{full_arg} is not a valid bowtie2 argument. "
-                f"Please check the documentation for valid arguments"
+                "Please check the documentation for valid arguments"
             )
         arg, arg_val = spl[0], spl[1]
         if arg in valid_bt2_args:
@@ -242,10 +242,10 @@ def run_bowtie_alignment(
     out = run_named_command("bowtie2 alignment", cmd)
     output_lines = out.output.split("\n")
     keep = []
-    for l in output_lines:
-        if len(l) == 0:
+    for line in output_lines:
+        if len(line) == 0:
             continue
-        if l[0] != "U":
-            keep.append(l)
+        if line[0] != "U":
+            keep.append(line)
     log.info("results for bowtie alignment: \n" + "\n".join(keep))
     return out

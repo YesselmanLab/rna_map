@@ -121,29 +121,17 @@ class MutationHistogram(object):
         correctly
         """
         if self.name != other.name:
-            raise ValueError(
-                "MutationalHistogram names do not match cannot merge"
-            )
+            raise ValueError("MutationalHistogram names do not match cannot merge")
         if self.sequence != other.sequence:
-            raise ValueError(
-                "MutationalHistogram sequences do not match cannot merge"
-            )
+            raise ValueError("MutationalHistogram sequences do not match cannot merge")
         if self.data_type != other.data_type:
-            raise ValueError(
-                "MutationalHistogram data_types do not match cannot merge"
-            )
+            raise ValueError("MutationalHistogram data_types do not match cannot merge")
         if self.start != other.start:
-            raise ValueError(
-                "MutationalHistogram starts do not match cannot merge"
-            )
+            raise ValueError("MutationalHistogram starts do not match cannot merge")
         if self.end != other.end:
-            raise ValueError(
-                "MutationalHistogram ends do not match cannot merge"
-            )
+            raise ValueError("MutationalHistogram ends do not match cannot merge")
         if self.structure != other.structure:
-            raise ValueError(
-                "MutationalHistogram structures do not match cannot merge"
-            )
+            raise ValueError("MutationalHistogram structures do not match cannot merge")
         self.num_reads += other.num_reads
         self.num_aligned += other.num_aligned
         for key in self.skips.keys():
@@ -219,9 +207,7 @@ class MutationHistogram(object):
         return df
 
     def get_percent_mutations(self):
-        data = np.array(
-            self.num_of_mutations[0:4] + [sum(self.num_of_mutations[5:])]
-        )
+        data = np.array(self.num_of_mutations[0:4] + [sum(self.num_of_mutations[5:])])
         data = [round(x, 2) for x in list((data / self.num_aligned) * 100)]
         return data
 
@@ -285,9 +271,7 @@ def get_mut_histos_from_pickle_file(fname: str) -> Dict[str, MutationHistogram]:
     return data
 
 
-def get_dataframe(
-    mut_histos: Dict[str, MutationHistogram], data_cols
-) -> pd.DataFrame:
+def get_dataframe(mut_histos: Dict[str, MutationHistogram], data_cols) -> pd.DataFrame:
     """
     Returns a dataframe of the mutation histograms
     :param mut_histos: a dictionary of mutation histograms
@@ -310,9 +294,7 @@ def get_dataframe(
                 aligned = 0.0
                 try:
                     aligned = round(
-                        float(mut_histo.num_aligned)
-                        / float(mut_histo.num_reads)
-                        * 100,
+                        float(mut_histo.num_aligned) / float(mut_histo.num_reads) * 100,
                         2,
                     )
                 except ZeroDivisionError:
@@ -391,9 +373,7 @@ def plot_read_coverage(nuc_pos, read_coverage, fname: str) -> None:
     """
     cov_trace = go.Bar(x=nuc_pos, y=read_coverage)
     cov_layout = go.Layout(
-        title="Read coverage: "
-        + ", Number of bit vectors: "
-        + str(max(read_coverage)),
+        title="Read coverage: " + ", Number of bit vectors: " + str(max(read_coverage)),
         xaxis=dict(title="Position"),
         yaxis=dict(title="Coverage fraction"),
     )

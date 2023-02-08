@@ -1,0 +1,8 @@
+[tool.black]
+line-length = 88
+preview = true
+
+[tool.flake8]
+ignore = ['E203', 'W503']
+max-line-length = 88
+max_complexity = 10

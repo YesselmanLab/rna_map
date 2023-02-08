@@ -98,7 +98,7 @@ class Mapper(object):
         """
         log.info(
             f"SKIPPING {method_name}, it has been run already! specify -overwrite "
-            f"to rerun"
+            "to rerun"
         )
 
     def skip_method_by_user(self, method_name, method_param):
@@ -106,8 +106,7 @@ class Mapper(object):
         Skip a method if the user requests it
         """
         log.info(
-            f"SKIPPING {method_name}, was requested by user using param "
-            f"{method_param}"
+            f"SKIPPING {method_name}, was requested by user using param {method_param}"
         )
 
     # run programs #############################################################

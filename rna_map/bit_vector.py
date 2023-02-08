@@ -1,9 +1,9 @@
 import os
 import re
-import json
 import pickle
 from dataclasses import dataclass
 from typing import Dict, List
+from pathlib import Path
 
 import pandas as pd
 from tabulate import tabulate
@@ -17,7 +17,7 @@ from rna_map.mutation_histogram import (
     plot_population_avg,
     plot_read_coverage,
     write_mut_histos_to_json_file,
-    write_mut_histos_to_pickle_file
+    write_mut_histos_to_pickle_file,
 )
 from rna_map.logger import get_logger
 from rna_map.sam import AlignedRead, SingleSamIterator, PairedSamIterator
@@ -46,10 +46,8 @@ class BitVectorFileWriter(object):
         self.end = end
         self.sequence = sequence
         self.f = open(path + name + "_bitvectors.txt", "w")
-        self.f.write("@ref\t{}\t{}\t{}\n".format(name, sequence, data_type))
-        self.f.write(
-            "@coordinates:\t{},{}:{}\n".format(0, len(sequence), len(sequence))
-        )
+        self.f.write(f"@ref\t{name}\t{sequence}\t{data_type}\n")
+        self.f.write(f"@coordinates:\t{start},{end}:{len(sequence)}\n")
         self.f.write("Query_name\tBit_vector\tN_Mutations\n")
 
     def write_bit_vector(self, q_name, bit_vector):
@@ -63,7 +61,7 @@ class BitVectorFileWriter(object):
                 if read_bit.isalpha():
                     n_mutations += 1
                 bit_string += read_bit
-        self.f.write("{}\t{}\t{}\n".format(q_name, bit_string, n_mutations))
+        self.f.write(f"{q_name}\t{bit_string}\t{n_mutations}\n")
 
 
 class BitVectorFileReader(object):
@@ -90,7 +88,7 @@ class BitVectorIterator(object):
         self.__paired = paired
         self.__cigar_pattern = re.compile(r"(\d+)([A-Z]{1})")
         self.__phred_qscores = parse_phred_qscore_file(
-            settings.get_py_path() + "/resources/phred_ascii.txt"
+            settings.get_py_path() / "resources" / "phred_ascii.txt"
         )
         # params
         self.__bases = ["A", "C", "G", "T"]
@@ -108,7 +106,7 @@ class BitVectorIterator(object):
             if read.rname not in self.__ref_seqs:
                 raise ValueError(
                     f"read {read.qname} aligned to {read.rname} which is not in "
-                    f"the reference fasta"
+                    "the reference fasta"
                 )
         if self.__paired:
             data = self.__get_bit_vector_paired(reads[0], reads[1])
@@ -242,7 +240,7 @@ class BitVectorGenerator(object):
 
     def setup(self, params):
         self.__params = params
-        self.__out_dir = os.path.join(params["dirs"]["output"], "BitVector_Files/")
+        self.__out_dir = Path(params["dirs"]["output"]) / "BitVector_Files"
         os.makedirs(params["dirs"]["output"], exist_ok=True)
         os.makedirs(self.__out_dir, exist_ok=True)
 
@@ -254,7 +252,7 @@ class BitVectorGenerator(object):
         self.__map_score_cutoff = self.__params["bit_vector"]["map_score_cutoff"]
         self.__csv_file = csv_file
         self.__summary_only = self.__params["bit_vector"]["summary_output_only"]
-        self.__rejected_out = open(self.__out_dir + "rejected_bvs.csv", "w")
+        self.__rejected_out = open(self.__out_dir / "rejected_bvs.csv", "w")
         self.__rejected_out.write("qname,rname,reason,read1,read2,bitvector\n")
         # setup parameters about generating bit vectors
         self.__generate_all_bit_vectors()
@@ -326,14 +324,11 @@ class BitVectorGenerator(object):
                 )
 
     def __generate_all_bit_vectors(self):
-        pickle_file = os.path.join(self.__out_dir, "mutation_histos.p")
-        if (
-            os.path.isfile(pickle_file)
-            and not self.__params["overwrite"]
-        ):
+        pickle_file = self.__out_dir / "mutation_histos.p"
+        if os.path.isfile(pickle_file) and not self.__params["overwrite"]:
             log.info(
-                "SKIPPING bit vector generation, it has run already! specify -overwrite "
-                + "to rerun"
+                "SKIPPING bit vector generation, it has run already! specify"
+                " -overwrite " + "to rerun"
             )
             with open(pickle_file, "rb") as handle:
                 self._mut_histos = pickle.load(handle)
@@ -359,7 +354,6 @@ class BitVectorGenerator(object):
         json_file = os.path.join(self.__out_dir, "mutation_histos.json")
         write_mut_histos_to_pickle_file(self.__mut_histos, pickle_file)
         write_mut_histos_to_json_file(self.__mut_histos, json_file)
-
 
     def __record_bit_vector(self, bit_vector):
         mh = self.__mut_histos[bit_vector.reads[0].rname]

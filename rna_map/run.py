@@ -6,6 +6,7 @@ import re
 import os
 import pandas as pd
 import yaml
+from pathlib import Path
 
 from rna_map.bit_vector import BitVectorGenerator
 
@@ -38,34 +39,34 @@ def validate_fasta_file(fa: str) -> None:
             " to file generation issues. Its recommended to use --summary-output-only "
         )
     num = 0
-    for i, l in enumerate(lines):
-        l = l.rstrip()
-        if len(l) == 0:
+    for i, line in enumerate(lines):
+        line = line.rstrip()
+        if len(line) == 0:
             raise DREEMInputException(
                 f"blank line found on ln: {i}. These are not allowed in fastas."
             )
         # should be a reference sequence declartion
         if i % 2 == 0:
             num += 1
-            if not l.startswith(">"):
+            if not line.startswith(">"):
                 raise DREEMInputException(
-                    f"reference sequence names are on line zero and even numbers."
+                    "reference sequence names are on line zero and even numbers."
                     f" line {i} has value which is not correct format in the fasta"
                 )
-            if l.startswith("> "):
+            if line.startswith("> "):
                 raise DREEMInputException(
-                    f"there should be no spaces between > and reference name."
+                    "there should be no spaces between > and reference name."
                     f"this occured on ln: {i} in the fasta file"
                 )
         elif i % 2 == 1:
-            if l.startswith(">"):
+            if line.startswith(">"):
                 raise DREEMInputException(
-                    f"sequences should be on are on odd line numbers."
+                    "sequences should be on are on odd line numbers."
                     f" line {i} has value which is not correct format in fasta file"
                 )
-            if re.search(r"[^AGCT]", l):
+            if re.search(r"[^AGCT]", line):
                 raise DREEMInputException(
-                    f"reference sequences must contain only AGCT characters."
+                    "reference sequences must contain only AGCT characters."
                     f" line {i} is not consisetnt with this in fasta"
                 )
     log.info(f"found {num} valid reference sequences in {fa}")
@@ -79,14 +80,14 @@ def validate_csv_file(fa: str, csv: str) -> None:
     ref_seqs = fasta_to_dict(fa)
     df = pd.read_csv(csv)
     if "name" not in df.columns:
-        raise DREEMInputException(f"csv file does not contain a column named 'name'.")
+        raise DREEMInputException("csv file does not contain a column named 'name'.")
     if "sequence" not in df.columns:
         raise DREEMInputException(
-            f"csv file does not contain a column named 'sequence'"
+            "csv file does not contain a column named 'sequence'"
         )
     if "structure" not in df.columns:
         raise DREEMInputException(
-            f"csv file does not contain a column named 'structure'"
+            "csv file does not contain a column named 'structure'"
         )
     if len(ref_seqs) != len(df):
         raise DREEMInputException(
@@ -97,11 +98,18 @@ def validate_csv_file(fa: str, csv: str) -> None:
         if row["name"] not in ref_seqs:
             raise DREEMInputException(
                 f"reference sequence name {row['name']} in csv file does not match"
-                f" any reference sequence names in fasta file"
+                " any reference sequence names in fasta file"
             )
 
 
 def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
+    """
+    validate the input files
+    :param fa: path to the fasta file
+    :param fq1: path to the first fastq file
+    :param fq2: path to the second fastq file
+    :param csv: path to the dot-bracket file
+    """
     if not os.path.isfile(fa):
         raise DREEMInputException(f"fasta file: does not exist {fa}!")
     else:
@@ -130,6 +138,14 @@ def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
 
 
 def run(fasta, fastq1, fastq2, dot_bracket, params=None):
+    """
+    run the pipeline
+    :param fasta: path to the fasta file
+    :param fastq1: path to the first fastq file
+    :param fastq2: path to the second fastq file
+    :param dot_bracket: path to the dot-bracket file
+    :param params: dictionary of parameters
+    """
     ins = validate_inputs(fasta, fastq1, fastq2, dot_bracket)
     if params is None:
         params = get_default_params()
@@ -143,8 +159,8 @@ def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     # convert aligned reads to bit vectors
     bt = BitVectorGenerator()
     bt.setup(params)
-    sam_path = os.path.join(params["dirs"]["output"], "Mapping_Files", "aligned.sam")
+    sam_path = Path(params["dirs"]["output"]) / "Mapping_Files" / "aligned.sam"
     bt.run(sam_path, ins.fasta, ins.is_paired(), ins.csv)
     # log parameter file
-    with open(os.path.join(params["dirs"]["log"], "params.yml"), "w") as f:
+    with open(Path(params["dirs"]["log"]) / "params.yml", "w") as f:
         yaml.dump(params, f)

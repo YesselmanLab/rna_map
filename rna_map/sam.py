@@ -109,7 +109,7 @@ class PairedSamIterator(object):
             and self._read_1.rnext == "="
         ):
             log.warning(
-                f"mate_2 is inconsistent with mate_1 for read: "
+                "mate_2 is inconsistent with mate_1 for read: "
                 f"{self._read_1.qname} SKIPPING!"
             )
             self.__next__()
@@ -118,7 +118,7 @@ class PairedSamIterator(object):
             and self._read_1.mapq == self._read_2.mapq
         ):
             log.warning(
-                f"mate_2 is inconsistent with mate_1 for read: "
+                "mate_2 is inconsistent with mate_1 for read: "
                 f"{self._read_1.qname} SKIPPING!"
             )
             self.__next__()

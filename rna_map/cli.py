@@ -64,7 +64,7 @@ def run_in_docker(args):
     platform_str = ""
     if platform != "":
         platform_str = "--platform " + platform
-    docker_cmd = f"docker run --name rna-map-cont " f"{platform_str} -v $(pwd):/data "
+    docker_cmd = f"docker run --name rna-map-cont {platform_str} -v $(pwd):/data "
     dreem_cmd = "rna-map "
     dirs = {os.getcwd(): "/data"}
     dcount = 2
@@ -110,7 +110,7 @@ def run_in_docker(args):
     docker_cmd += f"{args['docker_image']} "
     docker_cmd += dreem_cmd
     log.info(
-        f" RUNNING DOCKER #####################################################\n"
+        " RUNNING DOCKER #####################################################\n"
         f": {docker_cmd}"
     )
     subprocess.call(docker_cmd, shell=True)
