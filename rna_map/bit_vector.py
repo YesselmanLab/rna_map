@@ -45,7 +45,7 @@ class BitVectorFileWriter(object):
         self.start = start
         self.end = end
         self.sequence = sequence
-        self.f = open(path + name + "_bitvectors.txt", "w")
+        self.f = open(path / Path(name + "_bitvectors.txt"), "w")
         self.f.write(f"@ref\t{name}\t{sequence}\t{data_type}\n")
         self.f.write(f"@coordinates:\t{start},{end}:{len(sequence)}\n")
         self.f.write("Query_name\tBit_vector\tN_Mutations\n")

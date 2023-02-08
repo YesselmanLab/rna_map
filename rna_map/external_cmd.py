@@ -101,7 +101,7 @@ def get_cutadapt_version():
 def run_command(cmd: str) -> ProgOutput:
     """
     Run a command and return the output
-    :cmd: command to run
+    :param cmd: command to run
     """
     output, error_msg = None, None
     try:
@@ -116,8 +116,8 @@ def run_command(cmd: str) -> ProgOutput:
 def run_named_command(method_name: str, cmd: str) -> ProgOutput:
     """
     Run a mapping command and log the output
-    :method_name: name of the method
-    :cmd: command to run
+    :param method_name: name of the method
+    :param cmd: command to run
     :return: output of the command
     """
     log.info(f"running {method_name}")
@@ -133,9 +133,9 @@ def run_named_command(method_name: str, cmd: str) -> ProgOutput:
 def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
     """
     run fastqc appliction on fastq files
-    :fastq1: path to fastq1 file
-    :fastq2: path to fastq2 file
-    :out_dir: path to output directory
+    :param fastq1: path to fastq1 file
+    :param fastq2: path to fastq2 file
+    :param out_dir: path to output directory
     """
     fastqc_dir = os.path.join(out_dir, "fastqc")
     os.makedirs(fastqc_dir, exist_ok=True)
@@ -146,9 +146,9 @@ def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
 def run_trim_glore(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
     """
     Run trim glore on fastq files
-    :fastq1: path to fastq1 file
-    :fastq2: path to fastq2 file
-    :out_dir: path to output directory
+    :param fastq1: path to fastq1 file
+    :param fastq2: path to fastq2 file
+    :param out_dir: path to output directory
     """
     if fastq2 != "":
         cmd = f"trim_galore --fastqc --paired {fastq1} {fastq2} -o {out_dir}"
@@ -160,8 +160,8 @@ def run_trim_glore(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
 def run_bowtie_build(fasta: str, input_dir: str) -> ProgOutput:
     """
     Run bowtie2-build on a fasta file
-    :fasta: path to fasta file
-    :input_dir: path to input directory
+    :param fasta: path to fasta file
+    :param input_dir: path to input directory
     """
     fasta_name = Path(fasta).stem
     cmd = f'bowtie2-build "{fasta}" {input_dir}/{fasta_name}'
@@ -171,7 +171,7 @@ def run_bowtie_build(fasta: str, input_dir: str) -> ProgOutput:
 def validate_bowtie2_args(args: str) -> bool:
     """
     Validate the bowtie2 arguments
-    :args: arguments to validate, seperated by ","
+    :param args: arguments to validate, seperated by ","
     """
 
     def check_type(arg):
@@ -188,7 +188,7 @@ def validate_bowtie2_args(args: str) -> bool:
         except ValueError:
             return "str"
 
-    df = pd.read_csv(get_py_path() + "resources/bowtie2_args.csv")
+    df = pd.read_csv(get_py_path() / "resources" / "bowtie2_args.csv")
     valid_bt2_args = {}
     for _, row in df.iterrows():
         valid_bt2_args[row["param"]] = row["vtype"]
@@ -222,16 +222,16 @@ def run_bowtie_alignment(
 ) -> ProgOutput:
     """
     Run bowtie2 alignment
-    :fasta: path to fasta file
-    :fastq1: path to fastq1 file
-    :fastq2: path to fastq2 file
-    :in_dir: path to bowtie2 index directory
+    :param fasta: path to fasta file
+    :param fastq1: path to fastq1 file
+    :param fastq2: path to fastq2 file
+    :param in_dir: path to bowtie2 index directory
     """
     # check to make sure bt2 args are valid
     validate_bowtie2_args(args)
-    bt2_index = in_dir + "/" + Path(fasta).stem
+    bt2_index = Path(in_dir) / Path(fasta).stem
     bt2_args = " ".join(args.split(","))
-    sam_file = out_dir + "/aligned.sam"
+    sam_file = Path(out_dir) / "aligned.sam"
     cmd = f"bowtie2 {bt2_args} -x {bt2_index} -S {sam_file} "
     if fastq2 != "":
         cmd += f"-1 {fastq1} -2 {fastq2} "

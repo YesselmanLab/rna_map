@@ -1,6 +1,6 @@
 import yaml
 import cloup
-
+from pathlib import Path
 
 @cloup.command()
 @cloup.argument("param_file", type=cloup.Path(exists=True))
@@ -10,7 +10,7 @@ def main(param_file):
     """
     with open(param_file) as f:
         cli_opts = yaml.safe_load(f)
-    f = open("rna_map/cli_opts.py", "w")
+    f = open(Path("rna_map/cli_opts.py"), "w")
     f.write("import yaml\n")
     f.write("import cloup\n")
     f.write("from cloup import option_group, option\n")

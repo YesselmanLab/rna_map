@@ -38,23 +38,3 @@ def get_logger(module_name):
     """
     return logging.getLogger(APP_LOGGER_NAME).getChild(module_name)
 
-
-def log_error_and_exit(log, msg, exception):
-    log.error(msg)
-    raise exception(msg)
-
-
-def str_to_log_level(s: str):
-    s = s.rstrip().lstrip().lower()
-    if s == "info":
-        return logging.INFO
-    elif s == "debug":
-        return logging.DEBUG
-    elif s == "warn":
-        return logging.WARN
-    elif s == "error":
-        return logging.ERROR
-    elif s == "critical":
-        return logging.CRITICAL
-    else:
-        raise ValueError("unknown log level: {}".format(s))

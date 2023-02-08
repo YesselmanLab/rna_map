@@ -49,11 +49,11 @@ def get_test_inputs_paired():
     """
     Get the test inputs
     """
-    test_data_dir = os.path.join(TEST_DIR, "resources", "case_1")
+    test_data_dir = Path(TEST_DIR) / "resources" / "case_1"
     return Inputs(
-        test_data_dir + "/test.fasta",
-        test_data_dir + "/test_mate1.fastq",
-        test_data_dir + "/test_mate2.fastq",
+        test_data_dir / "test.fasta",
+        test_data_dir / "test_mate1.fastq",
+        test_data_dir / "test_mate2.fastq",
     )
 
 

@@ -102,6 +102,22 @@ def validate_csv_file(fa: str, csv: str) -> None:
             )
 
 
+def validate_fastq_file(fastq_file: str) -> bool:
+    """
+    validate a fastq file
+    """
+    with open(fastq_file, 'r', encoding='utf8') as f:
+        lines = [f.readline().strip() for _ in range(4)]
+    if len(lines) < 4:
+        return False
+    if not lines[0].startswith("@"):
+        return False
+    if not lines[2].startswith("+"):
+        return False
+    if len(lines[1]) != len(lines[3]):
+        return False
+    return True
+
 def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
     """
     validate the input files

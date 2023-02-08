@@ -2,6 +2,7 @@
 test sam module
 """
 import os
+from pathlib import Path
 from rna_map.sam import SingleSamIterator
 from rna_map.util import fasta_to_dict
 
@@ -9,7 +10,7 @@ TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 def test_single_sam_iterator():
-    fa_path = os.path.join(TEST_DIR, "resources", "case_1", "test.fasta")
+    fa_path = Path(TEST_DIR) / "resources" / "case_1" / "test.fasta"
     ref_seqs = fasta_to_dict(fa_path)
     sam_path = os.path.join(
         TEST_DIR,

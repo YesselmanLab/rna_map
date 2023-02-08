@@ -75,7 +75,11 @@ def extend_with_default(validator_class):
 
 
 def validate_parameters(params):
-    path = get_py_path() + "/resources/params_schema.json"
+    """
+    Validate the parameters against a schema
+    :params: parameters in dictionary form
+    """
+    path = get_py_path() / "resources" / "params_schema.json"
     with open(path) as f:
         schema = json.load(f)
     # Validate the params against the schema
@@ -103,7 +107,7 @@ def get_default_params():
     """
     Get the default parameters
     """
-    path = get_py_path() + "/resources/default.yml"
+    path = get_py_path() / "resources" / "default.yml"
     return parse_parameters_from_file(path)
 
 

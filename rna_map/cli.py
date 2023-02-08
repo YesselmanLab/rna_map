@@ -24,7 +24,7 @@ log = get_logger("CLI")
 
 
 def get_logo() -> str:
-    with open(os.path.join(get_py_path(), "resources", "logo.txt"), "r") as f:
+    with open(get_py_path() / "resources" / "logo.txt", "r") as f:
         return "".join(f.readlines())
 
 

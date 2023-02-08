@@ -2,16 +2,6 @@ import os
 import shutil
 
 
-def safe_rmdir(dir_name):
-    if os.path.isdir(dir_name):
-        shutil.rmtree(dir_name)
-
-
-def safe_mkdir(dir_name):
-    if not os.path.isdir(dir_name):
-        os.mkdir(dir_name)
-
-
 def fasta_to_dict(fasta_file):
     """
     Parse a FASTA file

@@ -53,24 +53,24 @@ def test_input_validation():
         validate_inputs(p["fasta"], p["fastq1"], "", "fake_path")
 
 
-# TODO create these files or maybe grab them from the server repo?
-def _test_fasta_checks():
-    fasta_test_path = TEST_DIR + "/resources/test_fastas/"
-    path = fasta_test_path + "blank_line.fasta"
+def test_fasta_checks():
+    fasta_test_path = Path(TEST_DIR) / "resources" / "test_fastas"
     with pytest.raises(DREEMInputException) as exc_info:
-        validate_fasta_file(path)
+        validate_fasta_file(fasta_test_path / "blank_line.fasta")
     assert (
         exc_info.value.args[0]
         == "blank line found on ln: 1. These are not allowed in fastas."
     )
-    path = fasta_test_path + "incorrect_format.fasta"
     with pytest.raises(DREEMInputException) as exc_info:
-        validate_fasta_file(path)
+        validate_fasta_file(fasta_test_path / "incorrect_format.fasta")
     assert (
         exc_info.value.args[0]
         == "reference sequence names are on line zero and even numbers. line 0 "
         "has value which is not correct format in the fasta"
     )
-    path = fasta_test_path + "incorrect_sequence.fasta"
-    with pytest.raises(DREEMInputException) as exc_info:
-        validate_fasta_file(path)
+    with pytest.raises(DREEMInputException):
+        validate_fasta_file(fasta_test_path / "incorrect_sequence.fasta")
+    with pytest.raises(DREEMInputException):
+        validate_fasta_file(fasta_test_path / "is_rna.fasta")
+    with pytest.raises(DREEMInputException):
+        validate_fasta_file(fasta_test_path / "space_between_carrot.fasta")

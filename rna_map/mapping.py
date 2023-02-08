@@ -35,7 +35,7 @@ class Mapper(object):
         self.__setup = True
         # params
         self.__in_dir = self.__params["dirs"]["input"]
-        self.__out_dir = os.path.join(self.__params["dirs"]["output"], "Mapping_Files")
+        self.__out_dir = Path(self.__params["dirs"]["output"]) / "Mapping_Files"
         self.__overwrite = self.__params["overwrite"]
         self.check_program_versions()
         self.build_directories(self.__params)
@@ -46,7 +46,7 @@ class Mapper(object):
         os.makedirs(params["dirs"]["input"], exist_ok=True)
         os.makedirs(params["dirs"]["output"], exist_ok=True)
         os.makedirs(
-            os.path.join(params["dirs"]["output"], "Mapping_Files"),
+            Path(params["dirs"]["output"]) / "Mapping_Files",
             exist_ok=True,
         )
 
@@ -86,6 +86,7 @@ class Mapper(object):
             )
         )
 
+    # TODO should I implement this?
     def __log_output(self):
         # f = open(f"{self._p.dirs.log}/{method_name}.log", "w")
         # f.write(output)
@@ -119,7 +120,7 @@ class Mapper(object):
             return
         # don't rerun unless asked with -overwrite
         if (
-            os.path.isdir(os.path.join(self.__out_dir, "fastqc"))
+            os.path.isdir(self.__out_dir / "fastqc")
             and not self.__overwrite
         ):
             self.skip_without_overwrite("fastqc")
@@ -158,7 +159,7 @@ class Mapper(object):
         """
         run bowtie alignment on the fastq files
         """
-        sam_path = os.path.join(self.__out_dir, "aligned.sam")
+        sam_path = self.__out_dir / "aligned.sam"
         if os.path.isfile(sam_path) and not self.__overwrite:
             self.skip_without_overwrite("bowtie_alignment")
             return
