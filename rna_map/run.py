@@ -26,10 +26,11 @@ log = get_logger("RUN")
 # validate inputs #############################################################
 
 
-def validate_fasta_file(fa: str) -> None:
+def validate_fasta_file(fa: str) -> bool:
     """
     ensure that the fasta file is in the correct format
     :param fa: path to the fasta file
+    :return: True if valid
     """
     with open(fa, "r", encoding="utf8") as f:
         lines = f.readlines()
@@ -70,6 +71,7 @@ def validate_fasta_file(fa: str) -> None:
                     f" line {i} is not consisetnt with this in fasta"
                 )
     log.info(f"found {num} valid reference sequences in {fa}")
+    return True
 
 
 def validate_csv_file(fa: str, csv: str) -> None:
@@ -82,9 +84,7 @@ def validate_csv_file(fa: str, csv: str) -> None:
     if "name" not in df.columns:
         raise DREEMInputException("csv file does not contain a column named 'name'.")
     if "sequence" not in df.columns:
-        raise DREEMInputException(
-            "csv file does not contain a column named 'sequence'"
-        )
+        raise DREEMInputException("csv file does not contain a column named 'sequence'")
     if "structure" not in df.columns:
         raise DREEMInputException(
             "csv file does not contain a column named 'structure'"
@@ -106,7 +106,7 @@ def validate_fastq_file(fastq_file: str) -> bool:
     """
     validate a fastq file
     """
-    with open(fastq_file, 'r', encoding='utf8') as f:
+    with open(fastq_file, "r", encoding="utf8") as f:
         lines = [f.readline().strip() for _ in range(4)]
     if len(lines) < 4:
         return False
@@ -117,6 +117,7 @@ def validate_fastq_file(fastq_file: str) -> bool:
     if len(lines[1]) != len(lines[3]):
         return False
     return True
+
 
 def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
     """
@@ -130,10 +131,13 @@ def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
         raise DREEMInputException(f"fasta file: does not exist {fa}!")
     else:
         log.info(f"fasta file: {fa} exists")
-        validate_fasta_file(fa)
+        if validate_fasta_file(fa):
+            log.info("fasta file is valid")
     if not os.path.isfile(fq1):
         raise DREEMInputException(f"fastq1 file: does not exist {fq1}!")
     else:
+        if not validate_fastq_file(fq1):
+            raise DREEMInputException(f"fastq1 file: is not a valid fastq file {fq1}!")
         log.info(f"fastq1 file: {fq1} exists")
     if fq2 != "":
         if not os.path.isfile(fq2):
@@ -141,6 +145,10 @@ def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
         else:
             log.info(f"fastq2 file: {fq2} exists")
             log.info("two fastq files supplied, thus assuming paired reads")
+            if not validate_fastq_file(fq2):
+                raise DREEMInputException(
+                    f"fastq2 file: is not a valid fastq file {fq2}!"
+                )
     if csv != "":
         if not os.path.isfile(csv):
             raise DREEMInputException(f"csv file: does not exist {csv}!")

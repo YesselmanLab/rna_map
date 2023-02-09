@@ -3,7 +3,7 @@ import shutil
 import pytest
 from pathlib import Path
 
-from rna_map.run import validate_inputs, validate_fasta_file
+from rna_map.run import validate_inputs, validate_fasta_file, validate_fastq_file
 from rna_map.exception import DREEMInputException
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -54,6 +54,17 @@ def test_input_validation():
 
 
 def test_fasta_checks():
+    """
+    test fasta checks
+    """
+    p = get_test_inputs_paired()
+    try:
+        validate_fasta_file(p["fasta"])
+    except DREEMInputException:
+        pytest.fail("fasta file should be valid")
+
+
+def test_fasta_checks_errors():
     fasta_test_path = Path(TEST_DIR) / "resources" / "test_fastas"
     with pytest.raises(DREEMInputException) as exc_info:
         validate_fasta_file(fasta_test_path / "blank_line.fasta")
@@ -74,3 +85,14 @@ def test_fasta_checks():
         validate_fasta_file(fasta_test_path / "is_rna.fasta")
     with pytest.raises(DREEMInputException):
         validate_fasta_file(fasta_test_path / "space_between_carrot.fasta")
+
+
+def test_fastq_checks():
+    """
+    test fastq checks
+    """
+    p = get_test_inputs_paired()
+    try:
+        validate_fastq_file(p["fastq1"])
+    except DREEMInputException:
+        pytest.fail("fastq file should be valid")
