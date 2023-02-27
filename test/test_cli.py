@@ -26,7 +26,7 @@ def test_cli_single():
     path = Path(TEST_DIR) / "resources" / "case_unit/"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["-fa", f"{path}/test.fasta", "-fq1", f"{path}/test_mate1.fastq"]
+        cli, ["-fa", path / "test.fasta", "-fq1", path / "test_mate1.fastq"]
     )
     assert result.exit_code == 0
     # assert os.path.isfile(f"output/test_mate1.fastq")

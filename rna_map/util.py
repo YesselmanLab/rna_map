@@ -40,5 +40,5 @@ def get_filename(path):
     :param path: the path
     :return: the filename
     """
-    path = Path(path)
+    path = Path(Path(path).stem)
     return str(path).rstrip(''.join(path.suffixes))

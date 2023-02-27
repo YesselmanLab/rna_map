@@ -120,10 +120,7 @@ class Mapper(object):
             self.skip_method_by_user("fastqc", "skip_fastqc")
             return
         # don't rerun unless asked with -overwrite
-        if (
-            os.path.isdir(self.__out_dir / "fastqc")
-            and not self.__overwrite
-        ):
+        if os.path.isdir(self.__out_dir / "fastqc") and not self.__overwrite:
             self.skip_without_overwrite("fastqc")
             return
         run_fastqc(self.__ins.fastq1, self.__ins.fastq2, self.__out_dir)
@@ -132,13 +129,22 @@ class Mapper(object):
         """
         run trim galore on the fastq files
         """
-        # version
-        fq1_path = f"{self.__out_dir}/{Path(self.__ins.fastq1).stem}_val_1.fq"
+        ext = "fq"
+        if self.__ins.fastq1.suffix == ".gz":
+            ext = "fq.gz"
+        if self.__ins.is_paired():
+            fq1_path = self.__out_dir / f"{get_filename(self.__ins.fastq1)}_val_1.{ext}"
+            fq2_path = self.__out_dir / f"{get_filename(self.__ins.fastq2)}_val_2.{ext}"
+        else:
+            fq1_path = (
+                self.__out_dir / f"{get_filename(self.__ins.fastq1)}_trimmed.{ext}"
+            )
+            fq2_path = None
         if self.__params["map"]["skip_trim_galore"]:
             self.skip_method_by_user("trim_glore", "skip_trim_galore")
             shutil.copy(self.__ins.fastq1, fq1_path)
-            fq2_path = f"{self.__out_dir}/{Path(self.__ins.fastq2).stem}_val_2.fq"
-            shutil.copy(self.__ins.fastq2, fq2_path)
+            if self.__ins.is_paired():
+                shutil.copy(self.__ins.fastq2, fq2_path)
             return
         # don't rerun unless asked with -overwrite
         if os.path.isfile(fq1_path) and not self.__overwrite:
@@ -165,13 +171,15 @@ class Mapper(object):
             self.skip_without_overwrite("bowtie_alignment")
             return
         ext = "fq"
-        if self.__ins.fastq1.endswith(".gz"):
+        if self.__ins.fastq1.suffix == ".gz":
             ext = "fq.gz"
         if self.__ins.is_paired():
-            fq1_path = f"{self.__out_dir}/{get_filename(self.__ins.fastq1)}_val_1.{ext}"
-            fq2_path = f"{self.__out_dir}/{get_filename(self.__ins.fastq2)}_val_2.{ext}"
+            fq1_path = self.__out_dir / f"{get_filename(self.__ins.fastq1)}_val_1.{ext}"
+            fq2_path = self.__out_dir / f"{get_filename(self.__ins.fastq2)}_val_2.{ext}"
         else:
-            fq1_path = f"{self.__out_dir}/{get_filename(self.__ins.fastq1)}_trimmed.{ext}"
+            fq1_path = (
+                self.__out_dir / f"{get_filename(self.__ins.fastq1)}_trimmed.{ext}"
+            )
             fq2_path = ""
         return run_bowtie_alignment(
             self.__ins.fasta,

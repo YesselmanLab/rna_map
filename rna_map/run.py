@@ -102,12 +102,12 @@ def validate_csv_file(fa: str, csv: str) -> None:
             )
 
 
-def validate_fastq_file(fastq_file: str) -> bool:
+def validate_fastq_file(fastq_file: Path) -> bool:
     """
     validate a fastq file
     """
     #TODO add validation for gz files
-    if fastq_file.endswith(".gz"):
+    if fastq_file.suffix == ".gz":
         return True
     with open(fastq_file, "r") as f:
         lines = [f.readline().strip() for _ in range(4)]
