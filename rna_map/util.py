@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 
 def fasta_to_dict(fasta_file):
@@ -31,3 +32,13 @@ def parse_phred_qscore_file(qscore_filename):
         phred_qscore[symbol] = score
     qscore_file.close()
     return phred_qscore
+
+
+def get_filename(path):
+    """
+    get the filename from a path
+    :param path: the path
+    :return: the filename
+    """
+    path = Path(path)
+    return str(path).rstrip(''.join(path.suffixes))

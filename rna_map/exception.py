@@ -3,6 +3,7 @@ defines exceptions for rna_map package
 """
 
 
+#TODO rename exceptions
 class DREEMException(Exception):
     """
     Base class for DREEM exceptions

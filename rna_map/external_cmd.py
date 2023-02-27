@@ -29,7 +29,7 @@ class ProgOutput:
 def does_program_exist(prog_name: str) -> bool:
     """
     Check if a program exists
-    :prog_name: name of the program
+    :param prog_name: name of the program
     """
     if shutil.which(prog_name) is None:
         return False

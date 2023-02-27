@@ -106,7 +106,10 @@ def validate_fastq_file(fastq_file: str) -> bool:
     """
     validate a fastq file
     """
-    with open(fastq_file, "r", encoding="utf8") as f:
+    #TODO add validation for gz files
+    if fastq_file.endswith(".gz"):
+        return True
+    with open(fastq_file, "r") as f:
         lines = [f.readline().strip() for _ in range(4)]
     if len(lines) < 4:
         return False
