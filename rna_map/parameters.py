@@ -27,7 +27,7 @@ class Inputs:
         """
         Check if the input is paired i.e. has both R1 and R2
         """
-        if self.fastq2 != "":
+        if self.fastq2 != Path(""):
             return True
         return False
 
@@ -35,7 +35,7 @@ class Inputs:
         """
         Check if the user supplied a csv file
         """
-        if self.csv != "":
+        if self.csv != Path(""):
             return True
         return False
 

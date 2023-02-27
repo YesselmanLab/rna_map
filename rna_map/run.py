@@ -130,19 +130,19 @@ def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
     :param fq2: path to the second fastq file
     :param csv: path to the dot-bracket file
     """
-    if not os.path.isfile(fa):
+    if not fa.is_file():
         raise DREEMInputException(f"fasta file: does not exist {fa}!")
     else:
         log.info(f"fasta file: {fa} exists")
         if validate_fasta_file(fa):
             log.info("fasta file is valid")
-    if not os.path.isfile(fq1):
+    if not fq1.is_file():
         raise DREEMInputException(f"fastq1 file: does not exist {fq1}!")
     else:
         if not validate_fastq_file(fq1):
             raise DREEMInputException(f"fastq1 file: is not a valid fastq file {fq1}!")
         log.info(f"fastq1 file: {fq1} exists")
-    if fq2 != "":
+    if str(fq2) != ".":
         if not os.path.isfile(fq2):
             raise DREEMInputException(f"fastq2 file: does not exist {fq2}!")
         else:
@@ -152,7 +152,7 @@ def validate_inputs(fa, fq1, fq2, csv) -> Inputs:
                 raise DREEMInputException(
                     f"fastq2 file: is not a valid fastq file {fq2}!"
                 )
-    if csv != "":
+    if str(csv) != ".":
         if not os.path.isfile(csv):
             raise DREEMInputException(f"csv file: does not exist {csv}!")
         else:
@@ -173,7 +173,7 @@ def run(fasta, fastq1, fastq2, dot_bracket, params=None):
     :param dot_bracket: path to the dot-bracket file
     :param params: dictionary of parameters
     """
-    ins = validate_inputs(fasta, fastq1, fastq2, dot_bracket)
+    ins = validate_inputs(Path(fasta), Path(fastq1), Path(fastq2), Path(dot_bracket))
     if params is None:
         params = get_default_params()
     else:
