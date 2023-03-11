@@ -113,6 +113,7 @@ def run_in_docker(args):
         " RUNNING DOCKER #####################################################\n"
         f": {docker_cmd}"
     )
+    print(docker_cmd)
     subprocess.call(docker_cmd, shell=True)
     subprocess.call("docker rm rna-map-cont", shell=True)
 

@@ -306,7 +306,12 @@ class BitVectorGenerator(object):
             fname = f"{self.__out_dir}/{mh.name}_{mh.start}_{mh.end}_"
             if not self.__summary_only:
                 df = mh.get_pop_avg_dataframe()
-                plot_population_avg(df, mh.name, f"{fname}pop_avg.html")
+                plot_population_avg(
+                    df,
+                    mh.name,
+                    f"{fname}pop_avg.html",
+                    plot_sequence=self.__params["bit_vector"]["plot_sequence"],
+                )
             # TODO add generate other plots arg?
             if self.__params["restore_org_behavior"]:
                 plot_modified_bases(
@@ -328,7 +333,8 @@ class BitVectorGenerator(object):
         if os.path.isfile(pickle_file) and not self.__params["overwrite"]:
             log.info(
                 "SKIPPING bit vector generation, it has run already! specify"
-                " -overwrite " + "to rerun"
+                " -overwrite "
+                + "to rerun"
             )
             with open(pickle_file, "rb") as handle:
                 self._mut_histos = pickle.load(handle)

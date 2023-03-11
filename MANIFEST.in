@@ -1,4 +1,2 @@
 include reqirements.txt
-include rna_map/resources/*
-recursive-exclude * *.py[co]
-recursive-exclude test
+recursive-include rna_map/resources *
