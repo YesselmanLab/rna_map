@@ -208,7 +208,8 @@ class MutationHistogram(object):
 
     def get_percent_mutations(self):
         data = np.array(self.num_of_mutations[0:4] + [sum(self.num_of_mutations[5:])])
-        data = [round(x, 2) for x in list((data / self.num_aligned) * 100)]
+        if self.num_aligned != 0:
+            data = [round(x, 2) for x in list((data / self.num_aligned) * 100)]
         return data
 
     def get_signal_to_noise(self):
@@ -224,6 +225,8 @@ class MutationHistogram(object):
                 GU += self.mut_bases[pos]
         AC /= float(AC_count)
         GU /= float(GU_count)
+        if GU == 0:
+            return 0
         return round(float(AC / GU), 2)
 
 
