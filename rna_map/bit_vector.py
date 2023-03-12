@@ -349,7 +349,7 @@ class BitVectorGenerator(object):
                 self._bit_vector_writers[ref_name] = BitVectorFileWriter(
                     self.__out_dir, ref_name, seq, "DMS", 1, len(seq)
                 )
-        if self.__csv_file != "":
+        if str(self.__csv_file) != ".":
             df = pd.read_csv(self.__csv_file)
             for i, row in df.iterrows():
                 if row["name"] in self.__mut_histos:
