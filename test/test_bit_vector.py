@@ -53,6 +53,6 @@ def test_bit_vector_generator():
     )
     bv_gen = BitVectorGenerator()
     bv_gen.setup(get_default_params())
-    bv_gen.run(sam_path, fa_path, False, "")
+    bv_gen.run(sam_path, fa_path, False, Path(""))
     assert os.path.exists(Path("output/BitVector_Files/summary.csv"))
     shutil.rmtree("output")
