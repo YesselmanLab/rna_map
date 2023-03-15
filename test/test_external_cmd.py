@@ -157,7 +157,7 @@ def test_validate_bt2_args():
     """
     test validate_bt2_args
     """
-    args = "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+    args = "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p 16"
     try:
         validate_bowtie2_args(args)
     except DREEMInputException as exc:
@@ -173,15 +173,15 @@ def test_validate_bt2_args_exceptions():
     args = ""
     validate_bowtie2_args(args)
     # invalid boolean argument
-    args = "--fake,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+    args = "--fake;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p 16"
     with pytest.raises(DREEMInputException):
         validate_bowtie2_args(args)
     # invalid integer argument
-    args = "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-fake 16"
+    args = "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-fake 16"
     with pytest.raises(DREEMInputException):
         validate_bowtie2_args(args)
     # invalid argument type
-    args = "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p test"
+    args = "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p test"
     with pytest.raises(DREEMInputException):
         validate_bowtie2_args(args)
 
@@ -193,7 +193,7 @@ def test_bowtie_alignment():
     setup_directories(os.getcwd())
     ins = get_test_inputs_paired()
     run_bowtie_build(ins.fasta, "input")
-    args = "--local,--no-unal,--no-discordant,--no-mixed,-X 1000,-L 12,-p 16"
+    args = "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p 16"
     run_bowtie_alignment(
         ins.fasta, ins.fastq1, ins.fastq2, "input", "output/Mapping_Files", args
     )
