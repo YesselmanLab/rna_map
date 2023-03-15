@@ -289,7 +289,10 @@ class BitVectorGenerator(object):
         for mut_histo in self.__mut_histos.values():
             row = [mut_histo.name]
             for col in cols:
-                row.append(mut_histo.skips[col] / mut_histo.num_reads * 100)
+                try:
+                    row.append(mut_histo.skips[col] / mut_histo.num_reads * 100)
+                except ZeroDivisionError:
+                    row.append(0)
             data.append(row)
         df = pd.DataFrame(data, columns=["name"] + cols)
         log.info(
