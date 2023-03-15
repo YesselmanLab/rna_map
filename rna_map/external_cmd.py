@@ -171,7 +171,7 @@ def run_bowtie_build(fasta: str, input_dir: str) -> ProgOutput:
 def validate_bowtie2_args(args: str) -> bool:
     """
     Validate the bowtie2 arguments
-    :param args: arguments to validate, seperated by ","
+    :param args: arguments to validate, seperated by ";"
     """
 
     def check_type(arg):
@@ -194,7 +194,7 @@ def validate_bowtie2_args(args: str) -> bool:
         valid_bt2_args[row["param"]] = row["vtype"]
     if len(args) == 0:
         log.warning("no bowtie2 arguments supplied thats probably wrong")
-    supplied_args = args.strip().split(",")
+    supplied_args = args.strip().split(";")
     for full_arg in supplied_args:
         if len(full_arg) == 0:
             continue
@@ -230,7 +230,7 @@ def run_bowtie_alignment(
     # check to make sure bt2 args are valid
     validate_bowtie2_args(args)
     bt2_index = Path(in_dir) / Path(fasta).stem
-    bt2_args = " ".join(args.split(","))
+    bt2_args = " ".join(args.split(";"))
     sam_file = Path(out_dir) / "aligned.sam"
     cmd = f"bowtie2 {bt2_args} -x {bt2_index} -S {sam_file} "
     if fastq2 != "":

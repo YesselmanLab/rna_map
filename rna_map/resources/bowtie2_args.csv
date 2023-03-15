@@ -24,7 +24,7 @@ param,vtype
 --end-to-end,bool
 --local,bool
 --ma,int
---mp,int
+--mp,str
 --np,int
 --rdg,str
 --rfg,str
