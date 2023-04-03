@@ -462,6 +462,24 @@ def plot_population_avg(
 # analysis functions ###########################################################
 
 
+def merge_mut_histo_files(mh_files, outdir, kind="pickle") -> None:
+    """
+    Collects all mutational histogram dictionaries in the list and merges them
+    :param mh_files: list of mutational histogram dictionaries
+    :param outdir: output directory
+    :param name: name of the output file
+    """
+    mut_histos = []
+    for mh_file in mh_files:
+        if kind == "pickle":
+            mut_histos.append(get_mut_histos_from_pickle_file(mh_file))
+        else:
+            mut_histos.append(get_mut_histos_from_json_file(mh_files))
+    merged = merge_all_merge_mut_histo_dicts(mut_histos)
+    write_mut_histos_to_pickle_file(merged, outdir + "mutation_histos.p")
+    write_mut_histos_to_json_file(merged, outdir + "mutation_histos.json")
+
+
 def merge_mut_histo_dicts(
     left: Dict[str, MutationHistogram], right: Dict[str, MutationHistogram]
 ) -> None:
