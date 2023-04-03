@@ -1,5 +1,6 @@
 import yaml
 import json
+import os
 import jsonschema
 from jsonschema import Draft4Validator, validators
 
@@ -101,6 +102,13 @@ def parse_parameters_from_file(param_file):
         params = {}
     validate_parameters(params)
     return params
+
+
+def get_preset_params(name):
+    param_path = os.path.join(get_py_path(), "resources", "presets", f"{name}.yml")
+    if not os.path.isfile(param_path):
+        raise ValueError(f"preset {name} does not exist")
+    return parse_parameters_from_file(param_path)
 
 
 def get_default_params():
