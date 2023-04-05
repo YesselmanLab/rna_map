@@ -10,5 +10,3 @@ pyyaml
 future
 pytest
 jsonschema
-flake8
-Flake8-pyproject
