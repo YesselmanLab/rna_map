@@ -230,6 +230,28 @@ class MutationHistogram(object):
         return round(float(AC / GU), 2)
 
 
+def convert_dreem_mut_histos_to_mutation_histogram(mhs) -> Dict[str, MutationHistogram]:
+    new_mhs = {}
+    for name, mh in mhs.items():
+        new_mh = MutationHistogram(name, mh.sequence, mh.data_type)
+        new_mh.structure = mh.structure
+        new_mh.num_reads = mh.num_reads
+        new_mh.num_aligned = mh.num_aligned
+        new_mh.skips = mh.skips
+        new_mh.num_of_mutations = mh.num_of_mutations
+        new_mh.mut_bases = mh.mut_bases
+        new_mh.info_bases = mh.info_bases
+        new_mh.del_bases = mh.del_bases
+        new_mh.ins_bases = mh.ins_bases
+        new_mh.cov_bases = mh.cov_bases
+        new_mh.mod_bases["A"] = mh.mod_bases["A"]
+        new_mh.mod_bases["C"] = mh.mod_bases["C"]
+        new_mh.mod_bases["G"] = mh.mod_bases["G"]
+        new_mh.mod_bases["T"] = mh.mod_bases["T"]
+        new_mhs[name] = new_mh
+    return new_mhs
+
+
 def write_mut_histos_to_json_file(
     mut_histos: Dict[str, MutationHistogram], fname: str
 ) -> None:
@@ -507,3 +529,12 @@ def merge_all_merge_mut_histo_dicts(
     for mh in mut_histos:
         merge_mut_histo_dicts(merged, mh)
     return merged
+
+
+f = open("mutation_histos.json", "r")
+mhs = json.load(f)
+for k, mh in mhs.items():
+    mus = []
+    for pos in range(mh.start, mh.end + 1):
+        mut_info = mh.mut_bases[pos] / mh.info_bases[pos]
+        mus.append(mut_info)
