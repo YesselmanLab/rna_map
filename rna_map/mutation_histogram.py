@@ -530,11 +530,3 @@ def merge_all_merge_mut_histo_dicts(
         merge_mut_histo_dicts(merged, mh)
     return merged
 
-
-f = open("mutation_histos.json", "r")
-mhs = json.load(f)
-for k, mh in mhs.items():
-    mus = []
-    for pos in range(mh.start, mh.end + 1):
-        mut_info = mh.mut_bases[pos] / mh.info_bases[pos]
-        mus.append(mut_info)
