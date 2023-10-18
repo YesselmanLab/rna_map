@@ -24,7 +24,7 @@ with open("requirements.txt", "r", encoding="UTF-8") as f:
 
 setup(
     name="rna_map",
-    version="0.4.0",
+    version="0.4.1",
     description="rapid analysis of RNA mutational profiling (MaP) experiments.",
     long_description=readme + "\n\n",
     long_description_content_type="text/markdown",
