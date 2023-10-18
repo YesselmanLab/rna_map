@@ -60,7 +60,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "rna-map = rna_map.cli : cli",
+            "rna-map = rna_map.cli:cli",
         ]
     },
 )
