@@ -1,6 +1,7 @@
 import os
 import re
 import pickle
+import json
 from dataclasses import dataclass
 from typing import Dict, List
 from pathlib import Path
@@ -333,11 +334,13 @@ class BitVectorGenerator(object):
 
     def __generate_all_bit_vectors(self):
         pickle_file = self.__out_dir / "mutation_histos.p"
+        mut_file = self.__out_dir / "muts.json"
+        f = open(mut_file, "w")
+        f.write("[")
         if os.path.isfile(pickle_file) and not self.__params["overwrite"]:
             log.info(
                 "SKIPPING bit vector generation, it has run already! specify"
-                " -overwrite "
-                + "to rerun"
+                " -overwrite " + "to rerun"
             )
             with open(pickle_file, "rb") as handle:
                 self._mut_histos = pickle.load(handle)
@@ -357,8 +360,35 @@ class BitVectorGenerator(object):
             for i, row in df.iterrows():
                 if row["name"] in self.__mut_histos:
                     self.__mut_histos[row["name"]].structure = row["structure"]
+        j = 0
         for bit_vector in self.__bit_vec_iterator:
+            if j > 0:
+                f.write(",")
+            j += 1
+            muts = {}
+            dels = {}
+            ambigs = {}
+            for i, k in bit_vector.data.items():
+                if k in self.__bases:
+                    muts[int(i)] = k
+                elif k == self.__bts.del_bit:
+                    dels[int(i)] = k
+                elif k == self.__bts.ambig_info:
+                    ambigs[int(i)] = k
+            data = [
+                bit_vector.reads[0].rname,
+                bit_vector.reads[0].mapq,
+                bit_vector.reads[1].mapq,
+                len(bit_vector.reads[0].seq),
+                len(bit_vector.reads[1].seq),
+                muts,
+                dels,
+                ambigs,
+            ]
+            json.dump(data, f)
             self.__record_bit_vector(bit_vector)
+        f.write("]")
+        f.close()
         # pickle mutational histograms
         json_file = os.path.join(self.__out_dir, "mutation_histos.json")
         write_mut_histos_to_pickle_file(self.__mut_histos, pickle_file)
