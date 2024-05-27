@@ -70,6 +70,7 @@ def validate_fasta_file(fa: str) -> bool:
                     "reference sequences must contain only AGCT characters."
                     f" line {i} is not consisetnt with this in fasta"
                 )
+    print("made it")
     log.info(f"found {num} valid reference sequences in {fa}")
     return True
 
@@ -106,7 +107,7 @@ def validate_fastq_file(fastq_file: Path) -> bool:
     """
     validate a fastq file
     """
-    #TODO add validation for gz files
+    # TODO add validation for gz files
     if fastq_file.suffix == ".gz":
         return True
     with open(fastq_file, "r") as f:

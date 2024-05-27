@@ -1,6 +1,7 @@
 """
 command line iterface for rna_map
 """
+
 import os
 import sys
 import subprocess
@@ -15,12 +16,12 @@ from rna_map.cli_opts import (
     parse_cli_args,
 )
 from rna_map.external_cmd import does_program_exist
-from rna_map.logger import setup_applevel_logger, get_logger
+from rna_map.logger import get_logger, setup_applevel_logger
 from rna_map.parameters import parse_parameters_from_file, get_default_params
 from rna_map.run import run
 from rna_map.settings import get_py_path
 
-log = get_logger("CLI")
+log = get_logger("cli")
 
 
 def get_logo() -> str:
