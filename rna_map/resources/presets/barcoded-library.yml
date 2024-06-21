@@ -9,8 +9,8 @@ restore_org_behavior: False
 stricter_bv_constraints: True
 map:
   skip: False
-  skip_fastqc: False
-  skip_trim_galore: False
+  skip_fastqc: True
+  skip_trim_galore: True
   tg_q_cutoff: 20 # trim galore quality cutoff
   # default args for bowtie alignment seperated by ","
   bt2_alignment_args: "--local;--no-unal;--no-discordant;--no-mixed;-X 1000;-L 12;-p 16"
