@@ -132,12 +132,14 @@ def cli(**args):
     """
     rapid analysis of RNA mutational profiling (MaP) experiments.
     """
+    if os.path.isfile("rna-map.log"):
+        os.remove("rna-map.log")
     # setup logging
     if args["debug"]:
-        setup_applevel_logger(is_debug=True)
+        setup_applevel_logger(file_name="rna-map.log", is_debug=True)
         log.info("Debug logging is on")
     else:
-        setup_applevel_logger()
+        setup_applevel_logger(file_name="rna-map.log")
     # check to see if we are running in docker
     if args["docker"]:
         print("running in docker")

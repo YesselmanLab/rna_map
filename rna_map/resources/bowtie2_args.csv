@@ -1,4 +1,5 @@
 param,vtype
+--verbose,bool
 --very-fast,bool
 --fast,bool
 --sensitive,bool
