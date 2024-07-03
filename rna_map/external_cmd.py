@@ -1,6 +1,7 @@
 """
 run and check external commannds
 """
+
 import os
 import shutil
 import subprocess
@@ -13,7 +14,7 @@ from rna_map.settings import get_py_path
 from rna_map.logger import get_logger
 from rna_map.exception import DREEMInputException, DREEMExternalProgramException
 
-log = get_logger("EXTERNAL_CMD")
+log = get_logger("external-cmd")
 
 
 @dataclass(frozen=True, order=True)

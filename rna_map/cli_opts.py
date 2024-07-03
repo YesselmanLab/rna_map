@@ -2,7 +2,7 @@ import cloup
 from cloup import option_group, option
 from rna_map.logger import get_logger
 
-log = get_logger("CLI_OPTS")
+log = get_logger("cli-opts")
 
 
 def main_options():

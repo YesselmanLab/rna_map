@@ -5,7 +5,7 @@ custom module for parsing sam files probably should use existing package
 from dataclasses import dataclass
 from rna_map import logger
 
-log = logger.get_logger("SAM")
+log = logger.get_logger("sam")
 
 
 @dataclass(frozen=True, order=True)

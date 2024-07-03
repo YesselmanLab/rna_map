@@ -24,7 +24,7 @@ from rna_map.logger import get_logger
 from rna_map.sam import AlignedRead, SingleSamIterator, PairedSamIterator
 from rna_map.util import parse_phred_qscore_file, fasta_to_dict
 
-log = get_logger("BIT_VECTOR")
+log = get_logger("bit_vector")
 
 
 @dataclass(frozen=True, order=True)

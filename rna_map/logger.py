@@ -21,7 +21,7 @@ import sys
 
 # logging #####################################################################
 
-APP_LOGGER_NAME = "rna_map"
+APP_LOGGER_NAME = "rna-map"
 
 
 def setup_logging(file_name: str = None) -> logging.Logger:

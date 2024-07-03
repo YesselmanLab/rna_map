@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from rna_map import logger
 from rna_map.settings import get_py_path
 
-log = logger.get_logger("PARAMETERS")
+log = logger.get_logger("parameters")
 
 
 @dataclass(frozen=True, order=True)

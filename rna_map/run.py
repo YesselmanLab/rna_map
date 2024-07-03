@@ -20,7 +20,7 @@ from rna_map.parameters import (
 from rna_map.mapping import Mapper
 from rna_map.util import fasta_to_dict
 
-log = get_logger("RUN")
+log = get_logger("run")
 
 
 # validate inputs #############################################################
