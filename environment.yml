@@ -1,0 +1,33 @@
+name: rna-map
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Core Python
+  - python=3.11
+  - pip
+
+  # CLI tools (Bioconda/conda-forge provide recent builds)
+  - bowtie2        # aligner
+  - fastqc         # QC
+  - cutadapt       # adapter/quality trimming
+  - trim-galore    # wrapper around cutadapt (Perl script; conda handles Perl dep)
+
+  # Python deps you listed
+  - cython
+  - colorlog
+  - click
+  - future
+  - plotly
+  - matplotlib
+  - pandas
+  - pytest
+
+  # Nice to have utilities (optional; remove if you prefer minimal)
+  - unzip
+  - curl
+  - wget
+
+  - pip:
+    - kaleido

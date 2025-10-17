@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+# Prevent two identical runs fighting each other on the same ref
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (Linux & macOS)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-13]  # macos-13 = Intel runner; more Bioconda packages available
+        python-version: ["3.11"]       # Expand to ["3.10","3.11","3.12"] if your deps support it
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Micromamba = fast conda installs + built-in caching
+      - name: Set up micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-version: "latest"
+          environment-file: environment.yml
+          environment-name: rna-map
+          cache-environment: true
+          cache-downloads: true
+          # Ensure conda-forge/bioconda priority and fast solver
+          create-args: >-
+            --channel conda-forge
+            --channel bioconda
+            --strict-channel-priority
+            python=${{ matrix.python-version }}
+
+      - name: Show environment
+        shell: bash -l {0}
+        run: |
+            micromamba info
+            micromamba list
+            which python
+            python --version
+
+      # If your environment.yml already installs rna_map via pip git+..., you can skip this step.
+      - name: Editable install of rna_map
+        shell: bash -l {0}
+        run: |
+          pip install -e .
+          rna-map --help || true
+
+      - name: Smoke-check CLI tools
+        shell: bash -l {0}
+        run: |
+          which bowtie2 || (echo "bowtie2 missing" && exit 1)
+          which fastqc  || (echo "fastqc missing"  && exit 1)
+          which cutadapt || (echo "cutadapt missing" && exit 1)
+          which trim_galore || (echo "trim_galore missing" && exit 1)
