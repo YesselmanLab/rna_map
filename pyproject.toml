@@ -1,3 +1,182 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rna_map"
+version = "0.4.1"
+description = "rapid analysis of RNA mutational profiling (MaP) experiments."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Joe Yesselman", email = "jyesselm@unl.edu"}
+]
+maintainers = [
+    {name = "Joe Yesselman", email = "jyesselm@unl.edu"}
+]
+keywords = ["rna_map", "RNA", "mutational profiling", "MaP", "bioinformatics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "colorlog",
+    "click",
+    "cloup",
+    "plotly",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "tabulate",
+    "pyyaml",
+    "future",
+    "jsonschema",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/YesselmanLab/rna_map"
+Repository = "https://github.com/YesselmanLab/rna_map"
+Documentation = "https://github.com/YesselmanLab/rna_map#readme"
+"Bug Tracker" = "https://github.com/YesselmanLab/rna_map/issues"
+
+[project.scripts]
+rna-map = "rna_map.cli:cli"
+
+[tool.setuptools]
+packages = ["rna_map"]
+package-dir = {rna_map = "rna_map"}
+
+[tool.setuptools.package-data]
+rna_map = [
+    "resources/*",
+    "resources/**/*",
+]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["__pycache__", "*.pyc", "*.pyo", "*.pyd", ".git*", ".DS_Store"]
+
+# Black configuration
 [tool.black]
 line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
 preview = true
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# isort configuration
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["rna_map"]
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["test"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["rna_map"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/build/*",
+    "*/dist/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "plotly.*",
+    "matplotlib.*",
+    "pandas.*",
+    "numpy.*",
+    "click.*",
+    "cloup.*",
+    "colorlog.*",
+    "tabulate.*",
+    "yaml.*",
+    "jsonschema.*",
+]
+ignore_missing_imports = true

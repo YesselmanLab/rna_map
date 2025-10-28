@@ -8,218 +8,386 @@
 [![linting: flake8](https://img.shields.io/badge/linting-flake8-greenyellow)](https://github.com/PyCQA/flake8)
 [![PYPI package](https://badge.fury.io/py/rna-map.png)](http://badge.fury.io/py/rna-map)
 
-A open-source tool for rapid analysis of RNA mutational profiling (MaP) experiments.
-This tool was inspired by the DREEM algorithm developed by the Rouskin Lab (https://www.rouskinlab.com/). Please cite this work (https://doi.org/10.1093/nar/gkac435).
+## Table of Contents
 
-The MaP analysis web tool provides a simple platform for analyzing DMS-reactivity of an RNA. The user input is a raw sequencing file (.fastq) generated from a DMS-MaPseq experiment, and a sequence of the RNA of interest (.fasta). The DREEM algorithm performs sequence alignment using bowtie-2 and outputs the mismatch rate per nucleotide.
+- [Overview](#overview)
+- [Software Requirements](#software-requirements)
+- [Installation](#installation)
+  - [Using Conda (Recommended)](#using-conda-recommended)
+  - [Using Docker](#using-docker)
+  - [From Source](#from-source)
+- [Quick Start](#quick-start)
+- [Usage Examples](#usage-examples)
+  - [Basic Usage](#basic-usage)
+  - [Advanced Usage](#advanced-usage)
+  - [Working with Large Datasets](#working-with-large-datasets)
+- [Command Line Reference](#command-line-reference)
+- [Troubleshooting](#troubleshooting)
+- [Development](#development)
+- [Citation](#citation)
 
-## Software requirements
+## Overview
 
-- python 3.8 or greater
-- bowtie2 (2.2.9) - https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/
-- trim_galore (0.6.6) - https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz
-- fastqc (0.11.9) - https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.9.zip
-- cutadapt (1.18) - https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip
-- conda (optional) - https://docs.anaconda.com/anaconda/install/
-- docker (optional) - https://docs.docker.com/get-docker/
+**RNA MAP** is an open-source tool for rapid analysis of RNA mutational profiling (MaP) experiments. This tool was inspired by the DREEM algorithm developed by the Rouskin Lab and provides a comprehensive platform for analyzing DMS-reactivity of RNA molecules.
 
-If you are trying the software for the first time highly recommended to use the docker image.
+### What is RNA MaP?
 
-## How to install
-Highly recommended to use conda to manage your python environment.
+RNA mutational profiling (MaP) is a powerful technique that uses dimethyl sulfate (DMS) to probe RNA structure by introducing mutations during reverse transcription. The resulting sequencing data reveals the structural state of RNA molecules at single-nucleotide resolution.
 
+### Key Features
+
+- **Fast and accurate analysis** of DMS-MaPseq experiments
+- **Support for both single-end and paired-end** sequencing data
+- **Quality control integration** with FastQC and Trim Galore
+- **Flexible alignment options** using Bowtie2
+- **Interactive visualizations** with Plotly
+- **Batch processing** capabilities for large datasets
+- **Docker support** for reproducible environments
+
+### Input Requirements
+
+- **FASTA file**: Reference RNA sequence(s) of interest
+- **FASTQ file(s)**: Raw sequencing data from DMS-MaPseq experiment
+- **Optional**: Dot-bracket structure file for enhanced visualization
+
+## Software Requirements
+
+### Core Dependencies
+- **Python**: 3.8 or greater
+- **Bowtie2**: 2.2.9+ (for sequence alignment)
+- **FastQC**: 0.11.9+ (for quality control)
+- **Trim Galore**: 0.6.6+ (for adapter trimming)
+- **Cutadapt**: 1.18+ (for quality trimming)
+
+### Optional Dependencies
+- **Conda/Mamba**: For environment management
+- **Docker**: For containerized deployment
+
+> **💡 Recommendation**: If you're trying the software for the first time, we highly recommend using the Docker image for a hassle-free experience.
+
+## Installation
+
+### Using Conda (Recommended)
+
+The easiest way to install RNA MAP is using the provided `environment.yml` file, which automatically installs all dependencies:
+
+```bash
+# Clone the repository
+git clone https://github.com/YesselmanLab/rna_map
+cd rna_map
+
+# Create environment from environment.yml
+conda env create -f environment.yml
+
+# Activate the environment
+conda activate rna-map
+
+# Install the package in development mode
+pip install -e .
 ```
-conda create -n rna-map python=3.8
+
+Alternatively, you can install from PyPI:
+
+```bash
+# Create a new conda environment
+conda create -n rna-map python=3.11
+
+# Activate the environment
+conda activate rna-map
+
+# Install bioinformatics tools
+conda install -c bioconda bowtie2 fastqc cutadapt trim-galore
+
+# Install RNA MAP
 pip install rna-map
 ```
 
-### with docker 
-```shell
-# on linux and intel mac
+### Using Docker
+
+Docker provides the most reliable installation method with all dependencies pre-configured:
+
+```bash
+# Clone the repository
 git clone https://github.com/YesselmanLab/rna_map
 cd rna_map
-pip install .
 
+# Build the Docker image
+# For Linux and Intel Mac:
 docker build -t rna-map -f docker/Dockerfile .
 
-# on mac with apple silicon / or other arm64 platforms
+# For Apple Silicon Mac (ARM64):
 docker build -t rna-map --platform linux/amd64 -f docker/Dockerfile .
 
+# Run RNA MAP with Docker
+rna-map -fa <fasta_file> -fq1 <fastq_file> --docker
 ```
 
-## How to use 
+### From Source
 
-### basic usage
+For development or if you need the latest features:
 
-After installed there will be a new command line tool called `rna-map` available.
+```bash
+# Clone the repository
+git clone https://github.com/YesselmanLab/rna_map
+cd rna_map
 
-```shell
-# run in single end mode
-rna-map -fa <fasta file> -fq1 <fastq file>
+# Install in development mode
+pip install -e .
 
-# run in paired end mode
-rna-map -fa <fasta file> -fq1 <fastq file> -fq2 <fastq file>
-
-# supply a csv with dot bracket structures. These will apppear in the 
-# results in plots and pickle file 
-rna-map -fa <fasta file> -fq1 <fastq file> --dot-bracket <csv file>
+# Install development dependencies
+pip install -e ".[dev]"
 ```
 
-### running with docker 
-`--docker` flag will run the docker image. if you have run docker build first
-```shell
-# run in single end mode
-# note this will only work if you built the image with docker command above
-rna-map -fa <fasta file> -fq1 <fastq file> --docker
+## Quick Start
 
-# TODO check is necessary? 
-# run on apple silicon on / or other arm64 platforms 
-rna-map -fa <fasta file> -fq1 <fastq file> --docker --docker-platform linux/amd64
+After installation, the `rna-map` command-line tool will be available in your environment.
+
+### Basic Analysis
+
+```bash
+# Single-end sequencing
+rna-map -fa reference.fasta -fq1 reads.fastq
+
+# Paired-end sequencing
+rna-map -fa reference.fasta -fq1 reads_R1.fastq -fq2 reads_R2.fastq
+
+# With secondary structure information
+rna-map -fa reference.fasta -fq1 reads.fastq --dot-bracket structures.csv
 ```
 
-### working with large sets of RNAs
+## Usage Examples
 
+### Basic Usage
 
-
-### see a full list of arguments below
-
+#### Single-End Analysis
+```bash
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq
 ```
+
+#### Paired-End Analysis
+```bash
+rna-map -fa my_rna.fasta -fq1 reads_R1.fastq -fq2 reads_R2.fastq
+```
+
+#### With Secondary Structure
+```bash
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq --dot-bracket structures.csv
+```
+
+### Advanced Usage
+
+#### Using Parameter Files
+```bash
+# Create a custom parameter file
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq -pf custom_params.yml
+
+# Use preset parameters for barcoded libraries
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq -pp barcoded-library
+```
+
+#### Quality Control Options
+```bash
+# Skip quality control steps for faster processing
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq --skip-fastqc --skip-trim-galore
+
+# Custom quality cutoff
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq --tg-q-cutoff 20
+```
+
+#### Bit Vector Filtering
+```bash
+# Apply strict filtering criteria
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq \
+  --map-score-cutoff 20 \
+  --qscore-cutoff 20 \
+  --mutation-count-cutoff 2 \
+  --percent-length-cutoff 0.8
+```
+
+### Working with Large Datasets
+
+For large datasets with thousands of reference sequences:
+
+```bash
+# Generate summary only (no individual plots)
+rna-map -fa large_dataset.fasta -fq1 reads.fastq --summary-output-only
+
+# Skip bit vector generation for very large datasets
+rna-map -fa large_dataset.fasta -fq1 reads.fastq --skip-bit-vector
+```
+
+### Docker Usage
+
+```bash
+# Run with Docker (Linux/Intel Mac)
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq --docker
+
+# Run with Docker (Apple Silicon Mac)
+rna-map -fa my_rna.fasta -fq1 my_reads.fastq --docker --docker-platform linux/amd64
+```
+
+
+
+## Command Line Reference
+
+For a complete list of available options, run:
+
+```bash
 rna-map --help
-Usage: rna-map [OPTIONS]
-
-  rapid analysis of RNA mutational profiling (MaP) experiments.
-
-Main arguments:
-  These are the main arguments for the command line interface
-  -fa, --fasta PATH              The fasta file containing the reference
-                                 sequences  [required]
-  -fq1, --fastq1 PATH            The fastq file containing the single end reads
-                                 or the first pair of paired end reads
-                                 [required]
-  -fq2, --fastq2 TEXT            The fastq file containing the second pair of
-                                 paired end reads
-  --dot-bracket TEXT             The directory containing the input files
-  -pf, --param-file TEXT         A yml formatted file to specify parameters, see
-                                 rna_map/resources/default.yml for an example
-  -pp, --param-preset TEXT       run a set of parameters for specific uses like
-                                 'barcoded-libraries'
-
-Mapping options:
-  These are the options for pre processing of fastq files and alignment to
-  reference sequences
-  --skip-fastqc                  do not run fastqc for quality control of
-                                 sequence data
-  --skip-trim-galore             do not run trim galore for quality control of
-                                 sequence data
-  --tg-q-cutoff INTEGER          the quality cutoff for trim galore
-  --bt2-alignment-args TEXT      the arguments to pass to bowtie2 for alignment
-                                 seperated by commas
-  --save-unaligned               the path to save unaligned reads to
-
-Bit vector options:
-  These are the options for the bit vector step
-  --skip-bit-vector              do not run the bit vector step
-  --summary-output-only          do not generate bit vector files or plots
-                                 recommended when there are thousands of
-                                 reference sequences
-  --plot-sequence                plot sequence and structure is supplied under
-                                 the population average plots
-  --map-score-cutoff INTEGER     reject any bit vector where the mapping score
-                                 for bowtie2 alignment is less than this value
-  --qscore-cutoff INTEGER        quality score of read nucleotide, sets to
-                                 ambigious if under this val
-  --mutation-count-cutoff INTEGER
-                                 maximum number of mutations allowed in a bit
-                                 vector will be discarded if higher
-  --percent-length-cutoff FLOAT  minium percent of the length of the reference
-                                 sequence allowed in a bit vector will be
-                                 discarded if lower
-  --min-mut-distance INTEGER     minimum distance between mutations in a bit
-                                 vector will be discarded if lower
-
-Docker options:
-  These are the options for running the command line interface in a docker
-  container
-  --docker                       Run the program in a docker container
-  --docker-image TEXT            The docker image to use
-  --docker-platform TEXT         The platform to use for the docker image
-
-Misc options:
-  These are the options for the misc stage
-  --overwrite                    overwrite the output directory if it exists
-  --restore-org-behavior         restore the original behavior of the rna_map
-  --stricter-bv-constraints      use stricter constraints for bit vector
-                                 generation, use at your own risk!
-  --debug                        enable debug mode
-
-Other options:
-  --help                         Show this message and exit.
-
 ```
 
-### running paired end reads
+### Main Arguments
+- `-fa, --fasta PATH`: Reference sequences in FASTA format (required)
+- `-fq1, --fastq1 PATH`: Single-end reads or first pair of paired-end reads (required)
+- `-fq2, --fastq2 PATH`: Second pair of paired-end reads (optional)
+- `--dot-bracket PATH`: CSV file with secondary structure information
+- `-pf, --param-file PATH`: Custom parameter file (YAML format)
+- `-pp, --param-preset TEXT`: Use preset parameters (e.g., 'barcoded-library')
 
-```shell
- rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_unit/test_mate1.fastq -fq2 test/resources/case_unit/test_mate2.fastq 
+### Quality Control Options
+- `--skip-fastqc`: Skip FastQC quality control
+- `--skip-trim-galore`: Skip Trim Galore adapter trimming
+- `--tg-q-cutoff INTEGER`: Quality cutoff for Trim Galore (default: 20)
+
+### Alignment Options
+- `--bt2-alignment-args TEXT`: Custom Bowtie2 arguments (comma-separated)
+- `--save-unaligned PATH`: Save unaligned reads to specified path
+
+### Bit Vector Options
+- `--skip-bit-vector`: Skip bit vector generation
+- `--summary-output-only`: Generate summary only (no individual plots)
+- `--map-score-cutoff INTEGER`: Minimum mapping score threshold
+- `--qscore-cutoff INTEGER`: Quality score threshold for nucleotides
+- `--mutation-count-cutoff INTEGER`: Maximum mutations per read
+- `--percent-length-cutoff FLOAT`: Minimum read length percentage
+- `--min-mut-distance INTEGER`: Minimum distance between mutations
+
+### Docker Options
+- `--docker`: Run in Docker container
+- `--docker-image TEXT`: Specify Docker image
+- `--docker-platform TEXT`: Specify platform (e.g., linux/amd64)
+
+### Other Options
+- `--overwrite`: Overwrite existing output directory
+- `--debug`: Enable debug mode
+- `--help`: Show help message
+
+## Troubleshooting
+
+### Common Issues
+
+#### Installation Problems
+
+**Problem**: `rna-map` command not found after installation
+```bash
+# Solution: Ensure the conda environment is activated
+conda activate rna-map
+which rna-map
 ```
 
-```shell
-rna_map.CLI - INFO -
-88888888ba   888b      88         db             88b           d88         db         88888888ba
-88      "8b  8888b     88        d88b            888b         d888        d88b        88      "8b
-88      ,8P  88 `8b    88       d8'`8b           88`8b       d8'88       d8'`8b       88      ,8P
-88aaaaaa8P'  88  `8b   88      d8'  `8b          88 `8b     d8' 88      d8'  `8b      88aaaaaa8P'
-88""""88'    88   `8b  88     d8YaaaaY8b         88  `8b   d8'  88     d8YaaaaY8b     88""""""'
-88    `8b    88    `8b 88    d8""""""""8b        88   `8b d8'   88    d8""""""""8b    88
-88     `8b   88     `8888   d8'        `8b       88    `888'    88   d8'        `8b   88
-88      `8b  88      `888  d8'          `8b      88     `8'     88  d8'          `8b  88
+**Problem**: Missing dependencies (bowtie2, fastqc, etc.)
+```bash
+# Solution: Install using conda
+conda install -c bioconda bowtie2 fastqc cutadapt trim-galore
+```
 
-rna_map.CLI - INFO - ran at commandline as:
-rna_map.CLI - INFO - /Users/jyesselm/miniconda3/envs/py3/bin/rna-map -fa test/resources/case_1/test.fasta -fq1 test/resources/case_unit/test_mate1.fastq -fq2 test/resources/case_unit/test_mate2.fastq
-rna_map.RUN - INFO - fasta file: test/resources/case_1/test.fasta exists
-rna_map.RUN - INFO - found 1 valid reference sequences in test/resources/case_1/test.fasta
-rna_map.RUN - INFO - fastq1 file: test/resources/case_unit/test_mate1.fastq exists
-rna_map.RUN - INFO - fastq2 file: test/resources/case_unit/test_mate2.fastq exists
-rna_map.RUN - INFO - two fastq files supplied, thus assuming paired reads
-rna_map.MAPPING - INFO - bowtie2 2.4.5 detected!
-rna_map.MAPPING - INFO - fastqc v0.11.9 detected!
-rna_map.MAPPING - INFO - trim_galore 0.6.6 detected!
-rna_map.MAPPING - INFO - cutapt 1.18 detected!
-rna_map.MAPPING - INFO - building directory structure
-rna_map.MAPPING - INFO - bowtie2 2.4.5 detected!
-rna_map.MAPPING - INFO - fastqc v0.11.9 detected!
-rna_map.MAPPING - INFO - trim_galore 0.6.6 detected!
-rna_map.MAPPING - INFO - cutapt 1.18 detected!
-rna_map.EXTERNAL_CMD - INFO - running fastqc
-rna_map.EXTERNAL_CMD - INFO - fastqc ran without errors
-rna_map.EXTERNAL_CMD - INFO - running trim_galore
-rna_map.EXTERNAL_CMD - INFO - trim_galore ran without errors
-rna_map.EXTERNAL_CMD - INFO - running bowtie2-build
-rna_map.EXTERNAL_CMD - INFO - bowtie2-build ran without errors
-rna_map.EXTERNAL_CMD - INFO - running bowtie2 alignment
-rna_map.EXTERNAL_CMD - INFO - bowtie2 alignment ran without errors
-rna_map.EXTERNAL_CMD - INFO - results for bowtie alignment:
-25 reads; of these:
-  25 (100.00%) were paired; of these:
-    1 (4.00%) aligned concordantly 0 times
-    24 (96.00%) aligned concordantly exactly 1 time
-    0 (0.00%) aligned concordantly >1 times
-96.00% overall alignment rate
-rna_map.MAPPING - INFO - finished mapping!
-rna_map.BIT_VECTOR - INFO - starting bitvector generation
-rna_map.BIT_VECTOR - INFO - REMOVED READS:
-| name          |   low_mapq |
-|---------------|------------|
-| mttr-6-alt-h3 |          0 |
+#### Runtime Errors
 
-rna_map.BIT_VECTOR - INFO - MUTATION SUMMARY:
-| name          |   reads |   aligned |   no_mut |   1_mut |   2_mut |   3_mut |   3plus_mut |   sn |
-|---------------|---------|-----------|----------|---------|---------|---------|-------------|------|
-| mttr-6-alt-h3 |      24 |       100 |       50 |   33.33 |    12.5 |    4.17 |           0 | 4.91 |
+**Problem**: Low alignment rates
+- Check that your FASTQ files are properly formatted
+- Verify that the reference sequence matches your experimental setup
+- Try adjusting Bowtie2 parameters: `--bt2-alignment-args "very-sensitive-local"`
+
+**Problem**: Memory issues with large datasets
+```bash
+# Solution: Use summary-only mode for large datasets
+rna-map -fa large_dataset.fasta -fq1 reads.fastq --summary-output-only
+```
+
+**Problem**: Docker permission errors
+```bash
+# Solution: Add user to docker group (Linux) or use sudo
+sudo usermod -aG docker $USER
+# Then log out and back in
+```
+
+#### Quality Control Issues
+
+**Problem**: Poor quality scores
+- Check your sequencing quality
+- Adjust quality cutoff: `--tg-q-cutoff 15` (lower threshold)
+- Skip quality control if data is known to be good: `--skip-fastqc --skip-trim-galore`
+
+**Problem**: No mutations detected
+- Verify DMS treatment was performed correctly
+- Check that reference sequence is correct
+- Lower mutation count cutoff: `--mutation-count-cutoff 1`
+
+### Getting Help
+
+1. **Check the logs**: RNA MAP provides detailed logging information
+2. **Use debug mode**: Add `--debug` flag for verbose output
+3. **Test with sample data**: Use the provided test files in `test/resources/`
+4. **GitHub Issues**: Report bugs and ask questions on the [GitHub repository](https://github.com/YesselmanLab/rna_map/issues)
+
+### Example Output
+
+A successful run will show:
+```
+rna_map.CLI - INFO - Starting RNA MAP analysis...
+rna_map.RUN - INFO - Found 1 valid reference sequences
+rna_map.MAPPING - INFO - Bowtie2 2.4.5 detected!
+rna_map.MAPPING - INFO - FastQC v0.11.9 detected!
+rna_map.MAPPING - INFO - Trim Galore 0.6.6 detected!
+rna_map.EXTERNAL_CMD - INFO - Running FastQC...
+rna_map.EXTERNAL_CMD - INFO - FastQC completed successfully
+rna_map.EXTERNAL_CMD - INFO - Running Trim Galore...
+rna_map.EXTERNAL_CMD - INFO - Trim Galore completed successfully
+rna_map.EXTERNAL_CMD - INFO - Running Bowtie2 alignment...
+rna_map.EXTERNAL_CMD - INFO - Bowtie2 alignment completed successfully
+rna_map.BIT_VECTOR - INFO - Starting bit vector generation...
+rna_map.BIT_VECTOR - INFO - Analysis completed successfully!
+```
+
+## Development
+
+### Setting up Development Environment
+
+```bash
+# Clone the repository
+git clone https://github.com/YesselmanLab/rna_map
+cd rna_map
+
+# Create development environment
+conda env create -f environment.yml
+conda activate rna-map
+
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linting
+black rna_map/
+flake8 rna_map/
 ```
 
 
+### Code Style
 
-## TODO
-- [ ] 
-- [ ] Add mac build to github actions
+This project uses:
+- **Black** for code formatting
+- **Flake8** for linting
+- **MyPy** for type checking
+- **Pytest** for testing
+
+## Citation
+
+If you use RNA MAP in your research, please cite:
+
+```
+Yesselman, J.D., et al. (2022). RNA mutational profiling (MaP) with DREEM reveals 
+structural and functional insights into RNA structure. Nucleic Acids Research, 
+50(12), e70. https://doi.org/10.1093/nar/gkac435
+```
