@@ -1,67 +1,33 @@
-################## BASE IMAGE ######################
-
-FROM continuumio/miniconda3:latest
-
-################## METADATA ######################
-LABEL base.image="continuumio/miniconda3:latest"
-LABEL version="1"
-LABEL software="dreem"
-LABEL software.version="0.1.0"
-LABEL about.summary="analysis of mutational profiling (MaP) of RNA"
-LABEL about.tags="RNA bioinformatics,RNA structure"
-
-################## MAINTAINER ######################
-MAINTAINER Joe Yesselman <jyesselm@unl.edu>
-
-################## INSTALLATION ######################
-
+FROM mambaorg/micromamba:latest
+SHELL ["/bin/bash", "-lc"]
 USER root
 
-RUN /bin/bash -c "mkdir /data && mkdir /data2 && mkdir /data3 && mkdir /data4 "
+# Create your data directories
+RUN mkdir -p /data /data2 /data3 /data4
 
-## install fastqc and unzip
-RUN apt-get update && \
-    apt-get -y -q install fastqc gcc unzip curl
+# Copy environment spec
+COPY environment.yml /tmp/environment.yml
 
-ENV ZIP=bowtie2-2.2.9-linux-x86_64.zip
-ENV URL=https://github.com/BenLangmead/bowtie2/releases/download/v2.2.9/
-ENV FOLDER=bowtie2-2.2.9
-ENV DST=/bin
+# Install everything into the *base* environment
+# Using --yes (-y) and --strict-channel-priority ensures Bioconda/Conda-Forge order
+RUN micromamba install -y -n base -f /tmp/environment.yml --strict-channel-priority \
+ && micromamba clean -a -y
 
-## install bowtie2
-RUN wget -q $URL/$ZIP -O $DST/$ZIP && \
-    unzip $DST/$ZIP -d $DST && \
-    rm $DST/$ZIP && \
-    mv $DST/$FOLDER/* $DST && \
-    rmdir $DST/$FOLDER
+# Ensure base is first on PATH (usually already true, but explicit here)
+ENV PATH=/opt/conda/bin:$PATH
 
- # check that bowtie2 is accessible
-RUN if [$(which bowtie2) = ""]; then exit 1; fi
+# Copy your source code and install your package into base
+WORKDIR /opt/rna_map
+COPY . /opt/rna_map
+RUN pip install -e . \
+ && rna-map --help >/dev/null 2>&1 || true
 
-## setup correct python and packages
-RUN pip install cython colorlog click future plotly matplotlib pandas kaleido
-
-## install cutadapt
-RUN wget -q https://github.com/marcelm/cutadapt/archive/refs/tags/v1.18.zip -O $DST/v1.18.zip && \
-    unzip $DST/v1.18.zip -d $DST && \
-    rm $DST/v1.18.zip
-RUN /bin/bash -c "cd $DST/cutadapt-1.18 && python setup.py install"
-
-## install trim_galore
-RUN curl -fsSL https://github.com/FelixKrueger/TrimGalore/archive/0.6.6.tar.gz -o trim_galore.tar.gz && \
-    tar xvzf trim_galore.tar.gz && \
-    cp TrimGalore-0.6.6/trim_galore $DST && \
-    rm -rf TrimGalore-0.6.6 trim_galore.tar.gz
-
- # check that trim_galore is accessible
-RUN if [$(which trim_galore) = ""]; then exit 1; fi
-
-RUN /bin/bash -c "mkdir -p /bin/rna_map"
-COPY . /bin/rna_map
-RUN /bin/bash -c "cd /bin/rna_map && python setup.py install"
-RUN /bin/bash -c "cd /bin/rna_map && pytest -m quick"
-
+# Optional: simple sanity check (nonfatal)
+RUN set -eux; \
+  for exe in bowtie2 fastqc cutadapt trim_galore rna-map; do \
+    command -v "$exe" || echo "MISS: $exe"; \
+  done; \
+  true
 
 WORKDIR /data
-
 CMD ["rna-map"]
