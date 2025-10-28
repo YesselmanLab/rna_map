@@ -9,9 +9,6 @@ Functions:
     - setup_logging(file_name: str = None) -> logging.Logger
         Set up the root logging configuration with optional file logging.
 
-    - setup_applevel_logger(logger_name: str = APP_LOGGER_NAME, is_debug: bool = False, file_name: str = None) -> logging.Logger
-        Set up and configure an application-level logger with optional debug level logging and file logging.
-
     - get_logger(module_name: str = "") -> logging.Logger
         Get a logger instance with the specified module name.
 """
@@ -21,10 +18,9 @@ import sys
 
 # logging #####################################################################
 
-APP_LOGGER_NAME = "rna_map"
+APP_LOGGER_NAME = "rna-map"
 
-
-def setup_logging(file_name: str = None) -> logging.Logger:
+def setup_logging(file_name: str = None, debug: bool = False) -> logging.Logger:
     """
     Set up logging configuration.
 
@@ -36,14 +32,16 @@ def setup_logging(file_name: str = None) -> logging.Logger:
         None
     """
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)  # Set the root logger level
+    root_logger.setLevel(
+        logging.DEBUG if debug else logging.INFO
+    )  # Set the root logger level
 
     # Create a stream handler for output to console
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)  # Set the desired level for console output
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    console_handler.setLevel(
+        logging.DEBUG if debug else logging.INFO
+    )  # Set the desired level for console output
+    formatter = logging.Formatter("%(levelname)s - %(name)s - %(message)s")
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
 
@@ -102,3 +100,5 @@ def get_logger(module_name: str = "") -> logging.Logger:
 
     """
     return logging.getLogger(APP_LOGGER_NAME).getChild(module_name)
+
+

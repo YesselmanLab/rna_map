@@ -16,7 +16,7 @@ from rna_map.cli_opts import (
     parse_cli_args,
 )
 from rna_map.external_cmd import does_program_exist
-from rna_map.logger import get_logger, setup_applevel_logger
+from rna_map.logger import get_logger, setup_logging
 from rna_map.parameters import parse_parameters_from_file, get_default_params
 from rna_map.run import run
 from rna_map.settings import get_py_path
@@ -134,10 +134,10 @@ def cli(**args):
     """
     # setup logging
     if args["debug"]:
-        setup_applevel_logger(is_debug=True)
+        setup_logging(debug=True)
         log.info("Debug logging is on")
     else:
-        setup_applevel_logger()
+        setup_logging()
     # check to see if we are running in docker
     if args["docker"]:
         print("running in docker")
