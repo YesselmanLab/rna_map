@@ -186,6 +186,11 @@ def bit_vector_options():
                 " if lower"
             ),
         ),
+        option(
+            "--bitvector-json-format",
+            is_flag=True,
+            help="output bitvectors in JSON format instead of text format",
+        ),
     )
 
 
@@ -297,6 +302,9 @@ def parse_cli_args(params, args):
         params["bit_vector"]["stricter_constraints"]["min_mut_distance"] = args[
             "min_mut_distance"
         ]
+    if args["bitvector_json_format"]:
+        log.info("outputting bitvectors in JSON format")
+        params["bit_vector"]["json_format"] = args["bitvector_json_format"]
     # misc options
     if args["overwrite"]:
         log.info("will overwrite all existing files")

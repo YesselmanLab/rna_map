@@ -1,6 +1,7 @@
 import os
 import re
 import pickle
+import json
 from dataclasses import dataclass
 from typing import Dict, List
 from pathlib import Path
@@ -41,14 +42,24 @@ class BitVectorSymbols:
 
 
 class BitVectorFileWriter(object):
-    def __init__(self, path, name, sequence, data_type, start, end):
+    def __init__(self, path, name, sequence, data_type, start, end, json_format=False):
         self.start = start
         self.end = end
         self.sequence = sequence
-        self.f = open(path / Path(name + "_bitvectors.txt"), "w")
-        self.f.write(f"@ref\t{name}\t{sequence}\t{data_type}\n")
-        self.f.write(f"@coordinates:\t{start},{end}:{len(sequence)}\n")
-        self.f.write("Query_name\tBit_vector\tN_Mutations\n")
+        self.name = name
+        self.data_type = data_type
+        self.json_format = json_format
+        self.path = path
+        
+        if json_format:
+            # Store bitvectors in memory for JSON output
+            self.bitvectors = []
+        else:
+            # Write directly to text file
+            self.f = open(path / Path(name + "_bitvectors.txt"), "w")
+            self.f.write(f"@ref\t{name}\t{sequence}\t{data_type}\n")
+            self.f.write(f"@coordinates:\t{start},{end}:{len(sequence)}\n")
+            self.f.write("Query_name\tBit_vector\tN_Mutations\n")
 
     def write_bit_vector(self, q_name, bit_vector):
         n_mutations = 0
@@ -61,7 +72,42 @@ class BitVectorFileWriter(object):
                 if read_bit.isalpha():
                     n_mutations += 1
                 bit_string += read_bit
-        self.f.write(f"{q_name}\t{bit_string}\t{n_mutations}\n")
+        
+        if self.json_format:
+            # Store for JSON output
+            self.bitvectors.append({
+                "query_name": q_name,
+                "bit_vector": bit_string,
+                "n_mutations": n_mutations
+            })
+        else:
+            # Write to text file
+            self.f.write(f"{q_name}\t{bit_string}\t{n_mutations}\n")
+    
+    def close(self):
+        """Close the file writer and write JSON if needed"""
+        if self.json_format:
+            # Write JSON file
+            json_data = {
+                "ref": {
+                    "name": self.name,
+                    "sequence": self.sequence,
+                    "data_type": self.data_type
+                },
+                "coordinates": {
+                    "start": self.start,
+                    "end": self.end,
+                    "length": len(self.sequence)
+                },
+                "bitvectors": self.bitvectors
+            }
+            json_file = self.path / Path(self.name + "_bitvectors.json")
+            with open(json_file, "w") as f:
+                json.dump(json_data, f, indent=2)
+        else:
+            # Close text file
+            if hasattr(self, 'f'):
+                self.f.close()
 
 
 class BitVectorFileReader(object):
@@ -344,13 +390,14 @@ class BitVectorGenerator(object):
             return
 
         self._bit_vector_writers = {}
+        json_format = self.__params["bit_vector"].get("json_format", False)
         for ref_name, seq in self.__ref_seqs.items():
             self.__mut_histos[ref_name] = MutationHistogram(
                 ref_name, seq, "DMS", 1, len(seq)
             )
             if not self.__summary_only:
                 self._bit_vector_writers[ref_name] = BitVectorFileWriter(
-                    self.__out_dir, ref_name, seq, "DMS", 1, len(seq)
+                    self.__out_dir, ref_name, seq, "DMS", 1, len(seq), json_format=json_format
                 )
         if str(self.__csv_file) != ".":
             df = pd.read_csv(self.__csv_file)
@@ -359,6 +406,9 @@ class BitVectorGenerator(object):
                     self.__mut_histos[row["name"]].structure = row["structure"]
         for bit_vector in self.__bit_vec_iterator:
             self.__record_bit_vector(bit_vector)
+        # Close all bit vector writers (writes JSON if needed)
+        for writer in self._bit_vector_writers.values():
+            writer.close()
         # pickle mutational histograms
         json_file = os.path.join(self.__out_dir, "mutation_histos.json")
         write_mut_histos_to_pickle_file(self.__mut_histos, pickle_file)

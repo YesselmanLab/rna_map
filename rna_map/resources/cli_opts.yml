@@ -122,11 +122,16 @@ bit_vector:
         default: 0.10
         help: minium percent of the length of the reference sequence allowed in a bit vector will be discarded if lower
     --min-mut-distance:
-        param: bit_vector:stricter_constraints:min_mut_distance
-        log_msg: minimum mutation distance set to {value} this will only run if --stricter-bv-constraints is set
-        type: int
-        default: 5
-        help: minimum distance between mutations in a bit vector will be discarded if lower
+      param: bit_vector:stricter_constraints:min_mut_distance
+      log_msg: minimum mutation distance set to {value} this will only run if --stricter-bv-constraints is set
+      type: int
+      default: 5
+      help: minimum distance between mutations in a bit vector will be discarded if lower
+    --bitvector-json-format:
+      param: bit_vector:json_format
+      log_msg: outputting bitvectors in JSON format
+      is_flag: True
+      help: output bitvectors in JSON format instead of text format
 
 misc:
   name: Misc options

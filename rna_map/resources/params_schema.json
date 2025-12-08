@@ -59,6 +59,10 @@
           "type": "boolean",
           "default": false
         },
+        "json_format": {
+          "type": "boolean",
+          "default": false
+        },
         "stricter_constraints": {
           "type": "object",
           "properties": {

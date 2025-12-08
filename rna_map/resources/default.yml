@@ -24,6 +24,7 @@ bit_vector:
   map_score_cutoff: 15
   plot_sequence: False
   summary_output_only: False
+  json_format: False # output bitvectors in JSON format instead of text format
   stricter_constraints: # new cutoffs for bit vectors use at your own risk
       min_mut_distance: 5 # minimum distance between mutations
       percent_length_cutoff: 0.10 #
