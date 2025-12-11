@@ -50,6 +50,7 @@ class BitVectorFileWriter(object):
         self.data_type = data_type
         self.json_format = json_format
         self.path = path
+        self.__bts = BitVectorSymbols()
         
         if json_format:
             # Store bitvectors in memory for JSON output
@@ -64,24 +65,46 @@ class BitVectorFileWriter(object):
     def write_bit_vector(self, q_name, bit_vector):
         n_mutations = 0
         bit_string = ""
-        for pos in range(self.start, self.end + 1):
-            if pos not in bit_vector:
-                bit_string += "."
-            else:
-                read_bit = bit_vector[pos]
-                if read_bit.isalpha():
-                    n_mutations += 1
-                bit_string += read_bit
         
         if self.json_format:
-            # Store for JSON output
-            self.bitvectors.append({
-                "query_name": q_name,
-                "bit_vector": bit_string,
-                "n_mutations": n_mutations
-            })
+            mut_pos = {}
+            ambiguous_pos = []
+            del_pos = []
+            
+            for pos in range(self.start, self.end + 1):
+                if pos not in bit_vector:
+                    bit_string += "."
+                    ambiguous_pos.append(pos)
+                else:
+                    read_bit = bit_vector[pos]
+                    if read_bit.isalpha():
+                        n_mutations += 1
+                        mut_pos[str(pos)] = read_bit
+                    elif read_bit == self.__bts.del_bit:
+                        del_pos.append(pos)
+                    elif read_bit == self.__bts.ambig_info:
+                        ambiguous_pos.append(pos)
+                    bit_string += read_bit
+            
+            # Store minimal JSON format
+            bv_data = {"query_name": q_name}
+            if mut_pos:
+                bv_data["mut_pos"] = mut_pos
+            if del_pos:
+                bv_data["del_pos"] = del_pos
+            if ambiguous_pos:
+                bv_data["ambiguous_pos"] = ambiguous_pos
+            self.bitvectors.append(bv_data)
         else:
             # Write to text file
+            for pos in range(self.start, self.end + 1):
+                if pos not in bit_vector:
+                    bit_string += "."
+                else:
+                    read_bit = bit_vector[pos]
+                    if read_bit.isalpha():
+                        n_mutations += 1
+                    bit_string += read_bit
             self.f.write(f"{q_name}\t{bit_string}\t{n_mutations}\n")
     
     def close(self):
