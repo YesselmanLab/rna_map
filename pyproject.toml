@@ -70,6 +70,7 @@ Documentation = "https://github.com/YesselmanLab/rna_map#readme"
 
 [project.scripts]
 rna-map = "rna_map.cli:cli"
+rna-map-pickle = "rna_map.pickle_to_df:cli"
 
 [tool.setuptools]
 packages = ["rna_map"]

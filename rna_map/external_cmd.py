@@ -130,7 +130,7 @@ def run_named_command(method_name: str, cmd: str) -> ProgOutput:
     return out
 
 
-def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
+def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> Optional[ProgOutput]:
     """
     run fastqc appliction on fastq files
     :param fastq1: path to fastq1 file
@@ -140,7 +140,11 @@ def run_fastqc(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:
     fastqc_dir = os.path.join(out_dir, "fastqc")
     os.makedirs(fastqc_dir, exist_ok=True)
     fastqc_cmd = f"fastqc {fastq1} {fastq2} -o {fastqc_dir}"
-    return run_named_command("fastqc", fastqc_cmd)
+    try:
+        return run_named_command("fastqc", fastqc_cmd)
+    except DREEMExternalProgramException as e:
+        log.warning(f"fastqc failed but continuing anyway: {e}")
+        return None
 
 
 def run_trim_glore(fastq1: str, fastq2: str, out_dir: str) -> ProgOutput:

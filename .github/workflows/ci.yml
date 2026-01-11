@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-13]  # macos-13 = Intel runner; more Bioconda packages available
+        os: [ubuntu-latest, macos-14]  # macos-14 = Apple Silicon runner
         python-version: ["3.11"]       # Expand to ["3.10","3.11","3.12"] if your deps support it
     runs-on: ${{ matrix.os }}
 
@@ -63,3 +63,7 @@ jobs:
           which fastqc  || (echo "fastqc missing"  && exit 1)
           which cutadapt || (echo "cutadapt missing" && exit 1)
           which trim_galore || (echo "trim_galore missing" && exit 1)
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: pytest
