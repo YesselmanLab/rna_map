@@ -7,14 +7,14 @@ app_logger = logger.setup_applevel_logger()
 
 def test_logging(caplog):
     app_logger.info("test")
-    assert caplog.record_tuples[0][0] == "rna_map"
+    assert caplog.record_tuples[0][0] == "rna-map"
     assert caplog.record_tuples[0][-1] == "test"
 
 
 def test_logging_2(caplog):
     log = logger.get_logger("TEST")
     log.info("test")
-    assert caplog.record_tuples[0][0] == "rna_map.TEST"
+    assert caplog.record_tuples[0][0] == "rna-map.TEST"
     assert caplog.record_tuples[0][-1] == "test"
 
 
